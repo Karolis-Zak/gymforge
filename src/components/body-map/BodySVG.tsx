@@ -191,7 +191,7 @@ export function BodySVG({ selectedMuscles, onToggleMuscle, view }: BodySVGProps)
           onClick={() => onToggleMuscle(zone.muscle)}
           onMouseEnter={() => setHoveredMuscle(zone.muscle)}
           onMouseLeave={() => setHoveredMuscle(null)}
-          className="cursor-pointer transition-all duration-200"
+          className="cursor-pointer transition-all duration-200 outline-none focus:outline-none"
           role="button"
           aria-label={getMuscleGroupLabel(zone.muscle)}
           tabIndex={0}

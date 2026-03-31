@@ -34,7 +34,7 @@ export function BottomNav() {
               <Link
                 href={item.href}
                 className={`
-                  flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200
+                  flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-200
                   ${isActive ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}
                 `}
               >

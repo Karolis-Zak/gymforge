@@ -47,10 +47,10 @@ export function Sidebar() {
                 <Link
                   href={item.href}
                   className={`
-                    flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 border
                     ${isActive
-                      ? 'bg-primary/10 text-primary border border-primary/20 shadow-glow'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                      ? 'bg-primary/10 text-primary border-primary/20'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5 border-transparent'
                     }
                   `}
                 >
