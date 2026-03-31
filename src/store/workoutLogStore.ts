@@ -65,19 +65,39 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
         if (!plan || !Array.isArray(plan.exercises) || plan.exercises.length === 0 || plan.exercises.some(ex => !ex.sets || ex.sets === 0)) {
           return
         }
+
+        // Find last completed workout weights for each exercise
+        const logs = get().logs
+        const getLastWeights = (exerciseId: string): WorkoutSet[] => {
+          for (let i = logs.length - 1; i >= 0; i--) {
+            if (!logs[i].completed) continue
+            const ex = logs[i].exercises.find(e => e.exerciseId === exerciseId)
+            if (ex && ex.sets.length > 0) return ex.sets
+          }
+          return []
+        }
+
         const workout: WorkoutLog = {
           id: Math.random().toString(36).substring(2),
           planId,
           planName,
           date: new Date().toISOString(),
-          exercises: plan.exercises.map(ex => ({
-            id: Math.random().toString(36).substring(2),
-            exerciseId: ex.id,
-            exerciseName: ex.name,
-            sets: Array(typeof ex.sets === 'number' ? ex.sets : 0).fill(null).map(() => ({ weight: 0, reps: ex.reps || 0, completed: false })),
-            notes: ex.notes || '',
-            date: new Date().toISOString()
-          })),
+          exercises: plan.exercises.map(ex => {
+            const lastSets = getLastWeights(ex.id)
+            const numSets = typeof ex.sets === 'number' ? ex.sets : 0
+            return {
+              id: Math.random().toString(36).substring(2),
+              exerciseId: ex.id,
+              exerciseName: ex.name,
+              sets: Array(numSets).fill(null).map((_, i) => ({
+                weight: lastSets[i]?.weight || 0,
+                reps: lastSets[i]?.reps || ex.reps || 0,
+                completed: false,
+              })),
+              notes: ex.notes || '',
+              date: new Date().toISOString()
+            }
+          }),
           completed: false
         }
         set({ currentWorkout: workout })
