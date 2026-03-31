@@ -35,7 +35,11 @@ export function Sidebar() {
       <nav className="flex-1 py-4 px-3">
         <ul className="space-y-1">
           {navItems.map(item => {
-            const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
+            const isActive = item.href === '/'
+              ? pathname === '/'
+              : item.href === '/plans'
+                ? pathname === '/plans' || pathname?.startsWith('/plans/')
+                : pathname === item.href
             const isWorkout = item.href === '/workout'
 
             return (

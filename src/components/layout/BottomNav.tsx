@@ -22,7 +22,11 @@ export function BottomNav() {
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-background-card/90 backdrop-blur-xl border-t border-white/5">
       <ul className="flex justify-around items-center h-16 px-2">
         {navItems.map(item => {
-          const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
+          const isActive = item.href === '/'
+            ? pathname === '/'
+            : item.href === '/plans'
+              ? pathname === '/plans' || pathname?.startsWith('/plans/')
+              : pathname === item.href
           const isWorkout = item.href === '/workout'
 
           return (
