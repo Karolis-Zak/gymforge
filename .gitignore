@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Next.js build
+.next/
+out/
+
+# Build artifacts
+*.tsbuildinfo
+next-env.d.ts
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# Environment / Secrets
+.env
+.env.*
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Note: package-lock.json IS committed (Vercel needs it for consistent builds)
+
+# Generated / temp
+repomix-output.xml
+*.zip
+
+# Vercel
+.vercel

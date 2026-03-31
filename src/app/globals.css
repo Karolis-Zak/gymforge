@@ -1,0 +1,131 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --color-bg: #0a0a0f;
+    --color-card: #13131a;
+    --color-elevated: #1a1a2e;
+    --color-primary: #00d4ff;
+    --color-primary-dark: #0891b2;
+    --color-accent: #a855f7;
+    --color-success: #22c55e;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
+    --color-text: #ffffff;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #475569;
+    --color-border: rgba(255, 255, 255, 0.1);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  /* Light theme overrides */
+  html.light-theme {
+    color-scheme: light;
+    --color-bg: #f5f5f7;
+    --color-card: #ffffff;
+    --color-elevated: #f0f0f3;
+    --color-text: #1a1a2e;
+    --color-text-secondary: #4b5563;
+    --color-text-muted: #9ca3af;
+    --color-border: rgba(0, 0, 0, 0.1);
+  }
+
+  html.light-theme body {
+    @apply text-[#1a1a2e];
+    background: #f5f5f7;
+  }
+
+  html.light-theme .bg-background { background: #f5f5f7; }
+  html.light-theme .bg-background-card { background: #ffffff; }
+  html.light-theme .bg-background-elevated { background: #f0f0f3; }
+  html.light-theme .text-text-primary { color: #1a1a2e; }
+  html.light-theme .text-text-secondary { color: #4b5563; }
+  html.light-theme .text-text-muted { color: #9ca3af; }
+  html.light-theme .border-white\/5 { border-color: rgba(0, 0, 0, 0.06); }
+  html.light-theme .border-white\/10 { border-color: rgba(0, 0, 0, 0.1); }
+  html.light-theme .bg-white\/5 { background: rgba(0, 0, 0, 0.03); }
+  html.light-theme .bg-white\/\[0\.02\] { background: rgba(0, 0, 0, 0.02); }
+  html.light-theme .hover\:bg-white\/5:hover { background: rgba(0, 0, 0, 0.05); }
+  html.light-theme .hover\:bg-white\/10:hover { background: rgba(0, 0, 0, 0.08); }
+  html.light-theme option { background: #ffffff; color: #1a1a2e; }
+  html.light-theme .shadow-glow { box-shadow: 0 0 20px rgba(0, 140, 180, 0.12); }
+  html.light-theme .shadow-card { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06); }
+  html.light-theme .shadow-card-hover { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); }
+  html.light-theme .gradient-text { -webkit-text-fill-color: transparent; background: linear-gradient(135deg, #0891b2, #7c3aed); -webkit-background-clip: text; background-clip: text; }
+  html.light-theme ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+  html.light-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+  html.light-theme ::selection { background-color: rgba(0, 140, 180, 0.2); color: #1a1a2e; }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  ::selection {
+    background-color: rgba(0, 212, 255, 0.3);
+    color: #ffffff;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Form elements */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-background-card border border-white/10 backdrop-blur-xl;
+  }
+
+  .glass-elevated {
+    @apply bg-background-elevated border border-white/10 backdrop-blur-xl;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-mixed;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-card-hover;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideUp 0.3s ease-out;
+  }
+}

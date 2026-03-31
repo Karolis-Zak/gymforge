@@ -1,0 +1,103 @@
+'use client'
+
+import React from 'react'
+import type { GeneratedPlan } from '../../lib/planGenerator'
+import { Card } from '../ui/Card'
+import { Badge } from '../ui/Badge'
+import { Button } from '../ui/Button'
+import { getMuscleGroupLabel } from '../../data/exerciseUtils'
+import { FiClock, FiRefreshCw } from 'react-icons/fi'
+
+interface PlanPreviewProps {
+  plan: GeneratedPlan
+  planName: string
+  onPlanNameChange: (name: string) => void
+  onConfirm: () => void
+  onShuffle: () => void
+}
+
+export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShuffle }: PlanPreviewProps) {
+  const totalExercises = plan.days.reduce((sum, d) => sum + d.exercises.length, 0)
+  const totalMinutes = plan.days.reduce((sum, d) => sum + d.estimatedMinutes, 0)
+  const allMuscles = [...new Set(plan.days.flatMap(d => d.targetMuscles))]
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Plan Name */}
+      <div>
+        <label className="text-sm font-medium text-text-secondary block mb-2">Name your plan</label>
+        <input
+          type="text"
+          value={planName}
+          onChange={e => onPlanNameChange(e.target.value)}
+          placeholder="e.g. My Strength Program"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg font-display text-text-primary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+        />
+      </div>
+
+      {/* Summary stats */}
+      <Card className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div>
+          <p className="text-2xl font-display font-bold text-primary">{plan.days.length}</p>
+          <p className="text-xs text-text-muted">Days / Week</p>
+        </div>
+        <div>
+          <p className="text-2xl font-display font-bold text-accent">{totalExercises}</p>
+          <p className="text-xs text-text-muted">Total Exercises</p>
+        </div>
+        <div>
+          <p className="text-2xl font-display font-bold text-success">{totalMinutes}min</p>
+          <p className="text-xs text-text-muted">Weekly Time</p>
+        </div>
+        <div>
+          <p className="text-2xl font-display font-bold text-warning">{allMuscles.length}</p>
+          <p className="text-xs text-text-muted">Muscle Groups</p>
+        </div>
+      </Card>
+
+      <p className="text-sm text-text-secondary">{plan.description}</p>
+
+      {/* Day cards */}
+      {plan.days.map((day, i) => (
+        <Card key={i}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-display font-bold text-text-primary">{day.dayName}</h3>
+              <p className="text-sm text-text-muted">{day.splitName}</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <FiClock /> ~{day.estimatedMinutes}min
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {day.targetMuscles.map(m => (
+              <Badge key={m} variant="primary" size="sm">{getMuscleGroupLabel(m)}</Badge>
+            ))}
+          </div>
+          <div className="space-y-1.5">
+            {day.exercises.map((ex, j) => (
+              <div key={ex.id + j} className="flex items-center justify-between py-1.5 text-sm">
+                <span className="text-text-secondary">{ex.name}</span>
+                <span className="text-text-muted">{ex.sets} × {ex.reps}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button variant="secondary" size="lg" onClick={onShuffle} className="flex-1">
+          <FiRefreshCw /> Shuffle Exercises
+        </Button>
+        <button
+          onClick={onConfirm}
+          disabled={!planName.trim()}
+          className="flex-1 h-14 bg-gradient-primary text-white text-lg font-display font-bold rounded-2xl shadow-glow hover:shadow-[0_0_40px_rgba(0,212,255,0.3)] active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Create My Plan
+        </button>
+      </div>
+    </div>
+  )
+}
