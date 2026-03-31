@@ -79,7 +79,7 @@ function isUnilateralExercise(exerciseName: string): boolean {
 
 export const ActiveWorkout: React.FC = () => {
   const router = useRouter()
-  const { currentWorkout, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
+  const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
 
   const [timer, setTimer] = useState(0)
@@ -286,6 +286,27 @@ export const ActiveWorkout: React.FC = () => {
           <span>{Math.round(progressPercent)}%</span>
         </div>
       </div>
+
+      {/* ===== Last Session Notes ===== */}
+      {(() => {
+        const lastLog = logs
+          .filter(l => l.completed && l.planId === currentWorkout.planId && l.sessionNotes)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+        if (!lastLog) return null
+        return (
+          <Card className="border-accent/10 bg-accent/5">
+            <div className="flex items-start gap-3">
+              <FiEdit3 className="text-accent mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-text-muted mb-1">
+                  Last session ({new Date(lastLog.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})
+                </p>
+                <p className="text-sm text-text-secondary">{lastLog.sessionNotes}</p>
+              </div>
+            </div>
+          </Card>
+        )
+      })()}
 
       {/* ===== Notes Panel ===== */}
       {showNotesPanel && (
