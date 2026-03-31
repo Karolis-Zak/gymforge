@@ -411,16 +411,17 @@ export function Questionnaire() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-2">Focus areas (pick up to 3)</label>
+                <label className="text-sm font-medium text-text-secondary block mb-2">Which areas do you want to prioritise?</label>
+                <p className="text-xs text-text-muted mb-2">Selected areas get extra exercises in your plan. Leave empty for a balanced program.</p>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {getAllMuscleGroups().map(m => (
                     <PillToggle key={m} label={getMuscleGroupLabel(m)} selected={answers.focusAreas.includes(m)} onClick={() => {
                       if (answers.focusAreas.includes(m)) update({ focusAreas: answers.focusAreas.filter(f => f !== m) })
-                      else if (answers.focusAreas.length < 3) update({ focusAreas: [...answers.focusAreas, m] })
+                      else update({ focusAreas: [...answers.focusAreas, m] })
                     }} />
                   ))}
                 </div>
-                {answers.focusAreas.length >= 3 && <p className="text-xs text-primary mt-1">Maximum 3 focus areas selected</p>}
+                {answers.focusAreas.length > 0 && <p className="text-xs text-text-muted mt-1">{answers.focusAreas.length} area{answers.focusAreas.length !== 1 ? 's' : ''} selected</p>}
               </div>
               <div>
                 <label className="text-sm font-medium text-text-secondary block mb-2">How often should each muscle be trained?</label>
