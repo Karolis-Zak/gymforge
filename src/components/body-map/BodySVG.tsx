@@ -197,6 +197,10 @@ export function BodySVG({ selectedMuscles, onToggleMuscle, view }: BodySVGProps)
           tabIndex={0}
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onToggleMuscle(zone.muscle) }}
         >
+          {/* Invisible wider hit area for easier tapping on mobile */}
+          {zone.paths.map((path, i) => (
+            <path key={`hit-${i}`} d={path} fill="transparent" stroke="transparent" strokeWidth="12" className="cursor-pointer" />
+          ))}
           {zone.paths.map((path, i) => (
             <path
               key={i}
@@ -204,7 +208,7 @@ export function BodySVG({ selectedMuscles, onToggleMuscle, view }: BodySVGProps)
               fill={getFill(zone.muscle)}
               stroke={getStroke(zone.muscle)}
               strokeWidth={selectedMuscles.includes(zone.muscle) ? 1.5 : 0.8}
-              className="transition-all duration-200"
+              className="transition-all duration-200 pointer-events-none"
               style={selectedMuscles.includes(zone.muscle) ? {
                 filter: 'drop-shadow(0 0 6px rgba(0, 212, 255, 0.3))'
               } : undefined}

@@ -75,6 +75,7 @@ export const useUserStore = create<UserStore>()(
         return Number(((50 + 2.3 * (heightInInches - 60)).toFixed(1)))
       },
       logWeight: (weight: number) => {
+        if (weight <= 0 || weight > 500) return
         set(state => ({
           weightHistory: [...state.weightHistory, { date: new Date().toISOString(), weight }]
         }))

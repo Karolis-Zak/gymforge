@@ -44,7 +44,7 @@ export function BodyMap() {
           {/* Front/Back toggle */}
           <div className="flex items-center justify-center gap-1 mb-4">
             <button
-              onClick={() => setView('front')}
+              onClick={() => { setView('front'); setSelectedMuscles([]) }}
               className={`px-4 py-2 text-sm font-medium rounded-l-xl border transition-all ${
                 view === 'front'
                   ? 'bg-primary/15 text-primary border-primary/30'
@@ -54,7 +54,7 @@ export function BodyMap() {
               Front
             </button>
             <button
-              onClick={() => setView('back')}
+              onClick={() => { setView('back'); setSelectedMuscles([]) }}
               className={`px-4 py-2 text-sm font-medium rounded-r-xl border transition-all ${
                 view === 'back'
                   ? 'bg-primary/15 text-primary border-primary/30'
@@ -64,7 +64,7 @@ export function BodyMap() {
               Back
             </button>
             <button
-              onClick={() => setView(v => v === 'front' ? 'back' : 'front')}
+              onClick={() => { setView(v => v === 'front' ? 'back' : 'front'); setSelectedMuscles([]) }}
               className="ml-2 w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/10 transition-all"
               aria-label="Flip view"
             >

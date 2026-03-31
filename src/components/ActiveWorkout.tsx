@@ -267,7 +267,7 @@ export const ActiveWorkout: React.FC = () => {
             <span className="font-mono text-lg font-bold text-primary">{formatTime(timer)}</span>
           </div>
           <Button variant="secondary" size="sm" onClick={() => setShowNotesPanel(!showNotesPanel)} aria-label="Workout notes"><FiEdit3 /></Button>
-          <Button variant="danger" size="sm" onClick={handleCancel}><FiX /> Stop</Button>
+          <Button variant="danger" size="sm" onClick={handleCancel}><FiX /> Cancel</Button>
         </div>
       </div>
 
