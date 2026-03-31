@@ -147,11 +147,16 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
                         href={getExerciseSearchUrl(ex.name)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-3 bg-white/[0.02] border border-white/10 rounded-xl hover:bg-white/5 transition-all text-sm"
+                        className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-xl hover:bg-primary/10 transition-all"
                       >
-                        <FiVideo className="text-primary" />
-                        <span className="text-text-secondary">Watch form guide on YouTube</span>
-                        <FiExternalLink className="text-text-muted ml-auto" size={12} />
+                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                          <FiVideo className="text-primary text-lg" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-text-primary font-medium text-sm">Watch {ex.name} form guide</p>
+                          <p className="text-text-muted text-xs">Opens YouTube in a new tab</p>
+                        </div>
+                        <FiExternalLink className="text-primary flex-shrink-0" size={14} />
                       </a>
                     )}
 

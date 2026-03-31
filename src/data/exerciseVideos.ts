@@ -1,68 +1,45 @@
 /**
  * Curated YouTube video IDs for exercises.
- * Key = EXACT exercise name (lowercase) as it appears in exercises.ts
- * Value = YouTube video ID
- *
- * IMPORTANT: Only exact name matches. No partial matching.
+ * Key = EXACT exercise name (lowercase) as in exercises.ts
+ * ALL video IDs verified working via YouTube oembed API.
  */
 const curatedVideos: Record<string, string> = {
   // === CHEST ===
   'barbell bench press': 'rT7DgCr-3pg',
   'decline barbell bench press': 'LfyQBUKR8SE',
-  'decline dumbbell bench press': 'wkBqYT6Ug2o',
   'incline barbell bench press': 'SrqOu55lrYU',
   'dumbbell bench press': 'VmB1G1K7v94',
-  'incline dumbbell bench press': 'hChjZQhX0HI',
   'dumbbell flye': 'eozdVDA78K0',
-  'incline dumbbell flye': 'bDaIFBPkvik',
   'incline cable flye': 'Iwe6AmxVf7o',
   'low-to-high cable crossover': 'taI4XduLpTk',
   'pec deck flye': 'Iwe6AmxVf7o',
   'cable crossover': 'taI4XduLpTk',
-  'cable chest press': '4JLMFfnBSKs',
   'push-up': '_l3ySVKYVJ8',
   'wide push-up': '_l3ySVKYVJ8',
   'decline push-up': 'SKPab2YC8BE',
   'chest dip': 'dX_nSOOJIsE',
   'machine chest press': 'xUm0BiZCWlQ',
   'close-grip bench press': 'nEF0bv2FW94',
-  'smith machine bench press': 'MQ2YAWKLR70',
-  'svend press': 'ASRPmWFtlBA',
-  'cable pullover': 'geyY0ZhHXJg',
-  'dumbbell pullover': 'geyY0ZhHXJg',
-  'landmine press': 'bKz_PmMFl5c',
   'dumbbell floor press': 'uUGDRwge4F8',
 
   // === BACK ===
   'conventional deadlift': 'op9kVnSso6Q',
-  'sumo deadlift': 'fQmzLnMiBOY',
-  'trap bar deadlift': 'GRWFiWbNdUU',
-  'snatch-grip deadlift': 'ofLbDMFnh9U',
-  'deficit deadlift': 'mP-WNbCOgHM',
-  'romanian deadlift': '7ADMkPlnZOk',
-  'dumbbell romanian deadlift': 'hQgFixGgiWA',
-  'cable romanian deadlift': '7ADMkPlnZOk',
   'single-leg romanian deadlift': 'jEy_czb3RKA',
   'stiff-leg deadlift': 'CN_7cz3P-1U',
-  'good morning': 'vKPGe8d01QY',
   'barbell bent-over row': 'FWJR5Ve8bnQ',
   'pendlay row': 'V8dZ3pyiCBo',
   'underhand barbell row': 'FWJR5Ve8bnQ',
   'dumbbell row': 'pYcpY20QaE8',
-  'chest-supported dumbbell row': 'H3AEfFBU9TY',
   'meadows row': 'GZbfZ033f74',
   'landmine row': 'j3Igk5nyZE4',
-  'seal row': 'H3AEfFBU9TY',
   'pull-up': 'eGo4IYlbE5g',
   'wide-grip pull-up': 'eGo4IYlbE5g',
   'neutral-grip pull-up': 'eGo4IYlbE5g',
   'band-assisted pull-up': 'eGo4IYlbE5g',
-  'chin-up': 'brhRXlOhWI8',
   'lat pulldown': 'CAwf7n6Luuc',
   'close-grip lat pulldown': 'CAwf7n6Luuc',
   'seated cable row': 'GZbfZ033f74',
   'close-grip cable row': 'GZbfZ033f74',
-  'single-arm cable row': 'lFKmSdweBJo',
   'cable face pull': 'rep-qVOkqgk',
   'band face pull': 'rep-qVOkqgk',
   'face pull': 'rep-qVOkqgk',
@@ -70,8 +47,6 @@ const curatedVideos: Record<string, string> = {
   'machine row': 'roCP6wCXPqo',
   'inverted row': 'XZV9IwluPjw',
   'straight-arm pulldown': 'lueEJGjTuPQ',
-  'rack pull': 'OkMkP4fUG8U',
-  'dumbbell pullover (back focus)': 'geyY0ZhHXJg',
   'lat prayer': 'lueEJGjTuPQ',
 
   // === SHOULDERS ===
@@ -81,23 +56,15 @@ const curatedVideos: Record<string, string> = {
   'single-arm dumbbell shoulder press': 'qEwKCR5JCog',
   'arnold press': '6Z15_WdXmVw',
   'push press': 'iaBVSJm78ko',
-  'behind-the-neck press': 'WJKDxJrBCkA',
-  'smith machine shoulder press': 'F_5pcy3AxiI',
-  'machine shoulder press': 'Wqq43dKoEZQ',
-  'kettlebell overhead press': 'Ls4PN3BQKWU',
   'dumbbell lateral raise': 'kDqklk1ZESo',
-  'cable lateral raise': '5vxMGLj1yMg',
-  'behind-the-back cable lateral raise': '5vxMGLj1yMg',
   'machine lateral raise': 'kDqklk1ZESo',
   'plate front raise': '-t7fuZ0KhDA',
   'dumbbell front raise': '-t7fuZ0KhDA',
-  'dumbbell y-raise': 'Ey0Pl9mEoww',
   'reverse dumbbell flye': 'EA7u4Q_8HQ0',
   'cable reverse flye': 'EA7u4Q_8HQ0',
   'reverse pec deck': 'EA7u4Q_8HQ0',
   'barbell upright row': 'amCU-ziHITM',
   'dumbbell upright row': 'amCU-ziHITM',
-  'band pull-apart': 'AWoQnVhHE2M',
 
   // === BICEPS ===
   'barbell curl': 'kwG2ipFRgfo',
@@ -111,9 +78,6 @@ const curatedVideos: Record<string, string> = {
   'machine preacher curl': 'fIWP-FRFNU0',
   'ez-bar spider curl': 'fIWP-FRFNU0',
   'concentration curl': '0AUGkch3tzc',
-  'cable bicep curl': 'NFzLq9nDnHI',
-  'bayesian cable curl': 'NFzLq9nDnHI',
-  'overhead cable curl': 'NFzLq9nDnHI',
   'incline dumbbell curl': 'soxrZlIl35U',
   'incline bench hammer curl': 'soxrZlIl35U',
   'spider curl': 'fIWP-FRFNU0',
@@ -124,7 +88,6 @@ const curatedVideos: Record<string, string> = {
   'band tricep pushdown': 'vB5OHsJ3EME',
   'single-arm cable pushdown': 'vB5OHsJ3EME',
   'overhead dumbbell tricep extension': '2C-uNgKwPLE',
-  'ez-bar overhead tricep extension': 'rv3QO9_dkwg',
   'cable overhead tricep extension': '2C-uNgKwPLE',
   'bodyweight tricep extension': '2C-uNgKwPLE',
   'skull crusher': 'd_KZxkY_0cM',
@@ -132,43 +95,25 @@ const curatedVideos: Record<string, string> = {
   'tricep dip': 'dX_nSOOJIsE',
   'bench dip': 'c3ZGl4pAwZ4',
   'machine dip': 'dX_nSOOJIsE',
-  'diamond push-up': 'J0DnG1_S3lg',
   'dumbbell tricep kickback': '6SS6K3lAwZ8',
-  'jm press': 'yHA3gBOamj4',
 
   // === QUADS ===
   'barbell back squat': 'Dy28eq2PjcM',
-  'barbell front squat': 'wyDbagKtFWQ',
   'goblet squat': 'MeIiIdhvXT4',
   'kettlebell goblet squat': 'MeIiIdhvXT4',
   'sumo squat': 'MeIiIdhvXT4',
   'band squat': 'Dy28eq2PjcM',
-  'smith machine squat': 'EXqzTKGkfbo',
   'pendulum squat': 'Dy28eq2PjcM',
-  'zercher squat': 'VLCRPwIHiag',
-  'sissy squat': 'iLVJaJh28Ik',
   'leg press': 'IZxyjW7MPJQ',
   'single-leg leg press': 'IZxyjW7MPJQ',
   'leg extension': '8iPEnn-ltC8',
-  'walking lunge': 'L8fvypPrzzo',
-  'reverse lunge': 'L8fvypPrzzo',
-  'barbell lunge': 'L8fvypPrzzo',
-  'dumbbell split squat': 'L8fvypPrzzo',
-  'dumbbell lateral lunge': 'gNMjax3oedE',
-  'dumbbell step-up': '9ZknEYboBOc',
-  'glute-focused step-up': '9ZknEYboBOc',
   'bulgarian split squat': '2C-uNgKwPLE',
   'hack squat': '0tn5K9NlCfo',
-  'wall sit': 'y-wV4Lz6pBI',
 
   // === HAMSTRINGS ===
   'lying leg curl': '1Tq3QdYUuHs',
   'seated leg curl': 'Orxowest56U',
   'dumbbell leg curl': '1Tq3QdYUuHs',
-  'nordic hamstring curl': 'Wd6bR0Ga_co',
-  'cable pull-through': 'MBcyMiiFNIc',
-  'glute-ham raise': 'N2OBFfbB0ZA',
-  'kettlebell sumo deadlift': 'fQmzLnMiBOY',
 
   // === GLUTES ===
   'barbell hip thrust': 'xDmFkJxPzeM',
@@ -177,45 +122,31 @@ const curatedVideos: Record<string, string> = {
   'hip thrust machine': 'xDmFkJxPzeM',
   'glute bridge': 'wPM8icPu6H8',
   'single-leg glute bridge': 'wPM8icPu6H8',
-  'frog pump': 'VjQC04mCdFE',
-  'cable glute kickback': 'hU5HeLaoM2Y',
-  'machine hip abduction': 'b0HK6KnBboo',
-  'banded hip abduction': 'b0HK6KnBboo',
-  'banded clamshell': 'tzqSb0EnkSw',
   'kettlebell swing': 'YSxHifyI6s8',
-  'kettlebell clean and press': 'RHhg3NX5VN4',
 
   // === CALVES ===
   'standing calf raise': '-M4-G8p8fmc',
-  'seated calf raise': 'JbyjNymZODg',
   'single-leg calf raise': '-M4-G8p8fmc',
   'bodyweight calf raise': '-M4-G8p8fmc',
   'smith machine calf raise': '-M4-G8p8fmc',
-  'donkey calf raise': 'kh2PnJpgAqg',
 
   // === CORE ===
   'plank': 'pSHjTRCQxIw',
   'side plank': 'K2VljzCC16g',
   'crunch': 'Xyd_fa5zoEU',
   'reverse crunch': 'hyv14e2QDq0',
-  'cable crunch': 'AV5PmrIVoLk',
-  'standing cable crunch': 'AV5PmrIVoLk',
   'hanging leg raise': 'hdng3Nm1x_E',
   'hanging knee raise': 'hdng3Nm1x_E',
   'bench leg raise': 'hdng3Nm1x_E',
   'lying leg raise': 'JB2oyawG9KI',
   'russian twist': 'wkD8rjkodUI',
   'bicycle crunch': '9FGilxCbdz8',
-  'ab wheel rollout': 'rqiTPl4XFfo',
   'mountain climber': 'nmwgirgXLYM',
   'dead bug': 'I5xbsA71v1A',
   'bird dog': 'wiFNA3sqjCA',
-  'bear crawl': 'pIxCPJQpLJA',
   'pallof press': 'AH_QZLm_0-s',
   'cable wood chop': 'pAplQXk3dkU',
   'low-to-high cable wood chop': 'pAplQXk3dkU',
-  'flutter kick': 'ANVdMDaSfkk',
-  'v-up': '7PGJOl5YkFU',
   'toe touch': 'Xyd_fa5zoEU',
 
   // === TRAPS ===
@@ -224,21 +155,15 @@ const curatedVideos: Record<string, string> = {
   'trap bar shrug': 'cJRVVxmytaM',
   'cable shrug': 'cJRVVxmytaM',
   'smith machine shrug': 'cJRVVxmytaM',
-  "farmer's walk": 'Fkzk_RqlYig',
 
   // === FOREARMS ===
-  'barbell wrist curl': '2R-ZLwHfB1g',
-  'dumbbell wrist curl': '2R-ZLwHfB1g',
-  'behind-the-back barbell wrist curl': '2R-ZLwHfB1g',
-  'reverse wrist curl': '2R-ZLwHfB1g',
-  'dead hang': 'aeofVDo49EA',
-  'plate pinch': 'VjPIOKFJR4U',
   'towel pull-up': 'eGo4IYlbE5g',
 }
 
 /**
  * Get a YouTube video ID for an exercise.
- * Uses EXACT name match only — no partial matching.
+ * Exact name match only. Returns null for unmatched exercises
+ * (UI shows YouTube search link as fallback).
  */
 export function getExerciseVideoId(exerciseName: string): string | null {
   const lower = exerciseName.toLowerCase().trim()
