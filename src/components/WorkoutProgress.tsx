@@ -57,7 +57,7 @@ const groupLogsByWeek = (logs: WorkoutLog[]): Record<string, WorkoutLog[]> => {
 export const WorkoutProgress: React.FC = () => {
   const { getWorkoutStats, getExerciseProgress, logs } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
-  const { weightHistory, logWeight, profile } = useUserStore()
+  const { weightHistory, logWeight, deleteWeightEntry, profile } = useUserStore()
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
   const [newWeight, setNewWeight] = useState('')
 
@@ -347,6 +347,30 @@ export const WorkoutProgress: React.FC = () => {
           <p className="text-sm text-text-muted text-center py-4">Log at least 2 entries to see your weight trend.</p>
         ) : (
           <p className="text-sm text-text-muted text-center py-4">Start logging your weight to track changes over time.</p>
+        )}
+        {weightHistory.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-white/5">
+            <h4 className="text-xs text-text-muted uppercase tracking-wider mb-2">Recent entries</h4>
+            <div className="space-y-1.5 max-h-32 overflow-y-auto">
+              {[...weightHistory].reverse().slice(0, 10).map(entry => (
+                <div key={entry.date} className="flex items-center justify-between py-1 text-sm">
+                  <span className="text-text-secondary">
+                    {new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-text-primary font-medium">{entry.weight} kg</span>
+                    <button
+                      onClick={() => deleteWeightEntry(entry.date)}
+                      className="text-text-muted hover:text-danger text-xs transition-colors"
+                      aria-label="Delete entry"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </Card>
     </div>

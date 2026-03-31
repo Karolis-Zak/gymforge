@@ -28,6 +28,7 @@ interface UserStore {
   calculateBMI: () => number | null
   getIdealWeight: () => number | null
   logWeight: (weight: number) => void
+  deleteWeightEntry: (date: string) => void
   toggleTheme: () => void
   setDefaultRestSeconds: (seconds: number) => void
 }
@@ -81,6 +82,11 @@ export const useUserStore = create<UserStore>()(
         if (weight <= 0 || weight > 500) return
         set(state => ({
           weightHistory: [...state.weightHistory, { date: new Date().toISOString(), weight }]
+        }))
+      },
+      deleteWeightEntry: (date: string) => {
+        set(state => ({
+          weightHistory: state.weightHistory.filter(e => e.date !== date)
         }))
       },
       toggleTheme: () => {
