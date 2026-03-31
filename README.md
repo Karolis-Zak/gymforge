@@ -56,6 +56,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+live [gymforge-nine.vercel.app](https://gymforge-nine.vercel.app/)
 ---
 
 ## Project Structure
