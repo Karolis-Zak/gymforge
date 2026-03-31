@@ -34,55 +34,56 @@ interface WorkoutStore {
 const DEFAULT_PLANS: WorkoutPlan[] = [
   {
     id: 'beginner-full-body',
-    name: 'Beginner Full Body Workout',
-    description: 'A simple full body workout perfect for beginners',
+    name: 'Beginner Full Body',
+    description: 'Simple full body workout — great for getting started. Covers all major muscle groups.',
     isPreMade: true,
     exercises: [
-      {
-        id: 'push-up',
-        name: 'Push-Up',
-        sets: 3,
-        reps: 10,
-        notes: 'Keep your core tight and back straight'
-      },
-      {
-        id: 'barbell-back-squat',
-        name: 'Barbell Back Squat',
-        sets: 3,
-        reps: 12,
-        notes: 'Keep your knees aligned with your toes'
-      },
-      {
-        id: 'plank',
-        name: 'Plank',
-        sets: 3,
-        reps: 1,
-        notes: 'Hold for 30 seconds'
-      }
+      { id: 'goblet-squat', name: 'Goblet Squat', sets: 3, reps: 12, notes: 'Hold dumbbell at chest, squat to depth' },
+      { id: 'dumbbell-bench-press', name: 'Dumbbell Bench Press', sets: 3, reps: 10, notes: 'Control the weight down, press up strong' },
+      { id: 'dumbbell-row', name: 'Dumbbell Row', sets: 3, reps: 10, notes: 'Pull elbow back, squeeze shoulder blade' },
+      { id: 'seated-dumbbell-press', name: 'Seated Dumbbell Shoulder Press', sets: 3, reps: 10, notes: 'Press overhead, lower to shoulders' },
+      { id: 'plank', name: 'Plank', sets: 3, reps: 30, notes: 'Hold for 30 seconds per set' },
     ]
   },
   {
-    id: 'intermediate-strength',
-    name: 'Intermediate Strength Training',
-    description: 'A progressive strength training program',
+    id: 'intermediate-push',
+    name: 'Push Day',
+    description: 'Chest, shoulders, and triceps — classic push workout for intermediate lifters.',
     isPreMade: true,
     exercises: [
-      {
-        id: 'conventional-deadlift',
-        name: 'Conventional Deadlift',
-        sets: 4,
-        reps: 8,
-        notes: 'Focus on proper form and back position'
-      },
-      {
-        id: 'barbell-bench-press',
-        name: 'Barbell Bench Press',
-        sets: 4,
-        reps: 10,
-        notes: 'Keep shoulders back and feet planted'
-      }
+      { id: 'barbell-bench-press', name: 'Barbell Bench Press', sets: 4, reps: 8, notes: 'Main lift — control the descent' },
+      { id: 'incline-dumbbell-bench-press', name: 'Incline Dumbbell Bench Press', sets: 3, reps: 10, notes: 'Upper chest focus' },
+      { id: 'seated-dumbbell-press', name: 'Seated Dumbbell Shoulder Press', sets: 3, reps: 10, notes: 'Strict form, no leg drive' },
+      { id: 'dumbbell-lateral-raise', name: 'Dumbbell Lateral Raise', sets: 3, reps: 15, notes: 'Light weight, control the movement' },
+      { id: 'cable-tricep-pushdown', name: 'Cable Tricep Pushdown', sets: 3, reps: 12, notes: 'Keep elbows pinned to sides' },
     ]
-  }
+  },
+  {
+    id: 'intermediate-pull',
+    name: 'Pull Day',
+    description: 'Back and biceps — build a strong, wide back with heavy rows and pulls.',
+    isPreMade: true,
+    exercises: [
+      { id: 'conventional-deadlift', name: 'Conventional Deadlift', sets: 4, reps: 6, notes: 'Main lift — keep back neutral' },
+      { id: 'lat-pulldown', name: 'Lat Pulldown', sets: 3, reps: 10, notes: 'Pull to upper chest, squeeze lats' },
+      { id: 'barbell-bent-over-row', name: 'Barbell Bent-Over Row', sets: 3, reps: 8, notes: 'Row to lower chest, control the negative' },
+      { id: 'cable-face-pull', name: 'Cable Face Pull', sets: 3, reps: 15, notes: 'External rotate at the end position' },
+      { id: 'dumbbell-bicep-curl', name: 'Dumbbell Bicep Curl', sets: 3, reps: 12, notes: 'Supinate wrist as you curl up' },
+    ]
+  },
+  {
+    id: 'intermediate-legs',
+    name: 'Leg Day',
+    description: 'Quads, hamstrings, glutes, and calves — build a solid foundation.',
+    isPreMade: true,
+    exercises: [
+      { id: 'barbell-back-squat', name: 'Barbell Back Squat', sets: 4, reps: 8, notes: 'Main lift — hit parallel or below' },
+      { id: 'romanian-deadlift', name: 'Romanian Deadlift', sets: 3, reps: 10, notes: 'Feel the stretch in hamstrings' },
+      { id: 'leg-press', name: 'Leg Press', sets: 3, reps: 12, notes: 'Full range of motion, don\'t lock knees' },
+      { id: 'walking-lunge', name: 'Walking Lunge', sets: 3, reps: 10, notes: '10 steps per leg' },
+      { id: 'standing-calf-raise', name: 'Standing Calf Raise', sets: 4, reps: 15, notes: 'Full stretch at bottom, pause at top' },
+    ]
+  },
 ]
 
 export const useWorkoutStore = create<WorkoutStore>()(

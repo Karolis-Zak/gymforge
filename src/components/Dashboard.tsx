@@ -4,7 +4,8 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '../store/userStore'
-import { useWorkoutLogStore, type WorkoutLog } from '../store/workoutLogStore'
+import { useWorkoutLogStore } from '../store/workoutLogStore'
+import type { WorkoutLog } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useOnboardingStore } from '../store/onboardingStore'
 import { Card } from './ui/Card'
@@ -15,7 +16,7 @@ import {
   BarElement, Tooltip, Filler
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
-import { FiZap, FiTrendingUp, FiAward, FiClock, FiPlay, FiArrowRight, FiRefreshCw, FiCompass, FiChevronDown, FiChevronUp, FiCalendar } from 'react-icons/fi'
+import { FiZap, FiTrendingUp, FiAward, FiClock, FiPlay, FiArrowRight, FiRefreshCw, FiCompass, FiChevronUp } from 'react-icons/fi'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Filler)
 
