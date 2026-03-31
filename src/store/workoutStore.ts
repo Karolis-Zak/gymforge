@@ -28,7 +28,6 @@ interface WorkoutStore {
   addExercise: (planId: string, exercise: Omit<Exercise, 'id'>) => void
   updateExercise: (planId: string, exerciseId: string, updates: Partial<Exercise>) => void
   deleteExercise: (planId: string, exerciseId: string) => void
-  exportPlan: (planId: string) => string
 }
 
 // Pre-made workout plans
@@ -149,11 +148,6 @@ export const useWorkoutStore = create<WorkoutStore>()(
             : plan
         )
       })),
-      exportPlan: (planId) => {
-        const plan = get().plans.find((p) => p.id === planId)
-        if (!plan) return ''
-        return JSON.stringify(plan, null, 2)
-      }
     }),
     {
       name: 'workout-plans-storage',
