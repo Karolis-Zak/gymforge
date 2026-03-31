@@ -89,6 +89,36 @@ export function Dashboard() {
 
   const toggleStat = (id: string) => setExpandedStat(prev => prev === id ? null : id)
 
+  // Dynamic greeting based on actual performance
+  const getGreeting = (): string => {
+    if (completedLogs.length === 0) return "Let's get started!"
+
+    // Volume trend
+    const volumeUp = volumePerWeek.length >= 2 && volumePerWeek[volumePerWeek.length - 1] > volumePerWeek[volumePerWeek.length - 2]
+    const volumeDown = volumePerWeek.length >= 2 && volumePerWeek[volumePerWeek.length - 1] < volumePerWeek[volumePerWeek.length - 2] * 0.8
+
+    // Streak status
+    const onFire = stats.currentStreak >= 5
+    const slacking = stats.currentStreak === 0 && completedLogs.length > 3
+
+    // Milestones
+    if (stats.completedWorkouts === 10) return "10 workouts done! You're officially hooked."
+    if (stats.completedWorkouts === 25) return "25 workouts! You're a machine."
+    if (stats.completedWorkouts === 50) return "50 workouts. Legend status unlocked."
+    if (stats.completedWorkouts === 100) return "100 workouts. We bow to your dedication."
+
+    if (onFire && volumeUp) return "You're on fire — volume up AND streak going strong!"
+    if (onFire) return `${stats.currentStreak} days straight? Someone call the fire department.`
+    if (volumeUp) return "Volume's climbing — the gains are coming."
+    if (volumeDown) return "Volume dropped — rest week or time to push harder?"
+    if (slacking) return "Haven't seen you in a while... the weights miss you."
+    if (thisWeekLogs.length >= 4) return "4+ sessions this week? Absolute animal."
+    if (thisWeekLogs.length >= 2) return "Good consistency this week. Keep it going."
+    if (stats.currentStreak >= 3) return "3-day streak — don't break the chain!"
+
+    return "Let's crush it today."
+  }
+
   return (
     <div className="animate-fade-in space-y-8">
       {/* Welcome */}
@@ -97,7 +127,7 @@ export function Dashboard() {
           <h1 className="text-3xl font-display font-bold text-text-primary">
             Welcome back, <span className="gradient-text">{userName}</span>
           </h1>
-          <p className="text-text-secondary mt-1">Let&apos;s crush it today.</p>
+          <p className="text-text-secondary mt-1">{getGreeting()}</p>
         </div>
         <div className="w-12 h-12 rounded-full bg-gradient-mixed flex items-center justify-center">
           <span className="text-white font-bold text-sm">{initials}</span>
@@ -316,6 +346,44 @@ export function Dashboard() {
                 <p className="text-xs text-text-muted">Completion</p>
               </div>
             </div>
+            {/* Extra stats */}
+            <div className="mt-4 pt-3 border-t border-white/5 space-y-2">
+              {completedLogs.length > 0 && (() => {
+                const totalVolume = completedLogs.reduce((sum, log) =>
+                  sum + log.exercises.reduce((exSum, ex) =>
+                    exSum + ex.sets.reduce((setSum, set) =>
+                      setSum + ((set.weight || 0) * (set.reps || 0)), 0), 0), 0)
+                const totalSets = completedLogs.reduce((sum, log) =>
+                  sum + log.exercises.reduce((exSum, ex) => exSum + ex.sets.length, 0), 0)
+                const avgPerWeek = weekKeys.length > 0 ? (stats.completedWorkouts / weekKeys.length).toFixed(1) : '0'
+                const firstDate = completedLogs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]?.date
+                return (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Total volume lifted</span>
+                      <span className="text-text-primary font-medium">{totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)} tonnes` : `${totalVolume} kg`}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Total sets completed</span>
+                      <span className="text-text-primary font-medium">{totalSets.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Avg workouts/week</span>
+                      <span className="text-text-primary font-medium">{avgPerWeek}</span>
+                    </div>
+                    {firstDate && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-text-muted">Training since</span>
+                        <span className="text-text-primary font-medium">{new Date(firstDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+            <Link href="/history" className="block mt-3 text-center">
+              <Button variant="secondary" size="sm">View Full History <FiArrowRight /></Button>
+            </Link>
           </Card>
         )}
       </div>
