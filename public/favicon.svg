@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" width="32" height="32"><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>RealFaviconGenerator</dc:creator><dc:source>https://realfavicongenerator.net</dc:source></rdf:Description></rdf:RDF></metadata><defs>
+    <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4ff"></stop>
+      <stop offset="100%" stop-color="#a855f7"></stop>
+    </linearGradient>
+  </defs><rect width="32" height="32" rx="8" fill="#0a0a0f"></rect><rect x="4" y="9" width="5" height="14" rx="1.5" fill="url(#fg)"></rect><rect x="23" y="9" width="5" height="14" rx="1.5" fill="url(#fg)"></rect><rect x="8" y="13" width="16" height="6" rx="1.5" fill="url(#fg)" opacity="0.7"></rect><rect x="7" y="11" width="3" height="10" rx="1" fill="url(#fg)" opacity="0.85"></rect><rect x="22" y="11" width="3" height="10" rx="1" fill="url(#fg)" opacity="0.85"></rect><path d="M17.5 10L15.5 15.5H17.5L15.5 22L19.5 14.5H17L17.5 10Z" fill="white" opacity="0.9"></path></svg>

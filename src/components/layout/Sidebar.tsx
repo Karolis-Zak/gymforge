@@ -26,9 +26,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-background-card border-r border-white/5 z-30">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 h-16 border-b border-white/5">
-        <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-          <FiZap className="text-white text-lg" />
-        </div>
+        <img src="/logo.svg" alt="GymForge" className="w-8 h-8" />
         <span className="font-display font-bold text-lg gradient-text">GymForge</span>
       </div>
 
