@@ -11,7 +11,6 @@ import type { MuscleGroup, Equipment } from '../../data/exercises'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Badge } from '../ui/Badge'
 import { SelectionCard, PillToggle, DayToggle, NumberCard } from './SelectionCard'
 import { PlanPreview } from './PlanPreview'
 import {
@@ -114,8 +113,14 @@ export function Questionnaire() {
   const handleGenerate = () => {
     const plan = generatePlan(answers)
     const levelLabel = answers.fitnessLevel === 'complete-beginner' ? 'Beginner' : answers.fitnessLevel === 'some-experience' ? 'Intermediate' : 'Advanced'
-    const goalLabel = answers.primaryGoal === 'muscle-building' ? 'Muscle' : answers.primaryGoal === 'toning' ? 'Toning' : answers.primaryGoal === 'fat-loss' ? 'Fat Loss' : answers.primaryGoal === 'strength' ? 'Strength' : 'Fitness'
-    setPlanName(`${levelLabel} ${goalLabel} Program`)
+    const goalNames: Record<string, string> = {
+      'strength': 'Strength', 'muscle-building': 'Muscle Building', 'toning': 'Tone & Define',
+      'fat-loss': 'Fat Burn', 'general-fitness': 'Fitness', 'endurance': 'Endurance', 'flexibility': 'Flexibility',
+    }
+    const secondaryNames: Record<string, string> = { 'strength': 'Strength', 'fat-loss': 'Conditioning', 'muscle-building': 'Hypertrophy', 'toning': 'Toning', 'endurance': 'Endurance' }
+    const goalLabel = goalNames[answers.primaryGoal] || 'Fitness'
+    const secondaryLabel = answers.secondaryGoal ? ` & ${secondaryNames[answers.secondaryGoal] || ''}` : ''
+    setPlanName(`${levelLabel} ${goalLabel}${secondaryLabel}`)
     setGeneratedPlan(plan)
     setShowPreview(true)
   }
@@ -422,7 +427,7 @@ export function Questionnaire() {
                 <label className="text-sm font-medium text-text-secondary block mb-2">Which areas do you want to prioritise?</label>
                 <p className="text-xs text-text-muted mb-2">Selected areas get extra exercises in your plan. Leave empty for a balanced program.</p>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {getAllMuscleGroups().map(m => (
+                  {getAllMuscleGroups().filter(m => m !== 'forearms' && m !== 'traps').map(m => (
                     <PillToggle key={m} label={getMuscleGroupLabel(m)} selected={answers.focusAreas.includes(m)} onClick={() => {
                       if (answers.focusAreas.includes(m)) update({ focusAreas: answers.focusAreas.filter(f => f !== m) })
                       else update({ focusAreas: [...answers.focusAreas, m] })
