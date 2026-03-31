@@ -444,21 +444,29 @@ export const ActiveWorkout: React.FC = () => {
               <div className="flex flex-col items-center py-8">
                 <p className="text-sm text-text-muted uppercase tracking-wider mb-2">Rest Between Sets</p>
                 <p className="text-text-secondary text-sm mb-6">Next: Set {currentSetIdx + 1} of {currentExercise.sets.length}</p>
-                <ProgressRing value={restTime} max={DEFAULT_REST_SECONDS} size={180} strokeWidth={10} color="#00d4ff">
+                <ProgressRing value={restTime} max={Math.max(restTime + 10, DEFAULT_REST_SECONDS)} size={180} strokeWidth={10} color="#00d4ff">
                   <span className="text-5xl font-display font-bold text-primary">{restTime}</span>
                   <span className="text-xs text-text-muted mt-1">seconds</span>
                 </ProgressRing>
-                <p className="text-text-secondary mt-6 mb-4">Breathe and recover.</p>
-                <div className="flex gap-3">
-                  <Button variant="secondary" size="md" onClick={() => {
-                    setRestTimers(prev => ({ ...prev, [currentExercise.id]: DEFAULT_REST_SECONDS }))
-                  }}>
+                <p className="text-text-secondary mt-6 mb-2">Breathe and recover.</p>
+                {/* Rest time controls */}
+                <div className="flex gap-2 mb-4">
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: Math.max(0, (prev[currentExercise.id] || 0) - 15) }))}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
+                    -15s
+                  </button>
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + 15 }))}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
+                    +15s
+                  </button>
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + 60 }))}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
                     +60s
-                  </Button>
-                  <Button variant="primary" size="md" onClick={() => setRestActive(prev => ({ ...prev, [currentExercise.id]: false }))}>
-                    <FiSkipForward /> Skip Rest
-                  </Button>
+                  </button>
                 </div>
+                <Button variant="primary" size="md" onClick={() => setRestActive(prev => ({ ...prev, [currentExercise.id]: false }))}>
+                  <FiSkipForward /> Skip Rest
+                </Button>
               </div>
             ) : (
               <div className="flex flex-col items-center">

@@ -20,9 +20,7 @@ export function searchExercises(query: string, filters?: ExerciseFilters): Exerc
   }
 
   if (filters?.muscle) {
-    results = results.filter(ex =>
-      ex.primaryMuscle === filters.muscle || ex.secondaryMuscles.includes(filters.muscle!)
-    )
+    results = results.filter(ex => ex.primaryMuscle === filters.muscle)
   }
 
   if (filters?.equipment) {
