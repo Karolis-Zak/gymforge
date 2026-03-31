@@ -16,7 +16,7 @@ export interface OnboardingAnswers {
   injurySeverity: Record<string, 'acute' | 'chronic'>
 
   // Goals
-  primaryGoal: 'strength' | 'muscle-building' | 'fat-loss' | 'general-fitness' | 'endurance' | 'flexibility'
+  primaryGoal: 'strength' | 'muscle-building' | 'toning' | 'fat-loss' | 'general-fitness' | 'endurance' | 'flexibility'
   secondaryGoal: string
   timelineWeeks: number
   cardioPreference: 'none' | 'light' | 'moderate' | 'heavy'

@@ -35,6 +35,7 @@ const INJURY_AREAS = [
 const GOALS = [
   { id: 'strength', label: 'Build Strength', desc: 'Get stronger, lift heavier', icon: <FiTarget /> },
   { id: 'muscle-building', label: 'Build Muscle', desc: 'Grow bigger muscles', icon: <FiAward /> },
+  { id: 'toning', label: 'Body Toning', desc: 'Define muscles, look lean', icon: <FiStar /> },
   { id: 'fat-loss', label: 'Lose Fat', desc: 'Burn calories, get leaner', icon: <FiTrendingDown /> },
   { id: 'general-fitness', label: 'General Fitness', desc: 'Stay healthy, feel good', icon: <FiHeart /> },
   { id: 'endurance', label: 'Build Endurance', desc: 'Improve stamina', icon: <FiActivity /> },
@@ -113,7 +114,7 @@ export function Questionnaire() {
   const handleGenerate = () => {
     const plan = generatePlan(answers)
     const levelLabel = answers.fitnessLevel === 'complete-beginner' ? 'Beginner' : answers.fitnessLevel === 'some-experience' ? 'Intermediate' : 'Advanced'
-    const goalLabel = answers.primaryGoal === 'muscle-building' ? 'Muscle' : answers.primaryGoal === 'fat-loss' ? 'Fat Loss' : answers.primaryGoal === 'strength' ? 'Strength' : 'Fitness'
+    const goalLabel = answers.primaryGoal === 'muscle-building' ? 'Muscle' : answers.primaryGoal === 'toning' ? 'Toning' : answers.primaryGoal === 'fat-loss' ? 'Fat Loss' : answers.primaryGoal === 'strength' ? 'Strength' : 'Fitness'
     setPlanName(`${levelLabel} ${goalLabel} Program`)
     setGeneratedPlan(plan)
     setShowPreview(true)

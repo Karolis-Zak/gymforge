@@ -144,6 +144,7 @@ function getVolume(level: string, goal: string, isCompound: boolean): { sets: nu
   // Goal modifiers
   if (goal === 'strength') { reps = Math.max(reps - 2, 5); sets = Math.min(sets + 1, 5) }
   if (goal === 'fat-loss') { reps = Math.min(reps + 3, 15) }
+  if (goal === 'toning') { reps = Math.min(reps + 2, 15); sets = 3 }
   if (goal === 'endurance') { reps = Math.min(reps + 5, 20); sets = Math.max(sets - 1, 2) }
   if (goal === 'muscle-building') { reps = Math.min(Math.max(reps, 8), 12) }
 
@@ -327,7 +328,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   })
 
   const goalLabels: Record<string, string> = {
-    'strength': 'Strength', 'muscle-building': 'Muscle Building', 'fat-loss': 'Fat Loss',
+    'strength': 'Strength', 'muscle-building': 'Muscle Building', 'toning': 'Body Toning', 'fat-loss': 'Fat Loss',
     'general-fitness': 'General Fitness', 'endurance': 'Endurance', 'flexibility': 'Flexibility',
   }
 
