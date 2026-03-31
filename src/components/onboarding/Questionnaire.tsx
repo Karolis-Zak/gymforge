@@ -219,7 +219,17 @@ export function Questionnaire() {
                 <Input label="Weight (kg)" type="number" value={answers.weight || ''} onChange={e => update({ weight: Number(e.target.value) })} placeholder="75" min={30} max={300} />
               </div>
               <div className="flex justify-end pt-2">
-                <Button onClick={next} disabled={!answers.name?.trim()}>Next <FiArrowRight /></Button>
+                <Button onClick={() => {
+                  // Save profile data immediately so it persists even if user doesn't finish questionnaire
+                  updateProfile({
+                    name: answers.name,
+                    age: answers.age,
+                    gender: answers.gender || undefined,
+                    height: answers.height || undefined,
+                    weight: answers.weight || undefined,
+                  })
+                  next()
+                }} disabled={!answers.name?.trim()}>Next <FiArrowRight /></Button>
               </div>
             </div>
           )}
