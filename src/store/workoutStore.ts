@@ -39,17 +39,17 @@ const DEFAULT_PLANS: WorkoutPlan[] = [
     isPreMade: true,
     exercises: [
       {
-        id: 'push-ups',
-        name: 'Push-ups',
+        id: 'push-up',
+        name: 'Push-Up',
         sets: 3,
         reps: 10,
         notes: 'Keep your core tight and back straight'
       },
       {
-        id: 'squats',
-        name: 'Bodyweight Squats',
+        id: 'barbell-back-squat',
+        name: 'Barbell Back Squat',
         sets: 3,
-        reps: 15,
+        reps: 12,
         notes: 'Keep your knees aligned with your toes'
       },
       {
@@ -68,15 +68,15 @@ const DEFAULT_PLANS: WorkoutPlan[] = [
     isPreMade: true,
     exercises: [
       {
-        id: 'deadlifts',
-        name: 'Deadlifts',
+        id: 'conventional-deadlift',
+        name: 'Conventional Deadlift',
         sets: 4,
         reps: 8,
         notes: 'Focus on proper form and back position'
       },
       {
-        id: 'bench-press',
-        name: 'Bench Press',
+        id: 'barbell-bench-press',
+        name: 'Barbell Bench Press',
         sets: 4,
         reps: 10,
         notes: 'Keep shoulders back and feet planted'
