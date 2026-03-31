@@ -64,11 +64,11 @@ export const UserProfileForm: React.FC = () => {
       </div>
 
       {/* Avatar & Name */}
-      <Card className="flex items-center gap-6">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-mixed flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-2xl">{initials}</span>
+      <Card className="flex items-center gap-4 sm:gap-6 overflow-hidden">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-mixed flex items-center justify-center flex-shrink-0">
+          <span className="text-white font-bold text-lg sm:text-2xl">{initials}</span>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {editing ? (
             <Input
               name="name"
@@ -79,7 +79,7 @@ export const UserProfileForm: React.FC = () => {
             />
           ) : (
             <>
-              <h2 className="text-2xl font-display font-bold text-text-primary">{name}</h2>
+              <h2 className="text-xl sm:text-2xl font-display font-bold text-text-primary truncate">{name}</h2>
               <p className="text-text-secondary text-sm mt-1">
                 {profile?.age ? `${profile.age} years old` : 'Set up your profile'}
                 {profile?.gender ? ` \u00b7 ${profile.gender}` : ''}
