@@ -147,7 +147,6 @@ function getVolume(level: string, goal: string, isCompound: boolean): { sets: nu
   if (goal === 'endurance') { reps = Math.min(reps + 5, 20); sets = Math.max(sets - 1, 2) }
   if (goal === 'muscle-building') { reps = Math.min(Math.max(reps, 8), 12) }
 
-  // Secondary goal nudge
   return { sets, reps }
 }
 
@@ -334,7 +333,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
   return {
     name: '',
-    description: `${split.type} program for ${goalLabels[answers.primaryGoal] || 'fitness'}. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.`,
+    description: `${split.type} program for ${goalLabels[answers.primaryGoal] || 'fitness'}${answers.secondaryGoal ? ` + ${goalLabels[answers.secondaryGoal] || answers.secondaryGoal}` : ''}. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${answers.cardioPreference !== 'none' ? ` Add ${answers.cardioPreference} cardio on rest days.` : ''}`,
     days,
     splitType: split.type,
   }

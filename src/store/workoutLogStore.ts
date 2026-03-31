@@ -74,9 +74,7 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
             id: Math.random().toString(36).substring(2),
             exerciseId: ex.id,
             exerciseName: ex.name,
-            sets: Array.isArray(ex.sets)
-              ? ex.sets.map((set: any) => ({ ...set, completed: false }))
-              : Array(typeof ex.sets === 'number' ? ex.sets : 0).fill(null).map(() => ({ weight: '', reps: ex.reps || '', rest: '', completed: false })),
+            sets: Array(typeof ex.sets === 'number' ? ex.sets : 0).fill(null).map(() => ({ weight: 0, reps: ex.reps || 0, completed: false })),
             notes: ex.notes || '',
             date: new Date().toISOString()
           })),
