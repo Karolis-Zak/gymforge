@@ -62,10 +62,11 @@ function isBodyweightExercise(exerciseName: string): boolean {
   return bwKeywords.some(kw => exerciseName.toLowerCase().includes(kw))
 }
 
-// Determine if exercise is time-based (hold)
+// Determine if exercise is time-based (hold/carry)
 function isTimedExercise(exerciseName: string): boolean {
-  const timedKeywords = ['plank', 'hold', 'hang', 'wall sit', 'farmer']
-  return timedKeywords.some(kw => exerciseName.toLowerCase().includes(kw))
+  const lower = exerciseName.toLowerCase()
+  return lower.includes('plank') || lower.includes('hold') || lower === 'dead hang' ||
+    lower.includes('wall sit') || lower.includes('farmer') || lower.includes('carry') || lower.includes('suitcase')
 }
 
 // Determine if exercise can be done per-side (unilateral)
