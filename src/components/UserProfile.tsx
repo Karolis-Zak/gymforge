@@ -7,10 +7,10 @@ import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { ProgressRing } from './ui/ProgressRing'
 import { StatCard } from './ui/StatCard'
-import { FiEdit2, FiCheck, FiUser, FiTarget } from 'react-icons/fi'
+import { FiEdit2, FiCheck, FiUser, FiTarget, FiClock } from 'react-icons/fi'
 
 export const UserProfileForm: React.FC = () => {
-  const { profile, updateProfile, calculateBMI, getIdealWeight } = useUserStore()
+  const { profile, updateProfile, calculateBMI, getIdealWeight, defaultRestSeconds, setDefaultRestSeconds } = useUserStore()
   const [editing, setEditing] = useState(!profile?.name)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -209,6 +209,34 @@ export const UserProfileForm: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* Training Settings */}
+      <Card>
+        <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">
+          <FiClock className="inline mr-1" /> Training Settings
+        </h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-text-primary font-medium text-sm">Default Rest Time</p>
+            <p className="text-xs text-text-muted">Time between sets (can be overridden per exercise in plan editor)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDefaultRestSeconds(Math.max(10, defaultRestSeconds - 15))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center"
+            >
+              -
+            </button>
+            <span className="text-lg font-display font-bold text-primary w-14 text-center">{defaultRestSeconds}s</span>
+            <button
+              onClick={() => setDefaultRestSeconds(Math.min(300, defaultRestSeconds + 15))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

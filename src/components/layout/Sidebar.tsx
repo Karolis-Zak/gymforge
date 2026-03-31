@@ -9,14 +9,15 @@ import { useUserStore } from '../../store/userStore'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: FiHome },
-  { href: '/get-started', label: 'Get Started', icon: FiCompass },
-  { href: '/profile', label: 'Profile', icon: FiUser },
+  { href: '/get-started', label: 'Create Plan', icon: FiCompass },
   { href: '/plans', label: 'Plans', icon: FiClipboard },
   { href: '/workout', label: 'Workout', icon: FiPlay },
   { href: '/exercises', label: 'Exercises', icon: FiSearch },
   { href: '/progress', label: 'Progress', icon: FiTrendingUp },
   { href: '/history', label: 'History', icon: FiBook },
 ]
+
+const bottomNavItem = { href: '/profile', label: 'Profile', icon: FiUser }
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -66,16 +67,35 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-4 border-t border-white/5 flex items-center justify-between">
-        <p className="text-xs text-text-muted">GymForge</p>
-        <button
-          onClick={toggleTheme}
-          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-text-muted hover:text-text-primary transition-all"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
-        </button>
+      {/* Profile + Footer */}
+      <div className="border-t border-white/5">
+        {/* Profile link */}
+        <div className="px-3 pt-3 pb-1">
+          <Link
+            href={bottomNavItem.href}
+            className={`
+              flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 border
+              ${pathname === bottomNavItem.href
+                ? 'bg-primary/10 text-primary border-primary/20'
+                : 'text-text-secondary hover:text-text-primary hover:bg-white/5 border-transparent'
+              }
+            `}
+          >
+            <bottomNavItem.icon className={`text-lg ${pathname === bottomNavItem.href ? 'text-primary' : ''}`} />
+            <span>{bottomNavItem.label}</span>
+          </Link>
+        </div>
+        {/* Theme toggle */}
+        <div className="px-4 py-3 flex items-center justify-between">
+          <p className="text-xs text-text-muted">GymForge</p>
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-text-muted hover:text-text-primary transition-all"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
+          </button>
+        </div>
       </div>
     </aside>
   )

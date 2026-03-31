@@ -24,6 +24,7 @@ export interface OnboardingAnswers {
   // Equipment & Location
   trainingLocation: 'home' | 'gym' | 'outdoor' | 'mixed'
   availableEquipment: Equipment[]
+  hasAdjustableBench: boolean
   hasTrainingPartner: 'yes' | 'sometimes' | 'no'
 
   // Schedule
@@ -76,6 +77,7 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
   cardioPreference: 'none',
   trainingLocation: 'gym',
   availableEquipment: [],
+  hasAdjustableBench: false,
   hasTrainingPartner: 'no',
   daysPerWeek: 3,
   specificDays: ['monday', 'wednesday', 'friday'],

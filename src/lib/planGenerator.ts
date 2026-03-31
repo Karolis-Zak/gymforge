@@ -159,6 +159,7 @@ function scoreExercise(
   usedIds: string[],
   cautiousMuscles: MuscleGroup[],
   hasPartner: string,
+  hasBench: boolean,
 ): number {
   let score = 0
 
@@ -183,6 +184,12 @@ function scoreExercise(
 
   // No spotter: deprioritize heavy barbell compounds
   if (hasPartner === 'no' && ex.equipment === 'barbell' && ex.type === 'compound') score -= 2
+
+  // No adjustable bench: deprioritize incline/decline exercises
+  if (!hasBench) {
+    const lower = ex.name.toLowerCase()
+    if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
+  }
 
   // Previously used penalty
   if (usedIds.includes(ex.id)) score -= 5
@@ -251,7 +258,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     // Score and sort
     const scored = dayPool.map(ex => ({
       ex,
-      score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner)
+      score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench)
     })).sort((a, b) => b.score - a.score)
 
     const compounds = scored.filter(s => s.ex.type === 'compound')

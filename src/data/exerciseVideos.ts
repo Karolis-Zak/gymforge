@@ -232,6 +232,20 @@ const curatedVideos: Record<string, string> = {
   'dead hang': 'ShkBXOGK7A8',
   'plate pinch': '_cdWkwQGffU',
   'towel pull-up': 'eGo4IYlbE5g',
+
+  // === ADDITIONAL BAND EXERCISES (12) ===
+  'band chest press': 'T0UJ0W-_yIE',
+  'band row': 'LSkyinhmA8k',
+  'band bicep curl': '20xtfGZ37nw',
+  'band lateral raise': 'yfNg5sFndbw',
+  'band leg curl': 'erpy11GrhsE',
+  'band good morning': 'CTRaCzE8pWU',
+  'band glute bridge': '6oYSPzZlwL0',
+  'band pallof press': '99evyH71IWs',
+  'band overhead press': '1-VfJqjYquQ',
+  'band chest fly': 'NDzLixr_k7I',
+  'band calf raise': 'utU05RX7fEw',
+  'band shrug': '_6wJaVW7TyA',
 }
 
 /**

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutLogStore, type WorkoutSet } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
+import { useUserStore } from '../store/userStore'
 import { exercises as exerciseDb } from '../data/exercises'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../data/exerciseVideos'
 import { Card } from './ui/Card'
@@ -13,7 +14,7 @@ import { ProgressRing } from './ui/ProgressRing'
 import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiInfo, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat } from 'react-icons/fi'
 import Confetti from 'react-confetti'
 
-const DEFAULT_REST_SECONDS = 60
+const FALLBACK_REST_SECONDS = 60
 
 const motivationalQuotes = [
   'Progress, not perfection.',
@@ -81,6 +82,8 @@ export const ActiveWorkout: React.FC = () => {
   const router = useRouter()
   const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
+  const { defaultRestSeconds } = useUserStore()
+  const DEFAULT_REST_SECONDS = defaultRestSeconds || FALLBACK_REST_SECONDS
 
   const [timer, setTimer] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(true)

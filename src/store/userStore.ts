@@ -22,12 +22,14 @@ interface UserStore {
   profile: UserProfile | null
   weightHistory: WeightEntry[]
   theme: 'dark' | 'light'
+  defaultRestSeconds: number
   setProfile: (profile: UserProfile) => void
   updateProfile: (updates: Partial<UserProfile>) => void
   calculateBMI: () => number | null
   getIdealWeight: () => number | null
   logWeight: (weight: number) => void
   toggleTheme: () => void
+  setDefaultRestSeconds: (seconds: number) => void
 }
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -49,6 +51,7 @@ export const useUserStore = create<UserStore>()(
       profile: null,
       weightHistory: [],
       theme: 'dark' as const,
+      defaultRestSeconds: 60,
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => 
         set((state) => ({
@@ -82,6 +85,9 @@ export const useUserStore = create<UserStore>()(
       },
       toggleTheme: () => {
         set(state => ({ theme: state.theme === 'dark' ? 'light' : 'dark' }))
+      },
+      setDefaultRestSeconds: (seconds: number) => {
+        if (seconds >= 10 && seconds <= 300) set({ defaultRestSeconds: seconds })
       },
     }),
     {

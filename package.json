@@ -2,7 +2,7 @@
   "name": "gymforge",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H gymforge.local -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

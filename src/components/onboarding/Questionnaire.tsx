@@ -334,6 +334,14 @@ export function Questionnaire() {
                 </div>
               )}
               <div>
+                <label className="text-sm font-medium text-text-secondary block mb-2">Do you have an adjustable bench?</label>
+                <p className="text-xs text-text-muted mb-2">Some exercises need a bench that can incline/decline.</p>
+                <div className="flex flex-wrap gap-2">
+                  <PillToggle label="Yes" selected={answers.hasAdjustableBench === true} onClick={() => update({ hasAdjustableBench: true })} />
+                  <PillToggle label="No" selected={answers.hasAdjustableBench === false} onClick={() => update({ hasAdjustableBench: false })} />
+                </div>
+              </div>
+              <div>
                 <label className="text-sm font-medium text-text-secondary block mb-2">Do you have a training partner?</label>
                 <p className="text-xs text-text-muted mb-2">Affects whether we suggest exercises that need a spotter.</p>
                 <div className="flex flex-wrap gap-2">
@@ -491,6 +499,7 @@ export function Questionnaire() {
                   <SummaryRow label="Cardio" value={answers.cardioPreference} onEdit={() => setStep(3)} />
                   <SummaryRow label="Location" value={answers.trainingLocation} onEdit={() => setStep(4)} />
                   <SummaryRow label="Equipment" value={answers.availableEquipment.length > 0 ? answers.availableEquipment.map(getEquipmentLabel).join(', ') : 'Bodyweight only'} onEdit={() => setStep(4)} />
+                  <SummaryRow label="Bench" value={answers.hasAdjustableBench ? 'Yes' : 'No'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Partner" value={answers.hasTrainingPartner === 'yes' ? 'Yes' : answers.hasTrainingPartner === 'sometimes' ? 'Sometimes' : 'No'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Schedule" value={`${answers.daysPerWeek}×/week, ${answers.sessionDuration} min, ${answers.warmupPreference} warm-up`} onEdit={() => setStep(5)} />
                   <SummaryRow label="Days" value={answers.specificDays.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ')} onEdit={() => setStep(5)} />
