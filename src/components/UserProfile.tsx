@@ -38,15 +38,15 @@ export const UserProfileForm: React.FC = () => {
     if (bmi < 18.5) return '#f59e0b'
     if (bmi < 25) return '#22c55e'
     if (bmi < 30) return '#f59e0b'
-    return '#ef4444'
+    return '#f59e0b'
   }
 
   const getBmiLabel = (bmi: number | null) => {
     if (!bmi) return 'N/A'
-    if (bmi < 18.5) return 'Underweight'
-    if (bmi < 25) return 'Normal'
-    if (bmi < 30) return 'Overweight'
-    return 'Obese'
+    if (bmi < 18.5) return 'Below average'
+    if (bmi < 25) return 'Healthy range'
+    if (bmi < 30) return 'Above average'
+    return 'High'
   }
 
   return (
@@ -82,7 +82,7 @@ export const UserProfileForm: React.FC = () => {
               <h2 className="text-xl sm:text-2xl font-display font-bold text-text-primary truncate">{name}</h2>
               <p className="text-text-secondary text-sm mt-1">
                 {profile?.age ? `${profile.age} years old` : 'Set up your profile'}
-                {profile?.gender ? ` \u00b7 ${profile.gender}` : ''}
+                {profile?.gender ? ` \u00b7 ${profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}` : ''}
               </p>
             </>
           )}

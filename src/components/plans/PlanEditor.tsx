@@ -8,7 +8,7 @@ import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
-import { FiArrowLeft, FiTrash2, FiSave, FiChevronUp, FiChevronDown } from 'react-icons/fi'
+import { FiArrowLeft, FiTrash2, FiSave, FiMenu } from 'react-icons/fi'
 
 export function PlanEditor({ planId }: { planId: string }) {
   const router = useRouter()
@@ -17,6 +17,8 @@ export function PlanEditor({ planId }: { planId: string }) {
 
   const [name, setName] = useState(plan?.name || '')
   const [description, setDescription] = useState(plan?.description || '')
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
   if (!plan) {
     return (
@@ -34,6 +36,16 @@ export function PlanEditor({ planId }: { planId: string }) {
 
   const handleAddExercise = (ex: { id: string; name: string; sets: number; reps: number; notes: string }) => {
     addExercise(planId, { name: ex.name, sets: ex.sets, reps: ex.reps, notes: ex.notes })
+  }
+
+  const handleDrop = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return
+    const newExercises = [...plan.exercises]
+    const [moved] = newExercises.splice(fromIdx, 1)
+    newExercises.splice(toIdx, 0, moved)
+    updatePlan(planId, { exercises: newExercises })
+    setDragIdx(null)
+    setDragOverIdx(null)
   }
 
   const handleMoveExercise = (index: number, direction: 'up' | 'down') => {
@@ -68,15 +80,23 @@ export function PlanEditor({ planId }: { planId: string }) {
         </h3>
         <div className="space-y-3">
           {plan.exercises.map((ex, i) => (
-            <div key={ex.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              {/* Reorder */}
-              <div className="flex flex-col gap-0.5">
-                <button onClick={() => handleMoveExercise(i, 'up')} disabled={i === 0} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move up">
-                  <FiChevronUp size={14} />
-                </button>
-                <button onClick={() => handleMoveExercise(i, 'down')} disabled={i === plan.exercises.length - 1} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move down">
-                  <FiChevronDown size={14} />
-                </button>
+            <div
+              key={ex.id}
+              draggable
+              onDragStart={() => setDragIdx(i)}
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
+              onDragEnd={() => { if (dragIdx !== null && dragOverIdx !== null) handleDrop(dragIdx, dragOverIdx); setDragIdx(null); setDragOverIdx(null) }}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                dragOverIdx === i && dragIdx !== null && dragIdx !== i
+                  ? 'bg-primary/10 border-primary/30'
+                  : dragIdx === i
+                    ? 'opacity-40 border-white/10 bg-white/[0.02]'
+                    : 'bg-white/[0.02] border-white/5'
+              }`}
+            >
+              {/* Drag handle */}
+              <div className="cursor-grab active:cursor-grabbing text-text-muted hover:text-text-primary touch-none" aria-label="Drag to reorder">
+                <FiMenu size={16} />
               </div>
 
               {/* Exercise info */}
