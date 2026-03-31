@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FiHome, FiUser, FiClipboard, FiPlay, FiTrendingUp, FiZap, FiCompass, FiSun, FiMoon, FiBook } from 'react-icons/fi'
+import { FiHome, FiUser, FiClipboard, FiPlay, FiTrendingUp, FiZap, FiCompass, FiSun, FiMoon, FiBook, FiSearch } from 'react-icons/fi'
 import { useWorkoutLogStore } from '../../store/workoutLogStore'
 import { useUserStore } from '../../store/userStore'
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: FiUser },
   { href: '/plans', label: 'Plans', icon: FiClipboard },
   { href: '/workout', label: 'Workout', icon: FiPlay },
+  { href: '/exercises', label: 'Exercises', icon: FiSearch },
   { href: '/progress', label: 'Progress', icon: FiTrendingUp },
   { href: '/history', label: 'History', icon: FiBook },
 ]
