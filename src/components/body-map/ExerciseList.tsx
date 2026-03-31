@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { exercises as exerciseDb, type MuscleGroup, type Equipment, type ExerciseData } from '../../data/exercises'
-import { getMuscleGroupLabel, getEquipmentLabel, getAllEquipment } from '../../data/exerciseUtils'
+import { exercises as exerciseDb, type MuscleGroup, type Equipment } from '../../data/exercises'
+import { getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVideos'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -18,20 +18,31 @@ const difficultyColors = {
   advanced: 'danger' as const,
 }
 
-const EQUIPMENT_FILTERS: (Equipment | 'all')[] = ['all', 'barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'band', 'ez-bar', 'smith-machine', 'pull-up-bar']
+const EQUIPMENT_OPTIONS: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'band', 'ez-bar', 'smith-machine', 'pull-up-bar']
 
 export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
-  const [equipmentFilter, setEquipmentFilter] = useState<Equipment | 'all'>('all')
+  const [selectedEquipment, setSelectedEquipment] = useState<Set<Equipment>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const toggleEquipment = (eq: Equipment) => {
+    setSelectedEquipment(prev => {
+      const next = new Set(prev)
+      if (next.has(eq)) next.delete(eq)
+      else next.add(eq)
+      return next
+    })
+  }
+
+  const hasEquipmentFilter = selectedEquipment.size > 0
 
   const filtered = useMemo(() => {
     let results = exerciseDb.filter(ex =>
       selectedMuscles.includes(ex.primaryMuscle) || ex.secondaryMuscles.some(m => selectedMuscles.includes(m))
     )
 
-    if (equipmentFilter !== 'all') {
-      results = results.filter(ex => ex.equipment === equipmentFilter)
+    if (hasEquipmentFilter) {
+      results = results.filter(ex => selectedEquipment.has(ex.equipment))
     }
 
     if (searchQuery) {
@@ -46,7 +57,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
     })
 
     return results
-  }, [selectedMuscles, equipmentFilter, searchQuery])
+  }, [selectedMuscles, selectedEquipment, hasEquipmentFilter, searchQuery])
 
   // Compound exercises that hit MULTIPLE selected muscle groups at once
   const compoundMatches = useMemo(() => {
@@ -61,7 +72,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         // Must hit at least 2 of the selected muscles
         return matchCount >= 2
       })
-      .filter(ex => equipmentFilter === 'all' || ex.equipment === equipmentFilter)
+      .filter(ex => !hasEquipmentFilter || selectedEquipment.has(ex.equipment))
       .filter(ex => !searchQuery || ex.name.toLowerCase().includes(searchQuery.toLowerCase()))
       .sort((a, b) => {
         // Sort by how many selected muscles they hit (most first)
@@ -72,7 +83,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         if (countB !== countA) return countB - countA
         return a.name.localeCompare(b.name)
       })
-  }, [selectedMuscles, equipmentFilter, searchQuery])
+  }, [selectedMuscles, selectedEquipment, hasEquipmentFilter, searchQuery])
 
   if (selectedMuscles.length === 0) {
     return (
@@ -106,19 +117,29 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         />
       </div>
 
-      {/* Equipment filter */}
+      {/* Equipment filter (multi-select) */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-        {EQUIPMENT_FILTERS.map(eq => (
+        <button
+          onClick={() => setSelectedEquipment(new Set())}
+          className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${
+            !hasEquipmentFilter
+              ? 'bg-primary/15 text-primary border-primary/30'
+              : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'
+          }`}
+        >
+          All
+        </button>
+        {EQUIPMENT_OPTIONS.map(eq => (
           <button
             key={eq}
-            onClick={() => setEquipmentFilter(eq)}
+            onClick={() => toggleEquipment(eq)}
             className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${
-              equipmentFilter === eq
+              selectedEquipment.has(eq)
                 ? 'bg-primary/15 text-primary border-primary/30'
                 : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'
             }`}
           >
-            {eq === 'all' ? 'All' : getEquipmentLabel(eq)}
+            {getEquipmentLabel(eq)}
           </button>
         ))}
       </div>
@@ -223,20 +244,18 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         </div>
       )}
 
-      {/* Divider between compound and regular */}
-      {compoundMatches.length > 0 && filtered.length > 0 && (
+      {/* Exercise cards - exclude those already in compound section */}
+      {(() => {
+        const compoundIds = new Set(compoundMatches.map(ex => ex.id))
+        const regularExercises = filtered.filter(ex => !compoundIds.has(ex.id))
+        return (<>
+      {compoundMatches.length > 0 && regularExercises.length > 0 && (
         <div className="flex items-center gap-3 pt-4">
           <div className="flex-1 h-px bg-white/5" />
           <span className="text-xs text-text-muted">All exercises</span>
           <div className="flex-1 h-px bg-white/5" />
         </div>
       )}
-
-      {/* Exercise cards - exclude those already in compound section */}
-      {(() => {
-        const compoundIds = new Set(compoundMatches.map(ex => ex.id))
-        const regularExercises = filtered.filter(ex => !compoundIds.has(ex.id))
-        return (
       <div className="space-y-2">
         {regularExercises.length === 0 && compoundMatches.length === 0 ? (
           <p className="text-text-muted text-sm text-center py-8">No exercises match your filters.</p>
@@ -329,7 +348,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
           })
         )}
       </div>
-        )
+        </>)
       })()}
     </div>
   )
