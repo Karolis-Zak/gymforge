@@ -1,65 +1,98 @@
 # GymForge
 
-A modern fitness tracking app built with Next.js. Track workouts, build personalised training plans, and monitor your progress with a clean dark-themed UI.
+Your personal training command center. Build smart workout plans, track every rep, and watch your progress over time.
+
+**[Live Demo](https://gymforge-nine.vercel.app)**
+
+---
+
+## What It Does
+
+**Smart Plan Builder** — Answer questions about your goals, equipment, schedule, and experience. The app generates a personalised weekly training program with the right exercises, sets, reps, and rest times for you.
+
+**Track Your Workouts** — Follow your plan with a clean workout interface. Log weights and reps, get rest timers between sets, watch form guide videos, and track each side for dumbbell exercises.
+
+**See Your Progress** — Charts for weekly volume, workout frequency, exercise progression, body weight trends, and a streak calendar. Tap any past workout to see exactly what you did.
+
+---
 
 ## Features
 
-- **Smart Onboarding** - 9-step questionnaire that generates a personalised workout plan based on your goals, equipment, schedule, and experience level
-- **205 Exercise Database** - Comprehensive library with instructions, tips, and YouTube form guides
-- **Active Workout Tracking** - Real-time timer, set tracking, rest timers, per-side tracking for unilateral exercises, weight progression suggestions
-- **Plan Management** - Create, edit, import/export workout plans with configurable rest times
-- **Progress Analytics** - Charts for volume, frequency, streaks, body weight tracking, and exercise-specific progress
-- **Workout History** - Detailed view of every completed workout with sets, weights, reps, and session notes
-- **Dark/Light Theme** - Toggle between themes for indoor/outdoor training
-- **Plan Refresh System** - Automatic suggestions to switch up exercises after 2-4 weeks
+| Feature | Description |
+|---------|-------------|
+| Onboarding Questionnaire | 9-step quiz covering goals, injuries, equipment, schedule, preferences |
+| Plan Generation | Auto-creates Push/Pull/Legs, Upper/Lower, or Full Body splits based on your answers |
+| 205 Exercises | Full database with muscle groups, difficulty, instructions, tips, and video guides |
+| Active Workout | Big central controls, auto rest timer, per-side tracking, exercise swap mid-workout |
+| Weight Progression | Suggests +2.5kg when you've been consistent at current weight |
+| Plan Editor | Add, remove, reorder exercises. Customise sets, reps, and rest per exercise |
+| Progress Charts | Volume per week, workouts per week, streak heatmap, body part distribution |
+| Body Weight Log | Track weight over time with trend chart |
+| Workout History | Full detail view of every completed session |
+| Dark/Light Theme | Toggle for indoor or outdoor training |
+| Plan Refresh | Suggests new exercises every 2-4 weeks to keep things fresh |
+| Session Notes | Log how you felt after each workout |
+
+---
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State**: Zustand with localStorage persistence
-- **Charts**: Chart.js + react-chartjs-2
-- **Icons**: react-icons (Feather)
+- **Next.js 14** — App Router, TypeScript
+- **Tailwind CSS** — Dark-first design system with glassmorphic UI
+- **Zustand** — State management with localStorage persistence
+- **Chart.js** — Analytics and progress visualisation
+- **react-icons** — Feather icon set
+
+---
 
 ## Getting Started
 
 ```bash
+git clone https://github.com/Karolis-Zak/gymforge.git
+cd gymforge
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000)
+
+---
 
 ## Project Structure
 
 ```
 src/
-  app/              # Next.js App Router pages
+  app/                  # Pages (App Router)
+    get-started/        # Onboarding questionnaire
+    plans/              # Plan list, builder, editor
+    workout/            # Active workout tracking
+    progress/           # Analytics and charts
+    history/            # Past workout details
+    profile/            # User profile and BMI
   components/
-    ui/             # Reusable UI primitives (Card, Button, Badge, etc.)
-    layout/         # Sidebar, BottomNav, LayoutShell
-    plans/          # Plan management components
-    onboarding/     # Questionnaire and plan preview
-  store/            # Zustand stores (user, workout, onboarding)
-  data/             # Exercise database (205 exercises) and utilities
-  lib/              # Plan generation algorithm
-  hooks/            # Custom hooks
+    ui/                 # Card, Button, Badge, Input, ProgressRing, StatCard, ErrorBoundary
+    layout/             # Sidebar, BottomNav, LayoutShell
+    plans/              # PlanCard, PlanBuilder, PlanEditor, ExercisePicker
+    onboarding/         # Questionnaire, SelectionCard, PlanPreview
+  store/                # Zustand stores (user, workout, onboarding)
+  data/                 # 205 exercises with search utilities and video links
+  lib/                  # Plan generation algorithm
+  hooks/                # Hydration hook
 ```
 
-## Routes
+---
 
-| Route | Description |
-|-------|-------------|
-| `/` | Dashboard with stats and quick start |
-| `/get-started` | Onboarding questionnaire |
-| `/profile` | User profile with BMI and body metrics |
-| `/plans` | Workout plan list |
-| `/plans/new` | Create a new plan |
-| `/plans/[id]` | Edit an existing plan |
-| `/workout` | Active workout tracking |
-| `/progress` | Analytics and charts |
-| `/history` | Past workout details |
+## Deployment
+
+Hosted on [Vercel](https://vercel.com). Pushes to `production` branch auto-deploy to the live site.
+
+```bash
+git checkout production
+git merge main
+git push origin production
+```
+
+---
 
 ## License
 
