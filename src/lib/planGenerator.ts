@@ -25,16 +25,14 @@ export interface GeneratedPlan {
   splitType: string
 }
 
-// Major muscles get dedicated exercise slots. Minor muscles are covered through secondary work.
+// Major muscles get dedicated exercise slots
 const MAJOR_MUSCLES: Set<MuscleGroup> = new Set(['chest', 'back', 'shoulders', 'quads', 'hamstrings', 'glutes', 'biceps', 'triceps'])
 
-// Round to standard gym rep numbers — no more 9s and 11s
 function roundToStandardReps(reps: number): number {
   const standards = [4, 5, 6, 8, 10, 12, 15, 20]
   return standards.reduce((prev, curr) => Math.abs(curr - reps) < Math.abs(prev - reps) ? curr : prev)
 }
 
-// Exercises that are timed (seconds) not reps
 function isTimedExercise(name: string): boolean {
   const lower = name.toLowerCase()
   return lower.includes('plank') || lower.includes('hold') || lower === 'dead hang' || lower.includes('wall sit')
@@ -50,52 +48,67 @@ function isCardioStyleExercise(name: string): boolean {
   return lower.includes('mountain climber') || lower.includes('bear crawl') || lower.includes('flutter')
 }
 
+// Movement pattern detection — prevents picking two exercises of the same pattern
+function getMovementPattern(ex: ExerciseData): string {
+  const lower = ex.name.toLowerCase()
+  // Presses (horizontal push)
+  if (lower.includes('bench press') || lower.includes('chest press') || lower.includes('floor press')) return 'horizontal-press'
+  // Overhead press (vertical push)
+  if (lower.includes('overhead') || lower.includes('shoulder press') || lower.includes('military') || lower.includes('arnold')) return 'overhead-press'
+  // Rows (horizontal pull)
+  if (lower.includes('row') && !lower.includes('upright')) return 'row'
+  // Vertical pull
+  if (lower.includes('pulldown') || lower.includes('pull-up') || lower.includes('chin-up') || lower.includes('pull up')) return 'vertical-pull'
+  // Squat pattern
+  if (lower.includes('squat') || lower.includes('leg press')) return 'squat'
+  // Hip hinge
+  if (lower.includes('deadlift') || lower.includes('rdl') || lower.includes('good morning') || lower.includes('hip thrust')) return 'hip-hinge'
+  // Curl pattern
+  if (lower.includes('curl') && ex.primaryMuscle === 'biceps') return 'curl'
+  // Tricep extension pattern
+  if (lower.includes('pushdown') || lower.includes('extension') || lower.includes('skull')) return 'tricep-extension'
+  // Fly/stretch pattern
+  if (lower.includes('fly') || lower.includes('flye') || lower.includes('crossover') || lower.includes('pullover')) return 'fly-stretch'
+  // Lateral raise
+  if (lower.includes('lateral raise') || lower.includes('front raise') || lower.includes('rear delt')) return 'raise'
+  // Lunge pattern
+  if (lower.includes('lunge') || lower.includes('split squat') || lower.includes('step-up')) return 'lunge'
+  // Push-up / dip pattern
+  if (lower.includes('push-up') || lower.includes('dip')) return 'bodyweight-push'
+  return 'other'
+}
+
 const SPLIT_CONFIG: Record<number, { type: string; days: { name: string; muscles: MuscleGroup[] }[] }> = {
-  2: {
-    type: 'Full Body',
-    days: [
-      { name: 'Full Body A', muscles: ['chest', 'back', 'shoulders', 'quads', 'core'] },
-      { name: 'Full Body B', muscles: ['back', 'glutes', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core'] },
-    ]
-  },
-  3: {
-    type: 'Push / Pull / Legs',
-    days: [
-      { name: 'Push', muscles: ['chest', 'shoulders', 'triceps'] },
-      { name: 'Pull', muscles: ['back', 'biceps', 'traps', 'forearms'] },
-      { name: 'Legs', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-    ]
-  },
-  4: {
-    type: 'Upper / Lower',
-    days: [
-      { name: 'Upper A', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
-      { name: 'Lower A', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-      { name: 'Upper B', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
-      { name: 'Lower B', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-    ]
-  },
-  5: {
-    type: '5-Day Split',
-    days: [
-      { name: 'Push', muscles: ['chest', 'shoulders', 'triceps'] },
-      { name: 'Pull', muscles: ['back', 'biceps', 'traps', 'forearms'] },
-      { name: 'Legs', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-      { name: 'Upper', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
-      { name: 'Lower', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-    ]
-  },
-  6: {
-    type: 'PPL × 2',
-    days: [
-      { name: 'Push A', muscles: ['chest', 'shoulders', 'triceps'] },
-      { name: 'Pull A', muscles: ['back', 'biceps', 'traps', 'forearms'] },
-      { name: 'Legs A', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-      { name: 'Push B', muscles: ['chest', 'shoulders', 'triceps'] },
-      { name: 'Pull B', muscles: ['back', 'biceps', 'traps', 'forearms'] },
-      { name: 'Legs B', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
-    ]
-  },
+  2: { type: 'Full Body', days: [
+    { name: 'Full Body A', muscles: ['chest', 'back', 'shoulders', 'quads', 'core'] },
+    { name: 'Full Body B', muscles: ['back', 'glutes', 'hamstrings', 'shoulders', 'biceps', 'triceps', 'core'] },
+  ]},
+  3: { type: 'Push / Pull / Legs', days: [
+    { name: 'Push', muscles: ['chest', 'shoulders', 'triceps'] },
+    { name: 'Pull', muscles: ['back', 'biceps', 'traps', 'forearms'] },
+    { name: 'Legs', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+  ]},
+  4: { type: 'Upper / Lower', days: [
+    { name: 'Upper A', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
+    { name: 'Lower A', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+    { name: 'Upper B', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
+    { name: 'Lower B', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+  ]},
+  5: { type: '5-Day Split', days: [
+    { name: 'Push', muscles: ['chest', 'shoulders', 'triceps'] },
+    { name: 'Pull', muscles: ['back', 'biceps', 'traps', 'forearms'] },
+    { name: 'Legs', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+    { name: 'Upper', muscles: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
+    { name: 'Lower', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+  ]},
+  6: { type: 'PPL × 2', days: [
+    { name: 'Push A', muscles: ['chest', 'shoulders', 'triceps'] },
+    { name: 'Pull A', muscles: ['back', 'biceps', 'traps', 'forearms'] },
+    { name: 'Legs A', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+    { name: 'Push B', muscles: ['chest', 'shoulders', 'triceps'] },
+    { name: 'Pull B', muscles: ['back', 'biceps', 'traps', 'forearms'] },
+    { name: 'Legs B', muscles: ['quads', 'hamstrings', 'glutes', 'calves', 'core'] },
+  ]},
 }
 
 const INJURY_MAP: Record<string, MuscleGroup[]> = {
@@ -103,56 +116,44 @@ const INJURY_MAP: Record<string, MuscleGroup[]> = {
   knees: ['quads', 'hamstrings'], wrists: ['forearms'],
   hips: ['glutes', 'hamstrings'], ankles: ['calves'], neck: ['traps'],
 }
-
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 const WEEKDAY_LABELS: Record<string, string> = {
   monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
   thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
 }
-
 const EQUIPMENT_ORDER: Record<string, number> = {
   barbell: 1, 'smith-machine': 2, dumbbell: 3, 'ez-bar': 4,
   kettlebell: 5, cable: 6, machine: 7, bodyweight: 8, band: 9, 'pull-up-bar': 8, none: 10,
 }
-
-// Only true cardio finishers — not real compound lifts
 const CARDIO_EXERCISES = ['mountain-climber', 'bear-crawl', 'flutter-kick', 'band-squat']
 
 function getAvoidedMuscles(injuries: string[], severity: Record<string, string>): MuscleGroup[] {
   const avoided = new Set<MuscleGroup>()
   injuries.forEach(injury => {
-    if (!severity[injury] || severity[injury] === 'acute') {
-      (INJURY_MAP[injury] || []).forEach(m => avoided.add(m))
-    }
+    if (!severity[injury] || severity[injury] === 'acute') (INJURY_MAP[injury] || []).forEach(m => avoided.add(m))
   })
   return Array.from(avoided)
 }
-
 function getCautiousMuscles(injuries: string[], severity: Record<string, string>): MuscleGroup[] {
   const cautious = new Set<MuscleGroup>()
   injuries.forEach(injury => {
-    if (severity[injury] === 'chronic') {
-      (INJURY_MAP[injury] || []).forEach(m => cautious.add(m))
-    }
+    if (severity[injury] === 'chronic') (INJURY_MAP[injury] || []).forEach(m => cautious.add(m))
   })
   return Array.from(cautious)
 }
-
 function getAllowedDifficulties(complexity: string): Difficulty[] {
   if (complexity === 'simple') return ['beginner']
   if (complexity === 'moderate') return ['beginner', 'intermediate']
   return ['beginner', 'intermediate', 'advanced']
 }
 
-// Rest time: beginners don't lift heavy enough for long rest regardless of goal
 function getRestSeconds(goal: string, level: string): number {
-  if (level === 'complete-beginner') return 75 // always 75s — light weights, focus on form
+  if (level === 'complete-beginner') return 75
   if (level === 'some-experience') {
     if (goal === 'strength') return 90
     if (goal === 'fat-loss' || goal === 'endurance') return 45
     return 60
   }
-  // Regular exerciser — goal drives rest
   if (goal === 'strength') return 120
   if (goal === 'muscle-building') return 75
   if (goal === 'toning') return 60
@@ -161,7 +162,6 @@ function getRestSeconds(goal: string, level: string): number {
   return 60
 }
 
-// Minimum 4 exercises per session. Beginners always do 3 sets.
 function getExerciseCount(targetDuration: number, level: string, goal: string): number {
   const warmup = level === 'complete-beginner' ? 8 : 5
   const available = targetDuration - warmup - 3
@@ -175,7 +175,6 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
   let sets: number
   let reps: number
 
-  // Beginners: ALWAYS 3 sets. Goal only affects reps.
   if (level === 'complete-beginner') {
     sets = 3
     if (primaryGoal === 'strength') reps = isCompound ? 8 : 10
@@ -198,7 +197,6 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
     else { sets = 3; reps = 10 }
   }
 
-  // Secondary goal nudge
   if (secondaryGoal === 'strength' && reps > 8) reps = Math.max(reps - 2, 8)
   if (secondaryGoal === 'muscle-building' && reps < 8) reps = 8
   if (secondaryGoal === 'fat-loss' && reps < 10) reps = 10
@@ -215,28 +213,22 @@ function scoreExercise(
   let score = 0
   if (focusAreas.includes(ex.primaryMuscle)) score += 6
   if (ex.type === 'compound') score += 4
-
   const lower = ex.name.toLowerCase()
   if (familiarExercises.some(f => lower.includes(f.toLowerCase()))) score += 3
 
   const category = getExerciseCategory(ex.id)
   if (varietyPref === 'routine') {
-    if (category === 'staple') score += 8
-    if (category === 'unique') score -= 4
+    if (category === 'staple') score += 8; if (category === 'unique') score -= 4
   } else if (varietyPref === 'variety') {
-    if (category === 'unique') score += 5
-    if (category === 'staple') score += 2
+    if (category === 'unique') score += 5; if (category === 'staple') score += 2
   } else {
-    if (category === 'staple') score += 5
-    if (category === 'unique') score += 1
+    if (category === 'staple') score += 5; if (category === 'unique') score += 1
   }
 
-  // Equipment comfort — fixed: "somewhat" is neutral on barbell, not negative
   if (comfort === 'yes') {
     if (ex.type === 'compound' && (ex.equipment === 'barbell' || ex.equipment === 'dumbbell')) score += 3
   } else if (comfort === 'somewhat') {
     if (ex.equipment === 'dumbbell') score += 1
-    // Barbell: neutral (0), not penalized
   } else {
     if (ex.equipment === 'barbell' || ex.equipment === 'ez-bar') score -= 6
     if (ex.equipment === 'machine' || ex.equipment === 'cable') score += 3
@@ -244,18 +236,13 @@ function scoreExercise(
   }
 
   if (hasPartner === 'no' && ex.equipment === 'barbell' && ex.type === 'compound') score -= 2
-
   if (!hasBench) {
     if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
   }
-
   if (usedIds.includes(ex.id)) score -= 5
   if (cautiousMuscles.includes(ex.primaryMuscle) && ex.type === 'compound') score -= 3
-
-  // Penalize timed/carry exercises from being selected as main lifts
   if (isTimedExercise(ex.name) || isCarryExercise(ex.name)) score -= 6
 
-  score += Math.random() * 2
   return score
 }
 
@@ -272,7 +259,7 @@ function sortExercises(exercises: GeneratedExercise[]): GeneratedExercise[] {
 function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string): number {
   const restSec = getRestSeconds(goal, level)
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
-  let total = warmupMins + 5
+  let total = warmupMins + 3
   exercises.forEach(ex => {
     total += (ex.sets * 1.5) + ((ex.sets - 1) * restSec / 60)
   })
@@ -293,12 +280,10 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     !ex.secondaryMuscles.some(m => avoidedMuscles.includes(m)) &&
     allowedDifficulties.includes(ex.difficulty)
   )
-
   if (pool.length < 10) {
     pool = exerciseDb.filter(ex =>
       (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
-      !avoidedMuscles.includes(ex.primaryMuscle) &&
-      allowedDifficulties.includes(ex.difficulty)
+      !avoidedMuscles.includes(ex.primaryMuscle) && allowedDifficulties.includes(ex.difficulty)
     )
   }
 
@@ -312,80 +297,78 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     const targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
     const majorTargets = targetMuscles.filter(m => MAJOR_MUSCLES.has(m))
     const minorTargets = targetMuscles.filter(m => !MAJOR_MUSCLES.has(m))
+    // If user selected minor muscle as focus, treat it as major for this day
+    const focusMinors = minorTargets.filter(m => answers.focusAreas.includes(m))
 
     const dayPool = pool.filter(ex =>
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
-
     const scored = dayPool.map(ex => ({
       ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
     const muscleCount: Record<string, number> = {}
-    const equipmentByMuscle: Record<string, Set<string>> = {} // track equipment per muscle to avoid duplicates
+    const usedPatterns = new Set<string>() // NEW: track movement patterns
     const MAX_PER_MUSCLE = 2
 
-    // PHASE 1: One compound per MAJOR muscle
-    const compoundSlots = Math.max(1, Math.ceil(exerciseCount * 0.6))
-    for (const muscle of majorTargets) {
-      if (selected.length >= compoundSlots) break
-      const best = scored.find(s =>
-        s.ex.type === 'compound' && s.ex.primaryMuscle === muscle &&
-        !selected.some(sel => sel.id === s.ex.id)
-      )
-      if (best) {
-        selected.push(best.ex)
-        muscleCount[muscle] = (muscleCount[muscle] || 0) + 1
-        if (!equipmentByMuscle[muscle]) equipmentByMuscle[muscle] = new Set()
-        equipmentByMuscle[muscle].add(best.ex.equipment)
-      }
+    // Helper: can we add this exercise?
+    const canAdd = (ex: ExerciseData): boolean => {
+      if (selected.some(s => s.id === ex.id)) return false
+      if ((muscleCount[ex.primaryMuscle] || 0) >= MAX_PER_MUSCLE) return false
+      const pattern = getMovementPattern(ex)
+      if (pattern !== 'other' && usedPatterns.has(pattern)) return false // NEW: no duplicate patterns
+      return true
+    }
+    const addExercise = (ex: ExerciseData) => {
+      selected.push(ex)
+      muscleCount[ex.primaryMuscle] = (muscleCount[ex.primaryMuscle] || 0) + 1
+      const pattern = getMovementPattern(ex)
+      if (pattern !== 'other') usedPatterns.add(pattern)
     }
 
-    // PHASE 2: Isolations for MAJOR muscles that need more coverage
-    const uncoveredMajor = majorTargets.filter(m => !muscleCount[m])
-    const coveredMajor = majorTargets.filter(m => muscleCount[m])
-    for (const muscle of [...uncoveredMajor, ...coveredMajor]) {
+    // PHASE 1: One compound per MAJOR muscle (different movement patterns)
+    for (const muscle of majorTargets) {
+      if (selected.length >= Math.ceil(exerciseCount * 0.6)) break
+      const best = scored.find(s => s.ex.type === 'compound' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
+      if (best) addExercise(best.ex)
+    }
+
+    // PHASE 2: One isolation per MAJOR muscle (provides stretch/variety)
+    for (const muscle of majorTargets) {
       if (selected.length >= exerciseCount) break
       if ((muscleCount[muscle] || 0) >= MAX_PER_MUSCLE) continue
-      const best = scored.find(s =>
-        s.ex.primaryMuscle === muscle &&
-        !selected.some(sel => sel.id === s.ex.id) &&
-        // Avoid same muscle + same equipment duplicates
-        !(equipmentByMuscle[muscle]?.has(s.ex.equipment) && (muscleCount[muscle] || 0) >= 1)
-      )
-      if (best) {
-        selected.push(best.ex)
-        muscleCount[muscle] = (muscleCount[muscle] || 0) + 1
-        if (!equipmentByMuscle[muscle]) equipmentByMuscle[muscle] = new Set()
-        equipmentByMuscle[muscle].add(best.ex.equipment)
-      }
+      const best = scored.find(s => s.ex.type === 'isolation' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
+      if (best) addExercise(best.ex)
     }
 
-    // PHASE 3: Fill remaining — allow minor muscles if room, but prefer major
+    // PHASE 3: Focus minor muscles (core, calves, traps) IF user selected them as focus
+    for (const muscle of focusMinors) {
+      if (selected.length >= exerciseCount) break
+      const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
+      if (best) addExercise(best.ex)
+    }
+
+    // PHASE 4: Fill remaining — any muscle, different patterns, prefer unfilled muscles
     if (selected.length < exerciseCount) {
-      const remaining = scored.filter(s =>
-        !selected.some(sel => sel.id === s.ex.id) &&
-        (muscleCount[s.ex.primaryMuscle] || 0) < MAX_PER_MUSCLE &&
-        // Avoid same muscle + same equipment
-        !(equipmentByMuscle[s.ex.primaryMuscle]?.has(s.ex.equipment) && (muscleCount[s.ex.primaryMuscle] || 0) >= 1)
-      )
-      // Prefer major muscles first in fill
-      const majorRemaining = remaining.filter(s => MAJOR_MUSCLES.has(s.ex.primaryMuscle))
-      const minorRemaining = remaining.filter(s => !MAJOR_MUSCLES.has(s.ex.primaryMuscle))
-      for (const { ex } of [...majorRemaining, ...minorRemaining]) {
+      const unfilled = [...majorTargets, ...focusMinors].filter(m => !muscleCount[m])
+      const filled = majorTargets.filter(m => muscleCount[m])
+      for (const muscle of [...unfilled, ...filled]) {
         if (selected.length >= exerciseCount) break
-        selected.push(ex)
-        muscleCount[ex.primaryMuscle] = (muscleCount[ex.primaryMuscle] || 0) + 1
+        const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
+        if (best) addExercise(best.ex)
       }
     }
 
-    // PHASE 4: Fallback
-    if (selected.length < 3) {
-      const fallback = pool.filter(ex =>
-        !usedThisWeek.has(ex.id) && !selected.some(s => s.id === ex.id)
-      ).slice(0, Math.max(3, exerciseCount) - selected.length)
-      selected.push(...fallback)
+    // PHASE 5: Absolute fill — relax pattern constraint if still short
+    if (selected.length < exerciseCount) {
+      for (const { ex } of scored) {
+        if (selected.length >= exerciseCount) break
+        if (!selected.some(s => s.id === ex.id) && (muscleCount[ex.primaryMuscle] || 0) < MAX_PER_MUSCLE) {
+          selected.push(ex)
+          muscleCount[ex.primaryMuscle] = (muscleCount[ex.primaryMuscle] || 0) + 1
+        }
+      }
     }
 
     selected.forEach(ex => usedThisWeek.add(ex.id))
@@ -396,40 +379,23 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       let { sets, reps } = vol
       let notes = ex.tips[0] || ''
 
-      // Handle special exercise types
-      if (isTimedExercise(ex.name)) {
-        reps = 30; sets = 3
-        notes = (notes ? notes + ' ' : '') + 'Hold for 30 seconds per set.'
-      } else if (isCarryExercise(ex.name)) {
-        reps = 30; sets = 3
-        notes = (notes ? notes + ' ' : '') + 'Walk for 30 seconds per set.'
-      } else if (isCardioStyleExercise(ex.name)) {
-        reps = 30; sets = 3
-        notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.'
-      }
+      if (isTimedExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Hold for 30 seconds per set.' }
+      else if (isCarryExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Walk for 30 seconds per set.' }
+      else if (isCardioStyleExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.' }
 
-      if (answers.fitnessLevel === 'complete-beginner' && ex.type === 'compound') {
-        notes = 'Focus on form over weight. ' + notes
-      }
+      if (answers.fitnessLevel === 'complete-beginner' && ex.type === 'compound') notes = 'Focus on form over weight. ' + notes
       if (answers.primaryGoal === 'fat-loss' && !isTimedExercise(ex.name) && !isCarryExercise(ex.name) && !isCardioStyleExercise(ex.name)) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
       return { id: ex.id, name: ex.name, sets, reps, notes }
     })
 
-    // Sort: heavy compounds first → lighter → isolations last
     exercises = sortExercises(exercises)
 
-    // Cardio finishers (NOT warmup exercises — those are just a note)
     if (cardioCount > 0) {
-      const cardioPool = pool.filter(ex =>
-        CARDIO_EXERCISES.includes(ex.id) && !selected.some(s => s.id === ex.id)
-      )
+      const cardioPool = pool.filter(ex => CARDIO_EXERCISES.includes(ex.id) && !selected.some(s => s.id === ex.id))
       cardioPool.slice(0, cardioCount).forEach(ex => {
-        exercises.push({
-          id: ex.id, name: ex.name, sets: 3, reps: 15,
-          notes: 'Cardio finisher — minimal rest between sets.',
-        })
+        exercises.push({ id: ex.id, name: ex.name, sets: 3, reps: 15, notes: 'Cardio finisher — minimal rest between sets.' })
       })
     }
 
