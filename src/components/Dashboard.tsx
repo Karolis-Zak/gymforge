@@ -13,7 +13,7 @@ import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
-import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp } from 'react-icons/fi'
+import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
 
 const CHART_OPTIONS = {
@@ -37,6 +37,7 @@ export function Dashboard() {
   const { profile } = useUserStore()
   const { currentWorkout, logs, getWorkoutStats, startWorkout } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
+  const { answers } = useOnboardingStore()
   const stats = getWorkoutStats()
   const [expandedStat, setExpandedStat] = useState<string | null>(null)
 
@@ -154,6 +155,41 @@ export function Dashboard() {
           </div>
         </Card>
       )}
+
+      {/* Workout Status */}
+      {(() => {
+        const plannedWorkoutsThisWeek = plans.length > 0 ? answers?.daysPerWeek || 3 : 0
+        const onTrack = plannedWorkoutsThisWeek > 0 && thisWeekLogs.length >= Math.ceil(plannedWorkoutsThisWeek * (new Date().getDay() / 7))
+        const workoutsRemaining = Math.max(0, plannedWorkoutsThisWeek - thisWeekLogs.length)
+
+        if (plannedWorkoutsThisWeek > 0) {
+          return (
+            <Card className={onTrack ? 'border-success/20 bg-success/5' : 'border-warning/20 bg-warning/5'}>
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${onTrack ? 'bg-success/20' : 'bg-warning/20'}`}>
+                  {onTrack ? <FiCheckCircle className="text-success text-lg" /> : <FiAlertCircle className="text-warning text-lg" />}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-text-primary">
+                    {onTrack ? '✓ On Track' : '⚠️ Behind Schedule'}
+                  </h3>
+                  <p className="text-sm text-text-secondary mt-1">
+                    {thisWeekLogs.length}/{plannedWorkoutsThisWeek} workouts this week
+                    {workoutsRemaining > 0 && ` • ${workoutsRemaining} remaining`}
+                  </p>
+                  <div className="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${onTrack ? 'bg-success' : 'bg-warning'}`}
+                      style={{ width: `${(thisWeekLogs.length / plannedWorkoutsThisWeek) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )
+        }
+        return null
+      })()}
 
       {/* Interactive Stats Grid */}
       <DashboardStats
