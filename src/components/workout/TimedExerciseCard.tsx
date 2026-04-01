@@ -136,16 +136,6 @@ export function TimedExerciseCard({
           <FiCheck className="text-2xl" /> Next Set
         </button>
       )}
-
-      {/* Skip button during hold */}
-      {timerState === 'holding' && (
-        <button
-          onClick={onCompleteSet}
-          className="w-full max-w-sm h-12 bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary text-sm font-medium rounded-2xl transition-all"
-        >
-          Skip Rest (Finish Early)
-        </button>
-      )}
     </div>
   )
 }
