@@ -77,16 +77,20 @@ export function Questionnaire() {
   const onboardingStore = useOnboardingStore()
 
   const [step, setStep] = useState(0)
-  const [answers, setLocalAnswers] = useState<OnboardingAnswers>(() => ({
-    ...DEFAULT_ANSWERS,
-    name: profile?.name || '',
-    age: profile?.age || 0,
-    gender: (profile?.gender as any) || '',
-    height: profile?.height || 0,
-    weight: profile?.weight || 0,
-    // Resume from stored answers if available
-    ...(onboardingStore.answers || {}),
-  }))
+  const [answers, setLocalAnswers] = useState<OnboardingAnswers>(() => {
+    const stored = onboardingStore.answers || {}
+    return {
+      ...DEFAULT_ANSWERS,
+      // Resume other answers from stored state
+      ...stored,
+      // Step 1: Always prioritize current profile data (not old stored answers)
+      name: profile?.name || '',
+      age: profile?.age || 0,
+      gender: (profile?.gender as any) || '',
+      height: profile?.height || 0,
+      weight: profile?.weight || 0,
+    }
+  })
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null)
   const [planName, setPlanName] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -130,7 +134,14 @@ export function Questionnaire() {
   const handleConfirm = () => {
     if (!generatedPlan || !planName.trim()) return
     onboardingStore.setAnswers(answers)
-    updateProfile({ name: answers.name, age: answers.age, gender: answers.gender || undefined, height: answers.height, weight: answers.weight })
+    // Only update profile if fields are empty (don't overwrite existing profile data)
+    updateProfile({
+      name: profile?.name || answers.name,
+      age: profile?.age || answers.age,
+      gender: profile?.gender || answers.gender || undefined,
+      height: profile?.height || answers.height,
+      weight: profile?.weight || answers.weight,
+    })
 
     const allIds: string[] = []
     generatedPlan.days.forEach(day => {
