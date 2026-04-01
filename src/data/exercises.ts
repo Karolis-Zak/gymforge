@@ -1,6 +1,6 @@
 export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps' | 'quads' | 'hamstrings' | 'glutes' | 'calves' | 'core' | 'forearms' | 'traps'
 
-export type Equipment = 'barbell' | 'dumbbell' | 'cable' | 'machine' | 'bodyweight' | 'band' | 'kettlebell' | 'none' | 'ez-bar' | 'smith-machine' | 'pull-up-bar'
+export type Equipment = 'barbell' | 'dumbbell' | 'cable' | 'machine' | 'bodyweight' | 'band' | 'kettlebell' | 'none' | 'ez-bar' | 'smith-machine' | 'pull-up-bar' | 'trap-bar'
 
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 
@@ -3424,7 +3424,7 @@ export const exercises: ExerciseData[] = [
     name: 'Trap Bar Deadlift',
     primaryMuscle: 'back',
     secondaryMuscles: ['quads', 'glutes', 'hamstrings', 'core', 'traps'],
-    equipment: 'barbell',
+    equipment: 'trap-bar',
     difficulty: 'beginner',
     type: 'compound',
     instructions: [

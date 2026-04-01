@@ -123,7 +123,17 @@ function roundToStandardReps(reps: number): number {
 
 function isTimedExercise(name: string): boolean {
   const lower = name.toLowerCase()
-  return lower.includes('plank') || lower.includes('hold') || lower === 'dead hang' || lower.includes('wall sit')
+  // Isometric holds (static positions for time)
+  if (lower.includes('plank')) return true
+  if (lower.includes('wall sit')) return true
+  if (lower === 'dead hang' || lower.includes('dead hang')) return true
+  if (lower.includes('plate pinch')) return true
+  // Movement-based duration exercises (cardio/circuit style — performed for seconds, not rep count)
+  if (lower.includes('mountain climber')) return true
+  if (lower.includes('bear crawl')) return true
+  if (lower.includes('flutter kick') || lower.includes('flutter')) return true
+  if (lower.includes('band squat')) return true
+  return false
 }
 
 function isCarryExercise(name: string): boolean {
@@ -216,7 +226,7 @@ const WEEKDAY_LABELS: Record<string, string> = {
   thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
 }
 const EQUIPMENT_ORDER: Record<string, number> = {
-  barbell: 1, 'smith-machine': 2, dumbbell: 3, 'ez-bar': 4,
+  barbell: 1, 'trap-bar': 1, 'smith-machine': 2, dumbbell: 3, 'ez-bar': 4,
   kettlebell: 5, cable: 6, machine: 7, bodyweight: 8, band: 9, 'pull-up-bar': 8, none: 10,
 }
 const CARDIO_EXERCISES = ['mountain-climber', 'bear-crawl', 'flutter-kick', 'band-squat']
@@ -409,6 +419,9 @@ function scoreExercise(
     if (requiresPartner(ex.name)) score -= 6
   }
   if (!hasBench) {
+    // Flye exercises require a bench for proper ROM and safety
+    if (lower.includes('flye') || lower.includes('fly')) score -= 8
+    // Other bench-dependent movements
     if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
   }
   if (usedIds.includes(ex.id)) score -= 5
@@ -536,7 +549,11 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
   daysToGenerate.forEach((splitDay, i) => {
     const dayOfWeek = sortedDays[i]
-    const targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
+    let targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
+    // If user selected focus areas, ensure they're in target muscles for this day (to guarantee inclusion)
+    const focusAreasInTargets = answers.focusAreas.filter(m => !avoidedMuscles.includes(m) && !targetMuscles.includes(m))
+    targetMuscles = [...targetMuscles, ...focusAreasInTargets]
+
     const majorTargets = targetMuscles.filter(m => MAJOR_MUSCLES.has(m))
     const minorTargets = targetMuscles.filter(m => !MAJOR_MUSCLES.has(m))
     // If user selected minor muscle as focus, treat it as major for this day

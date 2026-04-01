@@ -79,6 +79,7 @@ export function getMuscleGroupLabel(muscle: MuscleGroup): string {
 export function getEquipmentLabel(equipment: Equipment): string {
   const labels: Record<Equipment, string> = {
     barbell: 'Barbell',
+    'trap-bar': 'Trap Bar',
     dumbbell: 'Dumbbell',
     cable: 'Cable',
     machine: 'Machine',
