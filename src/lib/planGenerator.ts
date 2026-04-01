@@ -271,12 +271,66 @@ const INJURY_MAP: Record<string, MuscleGroup[]> = {
 }
 
 /**
- * Map focus areas to appropriate split days
- * Respects split structure: don't add triceps to Pull days, back to Push days, etc.
+ * Determine which days should include core work
+ * Core is a muscle that needs recovery — don't overuse it
+ * Logic: Cap at 3-4x/week based on split frequency
  */
-function distributeFocusAreas(focusAreas: MuscleGroup[], dayMuscles: MuscleGroup[]): MuscleGroup[] {
-  // Core and calves go on every day
-  const alwaysIncluded: MuscleGroup[] = focusAreas.filter(m => m === 'core' || m === 'calves')
+function getCoreDaysFromSplit(daysPerWeek: number, splitDays: { name: string }[]): Set<string> {
+  const coreDays = new Set<string>()
+
+  if (daysPerWeek <= 3) {
+    // Full-body splits: core on all days (only 2-3x/week anyway)
+    return new Set(splitDays.map((_, i) => i.toString()))
+  }
+
+  if (daysPerWeek === 4) {
+    // Upper/Lower: core on both lower days (2x/week)
+    // Days 1-3 are Upper A, Lower A, Upper B, Lower B
+    // Core goes on Lower days (indices 1, 3)
+    coreDays.add('1')
+    coreDays.add('3')
+    return coreDays
+  }
+
+  if (daysPerWeek === 6) {
+    // PPL × 2: Core on A days only (3x/week: Push A, Pull B, Legs A)
+    // Prevents overuse while covering all split patterns
+    coreDays.add('0') // Push A
+    coreDays.add('2') // Legs A
+    // Skip Push B, Pull A, Legs B to avoid fatigue stacking
+    return coreDays
+  }
+
+  // 5-day: 3x/week on primary days
+  if (daysPerWeek === 5) {
+    coreDays.add('0') // Push
+    coreDays.add('2') // Legs
+    // Pull (1) gets core via secondary, not primary focus
+    return coreDays
+  }
+
+  // Fallback: every other day
+  splitDays.forEach((_, i) => { if (i % 2 === 0) coreDays.add(i.toString()) })
+  return coreDays
+}
+
+/**
+ * Map focus areas to appropriate split days
+ * Respects split structure + SMART core distribution
+ */
+function distributeFocusAreas(focusAreas: MuscleGroup[], dayMuscles: MuscleGroup[], daysPerWeek: number, dayIndex: number, splitDays: { name: string }[]): MuscleGroup[] {
+  // Determine if THIS day should include core work
+  const coreDaysForWeek = getCoreDaysFromSplit(daysPerWeek, splitDays)
+  const shouldIncludeCore = coreDaysForWeek.has(dayIndex.toString())
+
+  // Calves always included (small muscle, minimal interference)
+  const alwaysIncluded: MuscleGroup[] = []
+  if (shouldIncludeCore && focusAreas.includes('core')) {
+    alwaysIncluded.push('core')
+  }
+  if (focusAreas.includes('calves')) {
+    alwaysIncluded.push('calves')
+  }
 
   // Other focus areas only add if they match the day's natural split
   const contextualFocus = focusAreas.filter(m => {
@@ -379,7 +433,47 @@ function getExerciseCount(targetDuration: number, level: string, goal: string, c
   return Math.max(min, Math.min(Math.round(available / timePerEx), maxByLevel))
 }
 
-function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean): { sets: number; reps: number } {
+/**
+ * Get rep range based on body type and goal
+ * TRUE training logic: Body composition affects optimal stimulus
+ */
+function getRepRangeByBodyType(bodyType: string, goal: string): number {
+  // Stocky = naturally strong → lower reps leverage this strength
+  if (bodyType === 'stocky') {
+    if (goal === 'strength') return 5
+    if (goal === 'muscle-building') return 6
+    if (goal === 'toning') return 8  // Still leverage strength
+    return 8
+  }
+
+  // Lean = lighter absolute strength → needs higher reps for volume
+  if (bodyType === 'lean') {
+    if (goal === 'strength') return 6
+    if (goal === 'muscle-building') return 10  // More volume needed
+    if (goal === 'toning') return 12
+    return 10
+  }
+
+  // Athletic = baseline
+  if (bodyType === 'athletic') {
+    if (goal === 'strength') return 6
+    if (goal === 'muscle-building') return 8
+    if (goal === 'toning') return 10
+    return 10
+  }
+
+  // Overweight/Obese = conservative reps to avoid joint stress
+  if (bodyType === 'overweight' || bodyType === 'obese') {
+    if (goal === 'strength') return 8
+    if (goal === 'muscle-building') return 10
+    if (goal === 'toning') return 12
+    return 12
+  }
+
+  return 10 // Default
+}
+
+function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean, bodyType?: string): { sets: number; reps: number } {
   let sets: number
   let reps: number
 
@@ -408,6 +502,13 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
   if (secondaryGoal === 'strength' && reps > 8) reps = Math.max(reps - 2, 8)
   if (secondaryGoal === 'muscle-building' && reps < 8) reps = 8
   if (secondaryGoal === 'fat-loss' && reps < 10) reps = 10
+
+  // Apply body-type optimization if available
+  if (bodyType && level === 'regular-exerciser') {
+    const bodyTypeOptimalReps = getRepRangeByBodyType(bodyType, primaryGoal)
+    // Shift reps toward body-type optimal (but don't override too much)
+    reps = Math.round((reps + bodyTypeOptimalReps) / 2)
+  }
 
   reps = roundToStandardReps(reps)
   return { sets, reps }
@@ -465,6 +566,7 @@ function scoreExercise(
   comfort: string, usedIds: string[], cautiousMuscles: MuscleGroup[],
   hasPartner: string, hasBench: boolean | null, varietyPref: string, injuries: string[] = [],
   bodyComposition?: BodyComposition,
+  bodyType?: string,
 ): number {
   let score = 0
   if (focusAreas.includes(ex.primaryMuscle)) score += 6
@@ -538,6 +640,13 @@ function scoreExercise(
         score -= penalty
       }
     }
+  }
+
+  // Body-type-aware exercise selection
+  // Overweight/Obese: strongly prefer machines + cables for joint safety
+  if (bodyType === 'overweight' || bodyType === 'obese') {
+    if (ex.equipment === 'machine' || ex.equipment === 'cable') score += 4
+    if (ex.equipment === 'barbell' && ex.type === 'compound') score -= 4  // Less joint stress with machines
   }
 
   if (isDurationBasedExercise(ex.name)) score -= 6
@@ -647,8 +756,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     let targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
     // Intelligently distribute focus areas — only add to days where they belong
     // (e.g., triceps only to Push days, back only to Pull days)
+    // Core frequency is smart: capped at 3-4x/week based on split
     const validFocusAreas = answers.focusAreas.filter(m => !avoidedMuscles.includes(m))
-    targetMuscles = distributeFocusAreas(validFocusAreas, targetMuscles)
+    targetMuscles = distributeFocusAreas(validFocusAreas, targetMuscles, answers.daysPerWeek, i, daysToGenerate)
 
     const majorTargets = targetMuscles.filter(m => MAJOR_MUSCLES.has(m))
     const minorTargets = targetMuscles.filter(m => !MAJOR_MUSCLES.has(m))
@@ -659,7 +769,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
     const scored = dayPool.map(ex => ({
-      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries, bodyComposition) + (shuffle ? Math.random() * 8 : 0)
+      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries, bodyComposition, answers.bodyType) + (shuffle ? Math.random() * 8 : 0)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
@@ -738,7 +848,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
     // Build exercise entries
     let exercises: GeneratedExercise[] = selected.map(ex => {
-      const vol = getVolume(answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, ex.type === 'compound')
+      const vol = getVolume(answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, ex.type === 'compound', answers.bodyType)
       let { sets, reps } = vol
       let notes = ex.tips[0] || ''
       let isDurationBased = false
@@ -800,9 +910,22 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     }
   }
 
+  // Progression guidance
+  let progressionNote = ''
+  if (answers.timelineWeeks >= 8) {
+    // Strategic progression for longer timelines
+    if (answers.primaryGoal === 'strength') {
+      progressionNote = ' Progress: Weeks 1-4 learn form, 5-8 add weight each session, 9-11 deload, 12 retest.'
+    } else if (answers.primaryGoal === 'muscle-building' || answers.primaryGoal === 'toning') {
+      progressionNote = ' Progress: Weekly increase 1-2 reps or 5-10% weight. Week 12: reduce volume, focus on form.'
+    } else {
+      progressionNote = ' Progress: Add weight when you hit top of rep range (e.g., 12 reps easy → add 5%).'
+    }
+  }
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
