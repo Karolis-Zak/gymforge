@@ -3,14 +3,14 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FiHome, FiUser, FiClipboard, FiPlay, FiCompass } from 'react-icons/fi'
+import { FiHome, FiUser, FiClipboard, FiPlay, FiSearch } from 'react-icons/fi'
 import { useWorkoutLogStore } from '../../store/workoutLogStore'
 
 const navItems = [
   { href: '/', label: 'Home', icon: FiHome },
-  { href: '/get-started', label: 'Create', icon: FiCompass },
   { href: '/plans', label: 'Plans', icon: FiClipboard },
   { href: '/workout', label: 'Workout', icon: FiPlay },
+  { href: '/exercises', label: 'Explore', icon: FiSearch },
   { href: '/profile', label: 'Profile', icon: FiUser },
 ]
 
