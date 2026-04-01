@@ -154,6 +154,15 @@ function getAllowedDifficulties(complexity: string): Difficulty[] {
   return ['beginner', 'intermediate', 'advanced']
 }
 
+// Exercises that should be completely excluded for wrist injuries (not just penalized)
+function shouldExcludeForWristInjury(ex: ExerciseData): boolean {
+  const lower = ex.name.toLowerCase()
+  // Dead hang, plate pinch, and wrist curls/extensions are inappropriate for any wrist injury
+  return (lower.includes('dead hang') ||
+          lower.includes('plate pinch') ||
+          (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
+}
+
 function getRestSeconds(goal: string, level: string): number {
   if (level === 'complete-beginner') return 75
   if (level === 'some-experience') {
@@ -346,12 +355,14 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
     !avoidedMuscles.includes(ex.primaryMuscle) &&
     !ex.secondaryMuscles.some(m => avoidedMuscles.includes(m)) &&
-    allowedDifficulties.includes(ex.difficulty)
+    allowedDifficulties.includes(ex.difficulty) &&
+    !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex))
   )
   if (pool.length < 10) {
     pool = exerciseDb.filter(ex =>
       (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
-      !avoidedMuscles.includes(ex.primaryMuscle) && allowedDifficulties.includes(ex.difficulty)
+      !avoidedMuscles.includes(ex.primaryMuscle) && allowedDifficulties.includes(ex.difficulty) &&
+      !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex))
     )
   }
 
