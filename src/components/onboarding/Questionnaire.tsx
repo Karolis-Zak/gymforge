@@ -70,6 +70,14 @@ function suggestDays(count: number): string[] {
   return Array.from({ length: count }, (_, i) => all[(i * spacing) % 7])
 }
 
+function capitalize(text: string): string {
+  return text
+    .replace(/-/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 export function Questionnaire() {
   const router = useRouter()
   const { profile, updateProfile } = useUserStore()
@@ -141,6 +149,7 @@ export function Questionnaire() {
       gender: profile?.gender || answers.gender || undefined,
       height: profile?.height || answers.height,
       weight: profile?.weight || answers.weight,
+      bodyType: (profile?.bodyType || answers.bodyType) as any,
     })
 
     const allIds: string[] = []
@@ -257,6 +266,7 @@ export function Questionnaire() {
                     gender: answers.gender || undefined,
                     height: answers.height || undefined,
                     weight: answers.weight || undefined,
+                    bodyType: answers.bodyType as any,
                   })
                   next()
                 }} disabled={!answers.name?.trim() || !answers.bodyType}>Next <FiArrowRight /></Button>
@@ -538,21 +548,21 @@ export function Questionnaire() {
                   <SummaryRow label="Name" value={answers.name} onEdit={() => setStep(1)} />
                   <SummaryRow label="Age / Gender" value={`${answers.age || '?'}, ${answers.gender || '?'}`} onEdit={() => setStep(1)} />
                   {answers.height > 0 && <SummaryRow label="Height / Weight" value={`${answers.height}cm, ${answers.weight}kg`} onEdit={() => setStep(1)} />}
-                  {answers.bodyType && <SummaryRow label="Build" value={answers.bodyType.replace(/-/g, ' ')} onEdit={() => setStep(1)} />}
-                  <SummaryRow label="Level" value={answers.fitnessLevel.replace(/-/g, ' ')} onEdit={() => setStep(2)} />
+                  {answers.bodyType && <SummaryRow label="Build" value={capitalize(answers.bodyType)} onEdit={() => setStep(1)} />}
+                  <SummaryRow label="Level" value={capitalize(answers.fitnessLevel)} onEdit={() => setStep(2)} />
                   {answers.injuries.length > 0 && <SummaryRow label="Injuries" value={answers.injuries.map(i => `${INJURY_AREAS.find(a => a.id === i)?.label || i} (${answers.injurySeverity[i] || 'ongoing'})`).join(', ')} onEdit={() => setStep(2)} />}
-                  <SummaryRow label="Goal" value={`${answers.primaryGoal.replace(/-/g, ' ')}${answers.secondaryGoal ? ` + ${answers.secondaryGoal.replace(/-/g, ' ')}` : ''}`} onEdit={() => setStep(3)} />
-                  <SummaryRow label="Cardio" value={answers.cardioPreference} onEdit={() => setStep(3)} />
-                  <SummaryRow label="Location" value={answers.trainingLocation} onEdit={() => setStep(4)} />
+                  <SummaryRow label="Goal" value={`${capitalize(answers.primaryGoal)}${answers.secondaryGoal ? ` + ${capitalize(answers.secondaryGoal)}` : ''}`} onEdit={() => setStep(3)} />
+                  <SummaryRow label="Cardio" value={capitalize(answers.cardioPreference)} onEdit={() => setStep(3)} />
+                  <SummaryRow label="Location" value={capitalize(answers.trainingLocation)} onEdit={() => setStep(4)} />
                   <SummaryRow label="Equipment" value={answers.availableEquipment.length > 0 ? answers.availableEquipment.map(getEquipmentLabel).join(', ') : 'Bodyweight only'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Bench" value={answers.hasAdjustableBench ? 'Yes' : 'No'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Partner" value={answers.hasTrainingPartner === 'yes' ? 'Yes' : answers.hasTrainingPartner === 'sometimes' ? 'Sometimes' : 'No'} onEdit={() => setStep(4)} />
-                  <SummaryRow label="Schedule" value={`${answers.daysPerWeek}×/week, ${answers.sessionDuration} min, ${answers.warmupPreference} warm-up`} onEdit={() => setStep(5)} />
+                  <SummaryRow label="Schedule" value={`${answers.daysPerWeek}×/week, ${answers.sessionDuration} min, ${capitalize(answers.warmupPreference)} warm-up`} onEdit={() => setStep(5)} />
                   <SummaryRow label="Days" value={answers.specificDays.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ')} onEdit={() => setStep(5)} />
                   <SummaryRow label="Focus" value={answers.focusAreas.length > 0 ? answers.focusAreas.map(getMuscleGroupLabel).join(', ') : 'Balanced'} onEdit={() => setStep(6)} />
-                  <SummaryRow label="Variety" value={answers.varietyPreference} onEdit={() => setStep(6)} />
+                  <SummaryRow label="Variety" value={capitalize(answers.varietyPreference)} onEdit={() => setStep(6)} />
                   <SummaryRow label="Frequency" value={answers.muscleFrequency === 'auto' ? 'Auto' : answers.muscleFrequency === 'twice' ? 'Twice/week' : 'Once/week'} onEdit={() => setStep(6)} />
-                  <SummaryRow label="Complexity" value={answers.exerciseComplexity} onEdit={() => setStep(7)} />
+                  <SummaryRow label="Complexity" value={capitalize(answers.exerciseComplexity)} onEdit={() => setStep(7)} />
                   <SummaryRow label="Free weights" value={answers.comfortWithFreeWeights === 'yes' ? 'Comfortable' : answers.comfortWithFreeWeights === 'somewhat' ? 'Somewhat' : 'Not yet'} onEdit={() => setStep(7)} />
                   <SummaryRow label="Duration" value={`${answers.timelineWeeks} weeks`} onEdit={() => setStep(3)} />
                 </div>

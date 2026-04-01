@@ -10,6 +10,7 @@ export interface BodyComposition {
   impactTolerance: 'low' | 'moderate' | 'high'
   relativeStrength: 'low' | 'moderate' | 'high' // e.g., stocky/bulky people often have high relative strength
   startingLoadModifier: number // 0.7-1.3, affects starting weight estimates
+  overriddenDueToBMI?: boolean // true if impact tolerance was reduced due to BMI override
 }
 
 function assessBodyComposition(height: number, weight: number, bodyType: string): BodyComposition {
@@ -58,12 +59,20 @@ function assessBodyComposition(height: number, weight: number, bodyType: string)
     impactTolerance = 'low'
     relativeStrength = 'low'
     startingLoadModifier = 0.7
+  } else {
+    // Default/unknown body type — use athletic baseline
+    bodyweightExerciseDifficulty = 1.0
+    impactTolerance = 'high'
+    relativeStrength = 'moderate'
+    startingLoadModifier = 1.0
   }
 
   // Override assessment based on BMI if there's a conflict
+  let overriddenDueToBMI = false
   if (bmi >= 30 && bodyweightExerciseDifficulty > 0.6) {
     bodyweightExerciseDifficulty = Math.min(bodyweightExerciseDifficulty, 0.6)
     impactTolerance = 'low'
+    overriddenDueToBMI = true
   }
   if (bmi < 18.5 && relativeStrength === 'high') {
     relativeStrength = 'moderate'
@@ -76,6 +85,7 @@ function assessBodyComposition(height: number, weight: number, bodyType: string)
     impactTolerance,
     relativeStrength,
     startingLoadModifier,
+    overriddenDueToBMI,
   }
 }
 
@@ -641,10 +651,14 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   // Body composition note if available
   let bodyCompNote = ''
   if (bodyComposition) {
-    if (bodyComposition.impactTolerance === 'low') {
+    if (bodyComposition.overriddenDueToBMI) {
+      bodyCompNote = ' Safety-adjusted for your BMI: lower-impact exercises and extra rest included.'
+    } else if (bodyComposition.impactTolerance === 'low') {
       bodyCompNote = ' Adapted for joint health: extra rest and lower-impact exercises chosen.'
     } else if (bodyComposition.bodyweightExerciseDifficulty > 1.1) {
       bodyCompNote = ' Optimized for your athletic build: includes challenging bodyweight progressions.'
+    } else if (bodyComposition.bodyweightExerciseDifficulty < 0.9 && bodyComposition.relativeStrength === 'high') {
+      bodyCompNote = ' Built for strength: tailored to your powerful frame with controlled progressions.'
     }
   }
 

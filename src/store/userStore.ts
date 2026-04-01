@@ -7,6 +7,7 @@ export interface UserProfile {
   gender?: 'male' | 'female' | 'other'
   height: number // in cm
   weight: number // in kg
+  bodyType?: 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese'
   units: {
     weight: 'kg' | 'lbs'
     height: 'cm' | 'in'
