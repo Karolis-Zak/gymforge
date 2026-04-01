@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useUserStore } from '../store/userStore'
+import { useOnboardingStore } from '../store/onboardingStore'
 import { exercises as exerciseDb } from '../data/exercises'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../data/exerciseVideos'
 import { Card } from './ui/Card'
@@ -79,14 +80,36 @@ function isUnilateralExercise(exerciseName: string): boolean {
   return unilateralKeywords.some(kw => lower.includes(kw))
 }
 
+// Check if exercise should be excluded for wrist injuries
+function isWristDangerousExercise(exerciseName: string, isAcuteWrist: boolean): boolean {
+  const lower = exerciseName.toLowerCase()
+
+  // SEVERE: always exclude for any wrist injury
+  const isSevere = (lower.includes('dead hang') ||
+                    lower.includes('plate pinch') ||
+                    (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
+
+  // MODERATE: exclude only for acute wrist injury
+  const isModerate = (lower.includes('pull-up') || lower.includes('pull up') ||
+                      lower.includes('chin-up') || lower.includes('chin up') ||
+                      lower.includes('dip') || lower.includes('inverted row'))
+
+  return isSevere || (isAcuteWrist && isModerate)
+}
+
 // Suggest smart swap alternatives based on current exercise context
-function suggestSwapExercises(currentExerciseName: string, allExercises = exerciseDb): typeof exerciseDb {
+function suggestSwapExercises(currentExerciseName: string, injuries: string[] = [], injurySeverity: Record<string, string> = {}, allExercises = exerciseDb): typeof exerciseDb {
   const current = findExerciseInfo(currentExerciseName)
   if (!current) return []
+
+  // Check for acute wrist injury
+  const hasAcuteWristInjury = injuries.includes('wrists') &&
+                              (!injurySeverity['wrists'] || injurySeverity['wrists'] === 'acute')
 
   // Score exercises for relevance as swaps
   const scored = exerciseDb
     .filter(ex => ex.id !== current.id) // Don't suggest the same exercise
+    .filter(ex => !(injuries.includes('wrists') && isWristDangerousExercise(ex.name, hasAcuteWristInjury))) // Filter by wrist safety
     .map(ex => {
       let score = 0
 
@@ -121,7 +144,10 @@ export const ActiveWorkout: React.FC = () => {
   const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
   const { defaultRestSeconds } = useUserStore()
+  const { answers } = useOnboardingStore()
   const DEFAULT_REST_SECONDS = defaultRestSeconds || FALLBACK_REST_SECONDS
+  const userInjuries = answers?.injuries || []
+  const userInjurySeverity = answers?.injurySeverity || {}
 
   const [workoutStarted, setWorkoutStarted] = useState(false)
   const [timer, setTimer] = useState(0)
@@ -207,12 +233,12 @@ export const ActiveWorkout: React.FC = () => {
     if (swappingExerciseId && currentWorkout) {
       const exercise = currentWorkout.exercises.find(ex => ex.id === swappingExerciseId)
       if (exercise) {
-        const suggestions = suggestSwapExercises(exercise.exerciseName)
+        const suggestions = suggestSwapExercises(exercise.exerciseName, userInjuries, userInjurySeverity)
         setSwapSuggestions(suggestions)
         setSwapQuery('')
       }
     }
-  }, [swappingExerciseId, currentWorkout])
+  }, [swappingExerciseId, currentWorkout, userInjuries, userInjurySeverity])
 
   if (!currentWorkout) {
     return (
