@@ -1,10 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useWorkoutLogStore, type WorkoutLog } from '../store/workoutLogStore'
+import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
-import { Button } from './ui/Button'
 import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook } from 'react-icons/fi'
 
 function formatDuration(seconds?: number): string {
