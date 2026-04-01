@@ -520,7 +520,10 @@ export function Questionnaire() {
                   <SummaryRow label="Days" value={answers.specificDays.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ')} onEdit={() => setStep(5)} />
                   <SummaryRow label="Focus" value={answers.focusAreas.length > 0 ? answers.focusAreas.map(getMuscleGroupLabel).join(', ') : 'Balanced'} onEdit={() => setStep(6)} />
                   <SummaryRow label="Variety" value={answers.varietyPreference} onEdit={() => setStep(6)} />
+                  <SummaryRow label="Frequency" value={answers.muscleFrequency === 'auto' ? 'Auto' : answers.muscleFrequency === 'twice' ? 'Twice/week' : 'Once/week'} onEdit={() => setStep(6)} />
                   <SummaryRow label="Complexity" value={answers.exerciseComplexity} onEdit={() => setStep(7)} />
+                  <SummaryRow label="Free weights" value={answers.comfortWithFreeWeights === 'yes' ? 'Comfortable' : answers.comfortWithFreeWeights === 'somewhat' ? 'Somewhat' : 'Not yet'} onEdit={() => setStep(7)} />
+                  <SummaryRow label="Duration" value={`${answers.timelineWeeks} weeks`} onEdit={() => setStep(3)} />
                 </div>
               </Card>
               <div className="flex gap-3">

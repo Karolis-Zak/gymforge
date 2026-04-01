@@ -8,6 +8,7 @@ export interface GeneratedExercise {
   sets: number
   reps: number
   notes: string
+  restSeconds?: number
 }
 
 export interface GeneratedDay {
@@ -172,7 +173,8 @@ function getExerciseCount(targetDuration: number, level: string, goal: string): 
   const restSec = getRestSeconds(goal, level)
   const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
-  return Math.max(5, Math.min(Math.round(available / timePerEx), 10))
+  const min = targetDuration <= 30 ? 4 : 5
+  return Math.max(min, Math.min(Math.round(available / timePerEx), 10))
 }
 
 function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean): { sets: number; reps: number } {
@@ -265,7 +267,13 @@ function estimateDuration(exercises: GeneratedExercise[], level: string, goal: s
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
   exercises.forEach(ex => {
-    total += (ex.sets * 1.5) + ((ex.sets - 1) * restSec / 60)
+    const isTimed = ex.notes?.includes('seconds')
+    if (isTimed) {
+      // Timed exercise: 30sec per set + rest between sets
+      total += (ex.sets * 0.5) + ((ex.sets - 1) * restSec / 60)
+    } else {
+      total += (ex.sets * 1.5) + ((ex.sets - 1) * restSec / 60)
+    }
   })
   return Math.round(total)
 }
@@ -402,7 +410,8 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (answers.primaryGoal === 'fat-loss' && !isTimedExercise(ex.name) && !isCarryExercise(ex.name) && !isCardioStyleExercise(ex.name)) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
-      return { id: ex.id, name: ex.name, sets, reps, notes }
+      const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel)
+      return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec }
     })
 
     exercises = sortExercises(exercises)
@@ -410,7 +419,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     if (cardioCount > 0) {
       const cardioPool = pool.filter(ex => CARDIO_EXERCISES.includes(ex.id) && !selected.some(s => s.id === ex.id))
       cardioPool.slice(0, cardioCount).forEach(ex => {
-        exercises.push({ id: ex.id, name: ex.name, sets: 3, reps: 15, notes: 'Cardio finisher — minimal rest between sets.' })
+        exercises.push({ id: ex.id, name: ex.name, sets: 3, reps: 15, notes: 'Cardio finisher — minimal rest between sets.', restSeconds: 30 })
       })
     }
 

@@ -76,9 +76,15 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
           </div>
           <div className="space-y-1.5">
             {day.exercises.map((ex, j) => (
-              <div key={ex.id + j} className="flex items-center justify-between py-1.5 text-sm">
-                <span className="text-text-secondary">{ex.name}</span>
-                <span className="text-text-muted">{ex.sets} × {ex.reps}</span>
+              <div key={ex.id + j} className="py-1.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-secondary">{ex.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-muted">{ex.sets} × {ex.reps}{ex.notes?.includes('seconds') ? 's' : ''}</span>
+                    {ex.restSeconds && <span className="text-[10px] text-text-muted">{ex.restSeconds}s rest</span>}
+                  </div>
+                </div>
+                {ex.notes && <p className="text-xs text-text-muted mt-0.5">{ex.notes}</p>}
               </div>
             ))}
           </div>
