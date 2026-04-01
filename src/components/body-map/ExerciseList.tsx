@@ -7,7 +7,7 @@ import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVid
 import { getExerciseCategory } from '../../data/exerciseCategories'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
-import { FiChevronDown, FiChevronUp, FiVideo, FiExternalLink, FiSearch, FiZap, FiLightbulb } from 'react-icons/fi'
+import { FiChevronDown, FiChevronUp, FiVideo, FiExternalLink, FiSearch, FiZap } from 'react-icons/fi'
 
 interface ExerciseListProps {
   selectedMuscles: MuscleGroup[]
@@ -313,7 +313,7 @@ function ExerciseCard({ ex, expandedId, setExpandedId, idPrefix = '', selectedMu
             <div>
               <h5 className="text-xs text-text-muted uppercase tracking-wider mb-2">Tips</h5>
               {ex.tips.map((tip, i) => (
-                <p key={i} className="text-sm text-accent flex items-start gap-2"><FiLightbulb className="mt-0.5 flex-shrink-0" size={14} /> {tip}</p>
+                <p key={i} className="text-sm text-accent flex items-start gap-2"><FiZap className="mt-0.5 flex-shrink-0" size={14} /> {tip}</p>
               ))}
             </div>
           )}
