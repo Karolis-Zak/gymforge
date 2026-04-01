@@ -49,9 +49,9 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
             <FiPlay /> Start
           </Button>
           <Link href={`/plans/${plan.id}`}>
-            <Button variant="ghost" size="sm"><FiEdit2 /></Button>
+            <Button variant="ghost" size="sm" aria-label="Edit plan"><FiEdit2 /></Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Hide exercises' : 'Show exercises'}>
             {expanded ? <FiChevronUp /> : <FiChevronDown />}
           </Button>
           {!plan.isPreMade && (
@@ -68,7 +68,7 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
               <div key={ex.id || i} className="flex items-center justify-between text-sm py-1">
                 <span className="text-text-secondary">{ex.name}</span>
                 <span className="text-text-muted text-xs">
-                  {ex.sets || 0} x {ex.reps || '?'}
+                  {ex.sets} x {ex.reps}
                 </span>
               </div>
             ))}

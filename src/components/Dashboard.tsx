@@ -224,9 +224,9 @@ export function Dashboard() {
           <Card className="animate-fade-in border-primary/20">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">Streak — Last 30 Days</h3>
-              <button onClick={() => setExpandedStat(null)} className="text-text-muted"><FiChevronUp size={14} /></button>
+              <button onClick={() => setExpandedStat(null)} className="text-text-muted" aria-label="Collapse"><FiChevronUp size={14} /></button>
             </div>
-            <div className="grid grid-cols-10 sm:grid-cols-15 gap-1">
+            <div className="grid grid-cols-6 sm:grid-cols-10 gap-1">
               {last30Days.map(date => {
                 const hasWorkout = streakDays.has(date)
                 const isToday = date === new Date().toISOString().split('T')[0]
@@ -250,7 +250,7 @@ export function Dashboard() {
           <Card className="animate-fade-in border-accent/20">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">Workouts Per Week</h3>
-              <button onClick={() => setExpandedStat(null)} className="text-text-muted"><FiChevronUp size={14} /></button>
+              <button onClick={() => setExpandedStat(null)} className="text-text-muted" aria-label="Collapse"><FiChevronUp size={14} /></button>
             </div>
             {weekKeys.length > 1 ? (
               <div className="h-40">
@@ -280,7 +280,7 @@ export function Dashboard() {
           <Card className="animate-fade-in border-success/20">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">Weekly Volume (kg)</h3>
-              <button onClick={() => setExpandedStat(null)} className="text-text-muted"><FiChevronUp size={14} /></button>
+              <button onClick={() => setExpandedStat(null)} className="text-text-muted" aria-label="Collapse"><FiChevronUp size={14} /></button>
             </div>
             {weekKeys.length > 1 ? (
               <div className="h-40">
@@ -314,7 +314,7 @@ export function Dashboard() {
           <Card className="animate-fade-in border-warning/20">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">Workout History</h3>
-              <button onClick={() => setExpandedStat(null)} className="text-text-muted"><FiChevronUp size={14} /></button>
+              <button onClick={() => setExpandedStat(null)} className="text-text-muted" aria-label="Collapse"><FiChevronUp size={14} /></button>
             </div>
             {weekKeys.length > 1 ? (
               <div className="h-40">
@@ -495,7 +495,7 @@ export function Dashboard() {
           </div>
           <h2 className="text-2xl font-display font-bold text-text-primary mb-2">Ready to start?</h2>
           <p className="text-text-secondary mb-6 max-w-md mx-auto">
-            Take our 3-minute quiz and we&apos;ll build a personalised workout plan for you.
+            Take our 3-minute quiz and we&apos;ll build a personalized workout plan for you.
           </p>
           <Link href="/get-started">
             <Button variant="primary" size="lg"><FiCompass /> Build My Plan</Button>

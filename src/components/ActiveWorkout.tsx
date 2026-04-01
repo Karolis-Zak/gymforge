@@ -328,7 +328,7 @@ export const ActiveWorkout: React.FC = () => {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-text-primary">{currentWorkout.planName}</h1>
-          <p className="text-text-muted text-sm italic mt-1 line-clamp-1">&quot;{motivationalQuotes[motivationIdx]}&quot;</p>
+          <p className="text-text-muted text-sm italic mt-1 line-clamp-1">{`"${motivationalQuotes[motivationIdx]}"`}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 bg-background-card border border-white/10 rounded-2xl px-4 py-2">

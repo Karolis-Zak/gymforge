@@ -43,7 +43,7 @@ export const UserProfileForm: React.FC = () => {
     if (bmi < 18.5) return '#f59e0b'
     if (bmi < 25) return '#22c55e'
     if (bmi < 30) return '#f59e0b'
-    return '#f59e0b'
+    return '#ef4444'
   }
 
   const getBmiLabel = (bmi: number | null) => {
