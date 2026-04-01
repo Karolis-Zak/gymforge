@@ -14,6 +14,7 @@ export interface ExerciseLog {
   exerciseName: string
   sets: WorkoutSet[]
   notes?: string
+  rpe?: number // Rate of Perceived Exertion (1-10 scale)
   date: string // ISO string
 }
 
@@ -36,6 +37,7 @@ interface WorkoutLogStore {
   completeSet: (exerciseId: string, setIndex: number, completed: boolean) => void
   updateSetWeight: (exerciseId: string, setIndex: number, weight: number) => void
   updateSetReps: (exerciseId: string, setIndex: number, reps: number) => void
+  updateExerciseRPE: (exerciseId: string, rpe: number | undefined) => void
   completeWorkout: (durationSeconds?: number) => void
   cancelWorkout: () => void
   updateSessionNotes: (notes: string) => void
@@ -168,7 +170,7 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
       updateSetReps: (exerciseId, setIndex, reps) => {
         set((state) => {
           if (!state.currentWorkout) return state
-          
+
           const updatedExercises = state.currentWorkout.exercises.map((exercise) => {
             if (exercise.id === exerciseId) {
               const updatedSets = [...exercise.sets]
@@ -177,7 +179,27 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
             }
             return exercise
           })
-          
+
+          return {
+            currentWorkout: {
+              ...state.currentWorkout,
+              exercises: updatedExercises
+            }
+          }
+        })
+      },
+
+      updateExerciseRPE: (exerciseId, rpe) => {
+        set((state) => {
+          if (!state.currentWorkout) return state
+
+          const updatedExercises = state.currentWorkout.exercises.map((exercise) => {
+            if (exercise.id === exerciseId) {
+              return { ...exercise, rpe }
+            }
+            return exercise
+          })
+
           return {
             currentWorkout: {
               ...state.currentWorkout,
