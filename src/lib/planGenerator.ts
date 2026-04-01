@@ -75,6 +75,8 @@ function getMovementPattern(ex: ExerciseData): string {
   if (lower.includes('lateral raise') || lower.includes('front raise') || lower.includes('rear delt')) return 'raise'
   // Lunge pattern
   if (lower.includes('lunge') || lower.includes('split squat') || lower.includes('step-up')) return 'lunge'
+  // Shrug pattern
+  if (lower.includes('shrug')) return 'shrug'
   // Push-up / dip pattern
   if (lower.includes('push-up') || lower.includes('dip')) return 'bodyweight-push'
   return 'other'
