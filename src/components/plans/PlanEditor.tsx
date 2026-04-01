@@ -8,7 +8,7 @@ import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
-import { FiArrowLeft, FiTrash2, FiSave, FiMenu } from 'react-icons/fi'
+import { FiArrowLeft, FiTrash2, FiSave, FiMenu, FiChevronUp, FiChevronDown } from 'react-icons/fi'
 
 export function PlanEditor({ planId }: { planId: string }) {
   const router = useRouter()
@@ -94,9 +94,19 @@ export function PlanEditor({ planId }: { planId: string }) {
                     : 'bg-white/[0.02] border-white/5'
               }`}
             >
-              {/* Drag handle */}
-              <div className="cursor-grab active:cursor-grabbing text-text-muted hover:text-text-primary touch-none" aria-label="Drag to reorder">
-                <FiMenu size={16} />
+              {/* Reorder: drag handle on desktop, arrows on mobile */}
+              <div className="flex items-center gap-1">
+                <div className="hidden md:block cursor-grab active:cursor-grabbing text-text-muted hover:text-text-primary touch-none" aria-label="Drag to reorder">
+                  <FiMenu size={16} />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }} disabled={i === 0} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move up">
+                    <FiChevronUp size={14} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }} disabled={i === plan.exercises.length - 1} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move down">
+                    <FiChevronDown size={14} />
+                  </button>
+                </div>
               </div>
 
               {/* Exercise info */}

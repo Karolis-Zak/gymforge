@@ -76,7 +76,9 @@ export const WorkoutPlans: React.FC = () => {
         </div>
       ) : plans.length === 0 ? (
         <Card className="text-center py-16">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <FiPlus className="text-primary text-2xl" />
+          </div>
           <h2 className="text-xl font-display font-bold text-text-primary mb-2">No plans yet</h2>
           <p className="text-text-secondary mb-6">Create your first workout plan to get started.</p>
           <Link href="/plans/new">

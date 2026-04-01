@@ -19,6 +19,12 @@ const difficultyColors = {
   advanced: 'danger' as const,
 }
 
+const difficultyFilterStyles = {
+  beginner: 'bg-success/15 text-success border-success/30',
+  intermediate: 'bg-warning/15 text-warning border-warning/30',
+  advanced: 'bg-danger/15 text-danger border-danger/30',
+}
+
 const EQUIPMENT_OPTIONS: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'band', 'ez-bar', 'smith-machine', 'pull-up-bar']
 const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced']
 const SORT_MODES = [
@@ -123,7 +129,9 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   if (selectedMuscles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-16">
-        <div className="text-4xl mb-4">👆</div>
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          <FiSearch className="text-primary text-2xl" />
+        </div>
         <h3 className="text-lg font-display font-bold text-text-primary mb-2">Tap a muscle group</h3>
         <p className="text-text-muted text-sm max-w-xs">Click on the body map to see exercises for that area. You can select multiple.</p>
       </div>
@@ -168,22 +176,12 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
           className={`px-3 py-1.5 text-xs rounded-full border transition-all ${!hasDifficultyFilter ? 'bg-accent/15 text-accent border-accent/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>All Levels</button>
         {DIFFICULTY_OPTIONS.map(d => (
           <button key={d} onClick={() => toggleDifficulty(d)}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-all ${selectedDifficulty.has(d) ? `bg-${difficultyColors[d]}/15 text-${difficultyColors[d]} border-${difficultyColors[d]}/30` : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
+            className={`px-3 py-1.5 text-xs rounded-full border transition-all ${selectedDifficulty.has(d) ? difficultyFilterStyles[d] : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
             {d.charAt(0).toUpperCase() + d.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Sort mode */}
-      <div className="flex gap-1.5">
-        <span className="text-xs text-text-muted py-1.5">Sort:</span>
-        {SORT_MODES.map(s => (
-          <button key={s.id} onClick={() => setSortMode(s.id)}
-            className={`px-2.5 py-1 text-xs rounded-full border transition-all ${sortMode === s.id ? 'bg-white/10 text-text-primary border-white/20' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
-            {s.label}
-          </button>
-        ))}
-      </div>
 
       {/* ===== Compound section (2+ muscles selected) ===== */}
       {compoundMatches.length > 0 && (
@@ -218,7 +216,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
           <button onClick={() => setShowSecondary(!showSecondary)} className="flex items-center gap-2 w-full">
             <div className="flex-1 h-px bg-white/5" />
             <span className="text-xs text-text-muted flex items-center gap-1">
-              Also works {muscleLabel} ({secondaryMatches.filter(ex => !compoundIds.has(ex.id)).length})
+              Also targets {muscleLabel} ({secondaryMatches.filter(ex => !compoundIds.has(ex.id)).length})
               {showSecondary ? <FiChevronUp size={10} /> : <FiChevronDown size={10} />}
             </span>
             <div className="flex-1 h-px bg-white/5" />

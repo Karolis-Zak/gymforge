@@ -48,13 +48,9 @@ export function ExercisePicker({ onAdd, addedExerciseIds = [] }: ExercisePickerP
   const addedSet = useMemo(() => new Set(addedExerciseIds), [addedExerciseIds])
 
   const filtered = useMemo(() => {
-    // searchExercises now only matches primaryMuscle
     const results = searchExercises(query, muscleFilter ? { muscle: muscleFilter as MuscleGroup } : undefined)
-      .filter(ex => !addedSet.has(ex.id))
-
-    // Smart sort
     return results.sort((a, b) => smartScore(b) - smartScore(a)).slice(0, 50)
-  }, [query, muscleFilter, addedSet])
+  }, [query, muscleFilter])
 
   const muscleGroups = getAllMuscleGroups()
 

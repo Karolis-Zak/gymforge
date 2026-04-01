@@ -5,7 +5,7 @@ import { useWorkoutLogStore, type WorkoutLog } from '../store/workoutLogStore'
 import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
-import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar } from 'react-icons/fi'
+import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook } from 'react-icons/fi'
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '—'
@@ -29,7 +29,9 @@ export function WorkoutHistory() {
 
       {completedLogs.length === 0 ? (
         <Card className="text-center py-16">
-          <div className="text-5xl mb-4">📖</div>
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <FiBook className="text-primary text-2xl" />
+          </div>
           <h2 className="text-xl font-display font-bold text-text-primary mb-2">No workouts yet</h2>
           <p className="text-text-secondary">Complete a workout to see it here.</p>
         </Card>

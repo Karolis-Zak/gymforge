@@ -538,7 +538,7 @@ export const ActiveWorkout: React.FC = () => {
                               : 'bg-white/5 text-text-muted border border-white/10'
                           }`}
                         >
-                          🤚 Right
+                          Right
                           {sideCompleted[currentExercise.id]?.[currentSetIdx]?.right && (
                             <FiCheck className="inline ml-1 text-success" />
                           )}
@@ -551,7 +551,7 @@ export const ActiveWorkout: React.FC = () => {
                               : 'bg-white/5 text-text-muted border border-white/10'
                           }`}
                         >
-                          🫲 Left
+                          Left
                           {sideCompleted[currentExercise.id]?.[currentSetIdx]?.left && (
                             <FiCheck className="inline ml-1 text-success" />
                           )}
@@ -605,7 +605,7 @@ export const ActiveWorkout: React.FC = () => {
 
                   if (isPerSide && !bothSidesDone) {
                     // Per-side mode: complete current side
-                    const sideLabel = side === 'right' ? '🤚 Right' : '🫲 Left'
+                    const sideLabel = side === 'right' ? 'Right' : 'Left'
                     const otherSide = side === 'right' ? 'left' : 'right'
                     const currentSideDone = side === 'right' ? sides?.right : sides?.left
                     const otherSideDone = side === 'right' ? sides?.left : sides?.right
