@@ -167,7 +167,7 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
               </div>
             </div>
             <button onClick={() => handleAdd(ex)}
-              className="opacity-0 group-hover:opacity-100 ml-3 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary/30 transition-all">
+              className="ml-3 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary/30 transition-all">
               <FiPlus />
             </button>
           </div>
