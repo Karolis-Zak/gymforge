@@ -37,12 +37,12 @@ const SORT_MODES = [
 type SortMode = typeof SORT_MODES[number]['id']
 
 // Smart scoring — staple isolation exercises for the target muscle rank highest
+// No random component — deterministic sort so exercises don't jump around on re-render
 function getSmartScore(ex: typeof exerciseDb[0]): number {
   const cat = getExerciseCategory(ex.id)
   let score = cat === 'staple' ? 30 : cat === 'standard' ? 15 : 0
   score += ex.type === 'isolation' ? 20 : 10
   score += ex.difficulty === 'beginner' ? 5 : ex.difficulty === 'intermediate' ? 2 : 0
-  score += Math.random() * 2
   return score
 }
 
