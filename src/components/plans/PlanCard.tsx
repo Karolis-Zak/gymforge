@@ -7,6 +7,7 @@ import { Button } from '../ui/Button'
 import type { WorkoutPlan } from '../../store/workoutStore'
 import { FiPlay, FiTrash2, FiChevronDown, FiChevronUp, FiEdit2 } from 'react-icons/fi'
 import Link from 'next/link'
+import { isTimedExercise } from '../../lib/exerciseUtils'
 
 interface PlanCardProps {
   plan: WorkoutPlan
@@ -38,7 +39,11 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
           {plan.isPreMade && <Badge variant="accent">Template</Badge>}
           {plan.exercises.length > 0 && (
             <Badge variant="neutral">
-              ~{plan.exercises.reduce((sum, ex) => sum + (typeof ex.sets === 'number' ? ex.sets : 3), 0)} sets
+              ~{plan.exercises.reduce((sum, ex) => {
+                const isTimed = isTimedExercise(ex.name)
+                const volume = typeof ex.sets === 'number' ? (isTimed ? ex.sets * ex.reps : ex.sets) : (isTimed ? 90 : 3)
+                return sum + volume
+              }, 0)} {plan.exercises.some(ex => isTimedExercise(ex.name)) ? 'seconds total' : 'sets'}
             </Badge>
           )}
         </div>
@@ -71,20 +76,28 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
         {expanded && (
           <div className="mt-4 pt-4 border-t border-white/5 animate-fade-in">
             <div className="space-y-3">
-              {plan.exercises.map((ex, i) => (
-                <div key={ex.id || i} className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary font-medium text-sm">{i + 1}. {ex.name}</p>
-                    {ex.notes && (
-                      <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{ex.notes}</p>
-                    )}
+              {plan.exercises.map((ex, i) => {
+                const isTimed = isTimedExercise(ex.name)
+                const repsDisplay = isTimed ? `${ex.reps}s` : ex.reps
+                const totalDisplay = isTimed
+                  ? `${ex.sets * ex.reps}s total`
+                  : `${typeof ex.sets === 'number' && typeof ex.reps === 'number' ? ex.sets * ex.reps : '?'} total`
+
+                return (
+                  <div key={ex.id || i} className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-text-primary font-medium text-sm">{i + 1}. {ex.name}</p>
+                      {ex.notes && (
+                        <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{ex.notes}</p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-primary font-bold text-sm">{ex.sets} × {repsDisplay}</p>
+                      <p className="text-text-muted text-xs">{totalDisplay}</p>
+                    </div>
                   </div>
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-primary font-bold text-sm">{ex.sets} × {ex.reps}</p>
-                    <p className="text-text-muted text-xs">{typeof ex.sets === 'number' && typeof ex.reps === 'number' ? ex.sets * ex.reps : '?'} total</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
