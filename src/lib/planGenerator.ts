@@ -638,9 +638,19 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const hasTimeForCardio = answers.sessionDuration > 50 && answers.cardioPreference !== 'none'
   const cardioNote = hasTimeForCardio ? ' Includes cardio finishers.' : ''
 
+  // Body composition note if available
+  let bodyCompNote = ''
+  if (bodyComposition) {
+    if (bodyComposition.impactTolerance === 'low') {
+      bodyCompNote = ' Adapted for joint health: extra rest and lower-impact exercises chosen.'
+    } else if (bodyComposition.bodyweightExerciseDifficulty > 1.1) {
+      bodyCompNote = ' Optimized for your athletic build: includes challenging bodyweight progressions.'
+    }
+  }
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }

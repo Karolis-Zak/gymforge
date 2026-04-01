@@ -230,7 +230,10 @@ export function Questionnaire() {
                 <Input label="Weight (kg)" type="number" value={answers.weight || ''} onChange={e => update({ weight: Number(e.target.value) })} placeholder="75" min={30} max={300} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">How would you describe your build?</label>
+                <div>
+                  <label className="text-sm font-medium text-text-secondary block mb-1">How would you describe your build?</label>
+                  <p className="text-xs text-text-muted mb-2">This helps us customize exercises based on your body type, not just weight.</p>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([
                     { id: 'lean', label: 'Lean', desc: 'Low body fat, athletic' },
@@ -256,7 +259,7 @@ export function Questionnaire() {
                     weight: answers.weight || undefined,
                   })
                   next()
-                }} disabled={!answers.name?.trim()}>Next <FiArrowRight /></Button>
+                }} disabled={!answers.name?.trim() || !answers.bodyType}>Next <FiArrowRight /></Button>
               </div>
             </div>
           )}
