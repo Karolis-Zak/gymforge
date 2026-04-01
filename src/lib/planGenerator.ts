@@ -214,6 +214,12 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
   return { sets, reps }
 }
 
+// Detect exercises that require a training partner
+function requiresPartner(name: string): boolean {
+  const lower = name.toLowerCase()
+  return lower.includes('leg curl') && (lower.includes('dumbbell') || lower.includes('band'))
+}
+
 // Detect wrist stress level for chronic wrist injuries
 function getWristStressLevel(name: string): 'severe' | 'moderate' | 'mild' | 'none' {
   const lower = name.toLowerCase()
@@ -272,7 +278,10 @@ function scoreExercise(
     if (ex.equipment === 'bodyweight') score += 2
   }
 
-  if (hasPartner === 'no' && ex.equipment === 'barbell' && ex.type === 'compound') score -= 2
+  if (hasPartner === 'no') {
+    if (ex.equipment === 'barbell' && ex.type === 'compound') score -= 2
+    if (requiresPartner(ex.name)) score -= 6
+  }
   if (!hasBench) {
     if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
   }
@@ -349,7 +358,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const usedThisWeek = new Set<string>()
   const days: GeneratedDay[] = []
   const daysToGenerate = split.days.slice(0, sortedDays.length)
-  const cardioCount = answers.cardioPreference === 'heavy' ? 2 : answers.cardioPreference === 'moderate' ? 1 : 0
+  // Only add cardio finishers if there's time in the session (>50 min with warmup)
+  const canAddCardio = answers.sessionDuration > 50
+  const cardioCount = canAddCardio && answers.cardioPreference === 'heavy' ? 2 : canAddCardio && answers.cardioPreference === 'moderate' ? 1 : 0
 
   daysToGenerate.forEach((splitDay, i) => {
     const dayOfWeek = sortedDays[i]
@@ -489,9 +500,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const secondaryLabel = answers.secondaryGoal ? ` & ${secondaryNames[answers.secondaryGoal] || answers.secondaryGoal}` : ''
   const warmupNote = answers.warmupPreference === 'full' ? ' Start with 10 min warmup.' : answers.warmupPreference === 'quick' ? ' Start with 5 min warmup.' : ''
 
+  // Only claim cardio finishers if there's room in the session (>50 min with warmup)
+  const hasTimeForCardio = answers.sessionDuration > 50 && answers.cardioPreference !== 'none'
+  const cardioNote = hasTimeForCardio ? ' Includes cardio finishers.' : ''
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${answers.cardioPreference !== 'none' ? ' Includes cardio finishers.' : ''}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
