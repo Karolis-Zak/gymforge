@@ -115,6 +115,7 @@ export interface GeneratedPlan {
   description: string
   days: GeneratedDay[]
   splitType: string
+  weeklyProgression: Array<{ week: number; rpeMin: number; rpeMax: number; phase: string; description: string }>
 }
 
 // Major muscles get dedicated exercise slots
@@ -1201,10 +1202,24 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     warmupProtocolNote = ' Each day: Do warm-up sets (50%×8, 70%×5, 85%×2) before first compound lift.'
   }
 
+  // Generate weekly progression guidance (Tier 3)
+  const weeklyProgression = Array.from({ length: answers.timelineWeeks }, (_, i) => {
+    const weekNumber = i + 1
+    const rpe = getWeekRPE(weekNumber, answers.timelineWeeks, answers.primaryGoal)
+    return {
+      week: weekNumber,
+      rpeMin: rpe.min,
+      rpeMax: rpe.max,
+      phase: rpe.description.split(':')[0],
+      description: rpe.description,
+    }
+  })
+
   return {
     name: '',
     description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${rotationNote}${warmupProtocolNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
+    weeklyProgression,
   }
 }

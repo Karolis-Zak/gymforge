@@ -55,6 +55,38 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
         </div>
       </Card>
 
+      {/* Weekly progression */}
+      {plan.weeklyProgression && plan.weeklyProgression.length > 0 && (
+        <Card>
+          <h4 className="font-display font-bold text-text-primary mb-3">Training Progression</h4>
+          <div className="space-y-2">
+            {plan.weeklyProgression.map((w) => (
+              <div key={w.week} className="flex items-center gap-3">
+                <div className="w-12 text-center">
+                  <span className="text-sm font-semibold text-text-primary">W{w.week}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-text-secondary">{w.phase}</span>
+                    <span className="text-xs text-text-muted">RPE {w.rpeMin}-{w.rpeMax}</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        w.rpeMax <= 6 ? 'bg-success' :
+                        w.rpeMax <= 7.5 ? 'bg-warning' :
+                        'bg-danger'
+                      }`}
+                      style={{ width: `${((w.rpeMin + w.rpeMax) / 2) / 10 * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <p className="text-sm text-text-secondary">{plan.description}</p>
 
       {/* Day cards */}
