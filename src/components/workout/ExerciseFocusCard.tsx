@@ -193,9 +193,10 @@ export function ExerciseFocusCard({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                const current = currentSet?.reps || 1
-                if (current > 1) {
-                  onUpdateSetReps(currentExercise.id, currentSetIdx, current - 1)
+                const current = currentSet?.reps || (isTimed ? 30 : 1)
+                const decrement = isTimed ? 5 : 1
+                if (current > decrement) {
+                  onUpdateSetReps(currentExercise.id, currentSetIdx, current - decrement)
                 }
               }}
               className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all active:scale-95"
@@ -207,13 +208,14 @@ export function ExerciseFocusCard({
               value={currentSet?.reps || ''}
               onChange={e => onUpdateSetReps(currentExercise.id, currentSetIdx, Number(e.target.value))}
               className={`${isBW ? 'w-20' : 'w-20'} h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all`}
-              min={1}
+              min={isTimed ? 5 : 1}
               placeholder={isTimed ? '30' : '10'}
             />
             <button
               onClick={() => {
                 const current = currentSet?.reps || 0
-                onUpdateSetReps(currentExercise.id, currentSetIdx, current + 1)
+                const increment = isTimed ? 5 : 1
+                onUpdateSetReps(currentExercise.id, currentSetIdx, current + increment)
               }}
               className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 hover:border-primary/50 transition-all active:scale-95 shadow-glow"
             >
