@@ -8,6 +8,12 @@ import { useUserStore } from '../store/userStore'
 import { useOnboardingStore } from '../store/onboardingStore'
 import { exercises as exerciseDb } from '../data/exercises'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../data/exerciseVideos'
+import {
+  AUDIO, REST_ADJUSTMENTS,
+  findExerciseInfo, isBodyweightExercise, isTimedExercise,
+  isUnilateralExercise, getWristStressLevel, isWristDangerousExercise,
+  formatTime
+} from '../lib/exerciseUtils'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
@@ -37,65 +43,16 @@ const beep = () => {
     const o = ctx.createOscillator()
     const g = ctx.createGain()
     o.type = 'sine'
-    o.frequency.value = 880
+    o.frequency.value = AUDIO.FREQUENCY
     o.connect(g)
     g.connect(ctx.destination)
-    g.gain.value = 0.1
+    g.gain.value = AUDIO.GAIN
     o.start(0)
-    o.stop(ctx.currentTime + 0.2)
+    o.stop(ctx.currentTime + AUDIO.DURATION)
     o.onended = () => ctx.close()
   } catch { /* ignore audio errors */ }
 }
 
-// Find exercise info from the database by name match
-function findExerciseInfo(exerciseName: string) {
-  const lower = exerciseName.toLowerCase()
-  return exerciseDb.find(ex => ex.name.toLowerCase() === lower) ||
-    exerciseDb.find(ex => lower.includes(ex.name.toLowerCase())) ||
-    exerciseDb.find(ex => ex.name.toLowerCase().includes(lower))
-}
-
-// Determine if exercise is bodyweight/no-weight based on equipment
-function isBodyweightExercise(exerciseName: string): boolean {
-  const info = findExerciseInfo(exerciseName)
-  if (info) return info.equipment === 'bodyweight' || info.equipment === 'none'
-  const bwKeywords = ['push-up', 'pushup', 'pull-up', 'pullup', 'plank', 'crunch', 'sit-up', 'burpee', 'lunge', 'squat', 'dip', 'mountain climber', 'leg raise']
-  return bwKeywords.some(kw => exerciseName.toLowerCase().includes(kw))
-}
-
-// Determine if exercise is time-based (hold/carry)
-function isTimedExercise(exerciseName: string): boolean {
-  const lower = exerciseName.toLowerCase()
-  return lower.includes('plank') || lower.includes('hold') || lower === 'dead hang' ||
-    lower.includes('wall sit') || lower.includes('farmer') || lower.includes('carry') || lower.includes('suitcase')
-}
-
-// Determine if exercise can be done per-side (unilateral)
-function isUnilateralExercise(exerciseName: string): boolean {
-  const info = findExerciseInfo(exerciseName)
-  const unilateralKeywords = ['single arm', 'single leg', 'one arm', 'one leg', 'concentration', 'curl', 'lunge', 'split squat', 'kickback', 'lateral raise', 'front raise', 'dumbbell row', 'pistol']
-  const lower = exerciseName.toLowerCase()
-  // Dumbbell exercises that are commonly done per-side
-  if (info && info.equipment === 'dumbbell' && info.type === 'isolation') return true
-  return unilateralKeywords.some(kw => lower.includes(kw))
-}
-
-// Check if exercise should be excluded for wrist injuries
-function isWristDangerousExercise(exerciseName: string, isAcuteWrist: boolean): boolean {
-  const lower = exerciseName.toLowerCase()
-
-  // SEVERE: always exclude for any wrist injury
-  const isSevere = (lower.includes('dead hang') ||
-                    lower.includes('plate pinch') ||
-                    (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
-
-  // MODERATE: exclude only for acute wrist injury
-  const isModerate = (lower.includes('pull-up') || lower.includes('pull up') ||
-                      lower.includes('chin-up') || lower.includes('chin up') ||
-                      lower.includes('dip') || lower.includes('inverted row'))
-
-  return isSevere || (isAcuteWrist && isModerate)
-}
 
 // Suggest smart swap alternatives based on current exercise context
 function suggestSwapExercises(currentExerciseName: string, injuries: string[] = [], injurySeverity: Record<string, string> = {}, allExercises = exerciseDb): typeof exerciseDb {
@@ -324,13 +281,6 @@ export const ActiveWorkout: React.FC = () => {
   // Find the current active exercise and set
   const currentExercise = currentWorkout.exercises.find(ex => !ex.sets.every(s => s.completed))
   const currentSetIdx = currentExercise ? currentExercise.sets.findIndex(s => !s.completed) : -1
-
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    const s = seconds % 60
-    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
-  }
 
   const getPB = (exerciseId: string) => {
     const progress = getExerciseProgress(exerciseId)
@@ -582,17 +532,17 @@ export const ActiveWorkout: React.FC = () => {
                 <p className="text-text-secondary mt-6 mb-2">Breathe and recover.</p>
                 {/* Rest time controls */}
                 <div className="flex gap-2 mb-4">
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: Math.max(0, (prev[currentExercise.id] || 0) - 15) }))}
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: Math.max(0, (prev[currentExercise.id] || 0) - REST_ADJUSTMENTS.DECREASE) }))}
                     className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    -15s
+                    -{REST_ADJUSTMENTS.DECREASE}s
                   </button>
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + 15 }))}
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + REST_ADJUSTMENTS.INCREASE_SHORT }))}
                     className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    +15s
+                    +{REST_ADJUSTMENTS.INCREASE_SHORT}s
                   </button>
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + 60 }))}
+                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + REST_ADJUSTMENTS.INCREASE_LONG }))}
                     className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    +60s
+                    +{REST_ADJUSTMENTS.INCREASE_LONG}s
                   </button>
                 </div>
                 <Button variant="primary" size="md" onClick={() => setRestActive(prev => ({ ...prev, [currentExercise.id]: false }))}>
