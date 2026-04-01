@@ -143,7 +143,7 @@ export function PlanEditor({ planId }: { planId: string }) {
         </div>
 
         <div className="mt-4">
-          <ExercisePicker onAdd={handleAddExercise} addedExerciseIds={plan.exercises.map(e => e.id)} />
+          <ExercisePicker onAdd={handleAddExercise} />
         </div>
       </Card>
 

@@ -148,15 +148,21 @@ export const ActiveWorkout: React.FC = () => {
     return () => { Object.values(restRefs.current).forEach(clearInterval) }
   }, [restActive])
 
-  // Auto-collapse completed exercises
+  // Auto-collapse completed exercises — only depends on currentWorkout changes
   useEffect(() => {
     if (!currentWorkout) return
-    currentWorkout.exercises.forEach(ex => {
-      if (ex.sets.every(s => s.completed) && collapsedExercises[ex.id] === undefined) {
-        setCollapsedExercises(prev => ({ ...prev, [ex.id]: true }))
-      }
+    setCollapsedExercises(prev => {
+      const next = { ...prev }
+      let changed = false
+      currentWorkout.exercises.forEach(ex => {
+        if (ex.sets.every(s => s.completed) && next[ex.id] === undefined) {
+          next[ex.id] = true
+          changed = true
+        }
+      })
+      return changed ? next : prev
     })
-  }, [currentWorkout, collapsedExercises])
+  }, [currentWorkout])
 
   if (!currentWorkout) {
     return (

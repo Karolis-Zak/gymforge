@@ -18,6 +18,11 @@ export const UserProfileForm: React.FC = () => {
     if (e.target.type === 'number') {
       const num = Number(e.target.value)
       if (isNaN(num) || num < 0) return
+      // Enforce realistic maximums
+      const name = e.target.name
+      if (name === 'weight' && num > 300) return
+      if (name === 'height' && num > 250) return
+      if (name === 'age' && num > 120) return
       value = num
     }
     updateProfile({ [e.target.name]: value })

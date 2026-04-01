@@ -4,12 +4,13 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutStore } from '../../store/workoutStore'
 import type { Exercise } from '../../store/workoutStore'
+import { exercises as exerciseDb } from '../../data/exercises'
 import { ExercisePicker } from './ExercisePicker'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
-import { FiArrowLeft, FiArrowRight, FiCheck, FiTrash2, FiPlus } from 'react-icons/fi'
+import { FiArrowLeft, FiArrowRight, FiCheck, FiTrash2 } from 'react-icons/fi'
 
 const GOAL_TAGS = ['Strength', 'Hypertrophy', 'Fat Loss', 'Endurance', 'Mobility', 'General Fitness']
 
@@ -73,13 +74,16 @@ export function PlanBuilder() {
   const handleTemplate = (template: typeof TEMPLATES[0]) => {
     setName(template.name)
     setDescription(template.description)
-    setExercises(template.exercises.map(ex => ({
-      id: Math.random().toString(36).substring(2),
-      name: ex.name,
-      sets: ex.sets,
-      reps: ex.reps,
-      notes: '',
-    })))
+    setExercises(template.exercises.map(ex => {
+      const dbMatch = exerciseDb.find(e => e.name === ex.name)
+      return {
+        id: dbMatch?.id || Math.random().toString(36).substring(2),
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        notes: '',
+      }
+    }))
     setStep(3) // Skip to review
   }
 
@@ -190,7 +194,7 @@ export function PlanBuilder() {
             <p className="text-text-secondary">Search and add exercises to your plan.</p>
           </div>
 
-          <ExercisePicker onAdd={handleAddExercise} addedExerciseIds={exercises.map(e => e.id)} />
+          <ExercisePicker onAdd={handleAddExercise} />
 
           {/* Exercise list */}
           {exercises.length > 0 && (
