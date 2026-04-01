@@ -6,6 +6,7 @@ import { Card } from '../ui/Card'
 import { FiArrowRight, FiCheck, FiRepeat, FiVideo, FiExternalLink, FiZap, FiMinus, FiPlus } from 'react-icons/fi'
 import { findExerciseInfo, isBodyweightExercise, isTimedExercise, isUnilateralExercise } from '../../lib/exerciseUtils'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVideos'
+import { TimedExerciseCard } from './TimedExerciseCard'
 import type { ExerciseLog } from '../../store/workoutLogStore'
 
 interface ExerciseFocusCardProps {
@@ -145,88 +146,95 @@ export function ExerciseFocusCard({
       )}
 
       {/* INPUTS - context-aware based on exercise type */}
-      <div className="flex items-center gap-6 mb-8">
-        {/* Only show weight for weighted exercises */}
-        {!isBW && (
-          <>
-            <div className="flex flex-col items-center">
-              <label className="text-xs text-text-muted uppercase tracking-wider mb-2">Weight (kg)</label>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const current = currentSet?.weight || 0
-                    if (current >= 0.5) {
-                      onUpdateSetWeight(currentExercise.id, currentSetIdx, current - 0.5)
-                    }
-                  }}
-                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all active:scale-95"
-                >
-                  <FiMinus size={18} />
-                </button>
-                <input
-                  type="number"
-                  value={currentSet?.weight || ''}
-                  onChange={e => onUpdateSetWeight(currentExercise.id, currentSetIdx, Number(e.target.value))}
-                  className="w-20 h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all"
-                  min={0}
-                  step={0.5}
-                  placeholder="0"
-                />
-                <button
-                  onClick={() => {
-                    const current = currentSet?.weight || 0
-                    onUpdateSetWeight(currentExercise.id, currentSetIdx, current + 0.5)
-                  }}
-                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 hover:border-primary/50 transition-all active:scale-95 shadow-glow"
-                >
-                  <FiPlus size={18} />
-                </button>
+      {isTimed ? (
+        <TimedExerciseCard
+          exerciseName={currentExercise.exerciseName}
+          currentSetIdx={currentSetIdx}
+          totalSets={currentExercise.sets.length}
+          duration={currentSet?.reps || 30}
+          onUpdateDuration={(duration) => onUpdateSetReps(currentExercise.id, currentSetIdx, duration)}
+          onCompleteSet={() => onCompleteSet(currentExercise.id, currentSetIdx, true, currentExercise.sets.length)}
+        />
+      ) : (
+        <div className="flex items-center gap-6 mb-8">
+          {/* Only show weight for weighted exercises */}
+          {!isBW && (
+            <>
+              <div className="flex flex-col items-center">
+                <label className="text-xs text-text-muted uppercase tracking-wider mb-2">Weight (kg)</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const current = currentSet?.weight || 0
+                      if (current >= 0.5) {
+                        onUpdateSetWeight(currentExercise.id, currentSetIdx, current - 0.5)
+                      }
+                    }}
+                    className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all active:scale-95"
+                  >
+                    <FiMinus size={18} />
+                  </button>
+                  <input
+                    type="number"
+                    value={currentSet?.weight || ''}
+                    onChange={e => onUpdateSetWeight(currentExercise.id, currentSetIdx, Number(e.target.value))}
+                    className="w-20 h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all"
+                    min={0}
+                    step={0.5}
+                    placeholder="0"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = currentSet?.weight || 0
+                      onUpdateSetWeight(currentExercise.id, currentSetIdx, current + 0.5)
+                    }}
+                    className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 hover:border-primary/50 transition-all active:scale-95 shadow-glow"
+                  >
+                    <FiPlus size={18} />
+                  </button>
+                </div>
               </div>
+              <span className="text-3xl text-text-muted font-light mt-6">&times;</span>
+            </>
+          )}
+          <div className="flex flex-col items-center">
+            <label className="text-xs text-text-muted uppercase tracking-wider mb-2">Reps</label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const current = currentSet?.reps || 1
+                  if (current > 1) {
+                    onUpdateSetReps(currentExercise.id, currentSetIdx, current - 1)
+                  }
+                }}
+                className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all active:scale-95"
+              >
+                <FiMinus size={18} />
+              </button>
+              <input
+                type="number"
+                value={currentSet?.reps || ''}
+                onChange={e => onUpdateSetReps(currentExercise.id, currentSetIdx, Number(e.target.value))}
+                className="w-20 h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all"
+                min={1}
+                placeholder="10"
+              />
+              <button
+                onClick={() => {
+                  const current = currentSet?.reps || 0
+                  onUpdateSetReps(currentExercise.id, currentSetIdx, current + 1)
+                }}
+                className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 hover:border-primary/50 transition-all active:scale-95 shadow-glow"
+              >
+                <FiPlus size={18} />
+              </button>
             </div>
-            <span className="text-3xl text-text-muted font-light mt-6">&times;</span>
-          </>
-        )}
-        <div className="flex flex-col items-center">
-          <label className="text-xs text-text-muted uppercase tracking-wider mb-2">
-            {isTimed ? 'Duration (sec)' : 'Reps'}
-          </label>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const current = currentSet?.reps || (isTimed ? 30 : 1)
-                const decrement = isTimed ? 5 : 1
-                if (current > decrement) {
-                  onUpdateSetReps(currentExercise.id, currentSetIdx, current - decrement)
-                }
-              }}
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all active:scale-95"
-            >
-              <FiMinus size={18} />
-            </button>
-            <input
-              type="number"
-              value={currentSet?.reps || ''}
-              onChange={e => onUpdateSetReps(currentExercise.id, currentSetIdx, Number(e.target.value))}
-              className={`${isBW ? 'w-20' : 'w-20'} h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all`}
-              min={isTimed ? 5 : 1}
-              placeholder={isTimed ? '30' : '10'}
-            />
-            <button
-              onClick={() => {
-                const current = currentSet?.reps || 0
-                const increment = isTimed ? 5 : 1
-                onUpdateSetReps(currentExercise.id, currentSetIdx, current + increment)
-              }}
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 hover:border-primary/50 transition-all active:scale-95 shadow-glow"
-            >
-              <FiPlus size={18} />
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* BIG Complete Button */}
-      {(() => {
+      {/* BIG Complete Button (only show for non-timed exercises) */}
+      {!isTimed && (() => {
         const isPerSide = perSideEnabled[currentExercise.id]
         const side = currentSide[currentExercise.id] || 'right'
         const sides = sideCompleted[currentExercise.id]?.[currentSetIdx]
@@ -286,12 +294,14 @@ export function ExerciseFocusCard({
         )
       })()}
 
-      {/* Rest timer info */}
-      <p className="text-xs text-text-muted mt-3">
-        {currentSetIdx < currentExercise.sets.length - 1
-          ? 'Rest timer starts automatically after each set'
-          : 'Last set for this exercise'}
-      </p>
+      {/* Rest timer info (only for non-timed exercises) */}
+      {!isTimed && (
+        <p className="text-xs text-text-muted mt-3">
+          {currentSetIdx < currentExercise.sets.length - 1
+            ? 'Rest timer starts automatically after each set'
+            : 'Last set for this exercise'}
+        </p>
+      )}
 
       {/* Exercise Guide Toggle */}
       <button
