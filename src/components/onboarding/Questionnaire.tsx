@@ -317,7 +317,7 @@ export function Questionnaire() {
                   <p className="text-xs text-text-muted">Recovering = we&apos;ll avoid those areas. Ongoing = we&apos;ll include lighter exercises.</p>
                 </div>
               )}
-              <NavButtons onBack={back} onNext={next} />
+              <NavButtons onBack={back} onNext={next} nextDisabled={!answers.fitnessLevel} />
             </div>
           )}
 
@@ -364,7 +364,7 @@ export function Questionnaire() {
                   ))}
                 </div>
               </div>
-              <NavButtons onBack={back} onNext={next} />
+              <NavButtons onBack={back} onNext={next} nextDisabled={!answers.primaryGoal || !answers.timelineWeeks} />
             </div>
           )}
 
@@ -405,7 +405,7 @@ export function Questionnaire() {
                   <PillToggle label="No, I train alone" selected={answers.hasTrainingPartner === 'no'} onClick={() => update({ hasTrainingPartner: 'no' })} />
                 </div>
               </div>
-              <NavButtons onBack={back} onNext={next} />
+              <NavButtons onBack={back} onNext={next} nextDisabled={!answers.trainingLocation || answers.hasAdjustableBench === null || !answers.hasTrainingPartner} />
             </div>
           )}
 
@@ -494,7 +494,7 @@ export function Questionnaire() {
                   <PillToggle label="Auto (best for my split)" selected={answers.muscleFrequency === 'auto'} onClick={() => update({ muscleFrequency: 'auto' })} />
                 </div>
               </div>
-              <NavButtons onBack={back} onNext={next} />
+              <NavButtons onBack={back} onNext={next} nextDisabled={!answers.varietyPreference || !answers.muscleFrequency} />
             </div>
           )}
 
@@ -518,7 +518,7 @@ export function Questionnaire() {
                   <PillToggle label="Not yet" selected={answers.comfortWithFreeWeights === 'not-yet'} onClick={() => update({ comfortWithFreeWeights: 'not-yet' })} />
                 </div>
               </div>
-              <NavButtons onBack={back} onNext={next} />
+              <NavButtons onBack={back} onNext={next} nextDisabled={!answers.exerciseComplexity || !answers.comfortWithFreeWeights} />
             </div>
           )}
 
