@@ -214,10 +214,38 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
   return { sets, reps }
 }
 
+// Detect wrist stress level for chronic wrist injuries
+function getWristStressLevel(name: string): 'severe' | 'moderate' | 'mild' | 'none' {
+  const lower = name.toLowerCase()
+
+  // Severe: direct wrist exercises or extreme holds
+  if (lower.includes('dead hang') || lower.includes('plate pinch') ||
+      (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension')))) {
+    return 'severe'
+  }
+
+  // Moderate: sustained grip or wrist end-range stress
+  if (lower.includes('pull-up') || lower.includes('pull up') ||
+      lower.includes('chin-up') || lower.includes('chin up') ||
+      lower.includes('dip') || lower.includes('inverted row')) {
+    return 'moderate'
+  }
+
+  // Mild: wrist extension under load or pressing
+  if (lower.includes('push-up') || lower.includes('push up') ||
+      lower.includes('overhead') || lower.includes('shoulder press') ||
+      lower.includes('curl') || lower.includes('shrug') ||
+      lower.includes('farmer') || lower.includes('carry')) {
+    return 'mild'
+  }
+
+  return 'none'
+}
+
 function scoreExercise(
   ex: ExerciseData, focusAreas: MuscleGroup[], familiarExercises: string[],
   comfort: string, usedIds: string[], cautiousMuscles: MuscleGroup[],
-  hasPartner: string, hasBench: boolean, varietyPref: string,
+  hasPartner: string, hasBench: boolean, varietyPref: string, injuries: string[] = [],
 ): number {
   let score = 0
   if (focusAreas.includes(ex.primaryMuscle)) score += 6
@@ -249,12 +277,23 @@ function scoreExercise(
     if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
   }
   if (usedIds.includes(ex.id)) score -= 5
+
+  // Handle cautious muscles (injuries)
   if (cautiousMuscles.includes(ex.primaryMuscle)) {
     score -= ex.type === 'compound' ? 5 : 2
     // Extra penalty for high-impact movements on cautious joints
     const l = ex.name.toLowerCase()
     if (l.includes('lunge') || l.includes('jump') || l.includes('plyometric') || l.includes('box jump')) score -= 4
   }
+
+  // Special handling for chronic wrist injuries: penalize wrist-stressful exercises
+  if (injuries.includes('wrists')) {
+    const wristStress = getWristStressLevel(ex.name)
+    if (wristStress === 'severe') score -= 8
+    else if (wristStress === 'moderate') score -= 5
+    else if (wristStress === 'mild') score -= 2
+  }
+
   if (isTimedExercise(ex.name) || isCarryExercise(ex.name)) score -= 6
 
   return score
@@ -324,7 +363,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
     const scored = dayPool.map(ex => ({
-      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference) + (shuffle ? Math.random() * 8 : 0)
+      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries) + (shuffle ? Math.random() * 8 : 0)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
