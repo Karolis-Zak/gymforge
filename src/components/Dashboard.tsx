@@ -8,7 +8,7 @@ import { useWorkoutLogStore } from '../store/workoutLogStore'
 import type { WorkoutLog } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useOnboardingStore } from '../store/onboardingStore'
-import { calculateVolume, getProgressionSuggestion } from '../lib/exerciseUtils'
+import { calculateVolume, getProgressionSuggestion, findExerciseInfo } from '../lib/exerciseUtils'
 import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
@@ -201,6 +201,71 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Weekly Volume Targets */}
+      {(() => {
+        // Calculate sets per muscle this week
+        const muscleSetCounts: Record<string, number> = {}
+        const targetSetsPerMuscle = 10 // Optimal 8-12, aiming for 10
+
+        thisWeekLogs.forEach(log => {
+          log.exercises.forEach(ex => {
+            const exerciseInfo = findExerciseInfo(ex.exerciseName)
+            if (exerciseInfo) {
+              const muscles = [exerciseInfo.primaryMuscle, ...exerciseInfo.secondaryMuscles]
+              const setsPerMuscle = Math.ceil(ex.sets.length / muscles.length)
+              muscles.forEach(m => {
+                muscleSetCounts[m] = (muscleSetCounts[m] || 0) + setsPerMuscle
+              })
+            }
+          })
+        })
+
+        const majorMuscles = ['chest', 'back', 'shoulders', 'quads', 'hamstrings', 'glutes', 'biceps', 'triceps']
+        const muscleProgress = majorMuscles
+          .filter(m => muscleSetCounts[m] !== undefined || thisWeekLogs.length > 0)
+          .map(m => ({
+            muscle: m,
+            sets: muscleSetCounts[m] || 0,
+            target: targetSetsPerMuscle,
+            pct: Math.min(100, ((muscleSetCounts[m] || 0) / targetSetsPerMuscle) * 100)
+          }))
+          .filter(m => m.sets > 0 || m.pct > 0)
+
+        if (muscleProgress.length > 0) {
+          return (
+            <div>
+              <h2 className="text-xl font-display font-bold text-text-primary mb-4">Weekly Volume by Muscle</h2>
+              <Card padding="md">
+                <div className="space-y-3">
+                  {muscleProgress.map(m => (
+                    <div key={m.muscle}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-text-primary capitalize">{m.muscle}</span>
+                        <span className={`text-xs font-bold ${m.pct >= 100 ? 'text-success' : m.pct >= 70 ? 'text-warning' : 'text-text-muted'}`}>
+                          {m.sets}/{m.target} sets
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            m.pct >= 100 ? 'bg-success' :
+                            m.pct >= 70 ? 'bg-warning' :
+                            'bg-primary/40'
+                          }`}
+                          style={{ width: `${Math.min(m.pct, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-text-muted mt-4">Target: 8-12 sets per muscle per week. Adjust exercises if imbalanced.</p>
+              </Card>
+            </div>
+          )
+        }
+        return null
+      })()}
 
       {/* Progression Suggestions (from RPE feedback) */}
       {(() => {
