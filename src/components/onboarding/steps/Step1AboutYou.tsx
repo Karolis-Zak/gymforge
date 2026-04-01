@@ -45,11 +45,11 @@ export function Step1AboutYou({ answers, update, onNext, onBack }: Step1AboutYou
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {([
-            { id: 'lean', label: 'Lean', desc: 'Low body fat, athletic build — can handle high-impact exercises' },
-            { id: 'athletic', label: 'Athletic', desc: 'Fit and toned — optimized for full range of movements' },
-            { id: 'stocky', label: 'Stocky', desc: 'Naturally strong, solid frame — moderate-impact focus' },
-            { id: 'overweight', label: 'Overweight', desc: 'Building strength from here — joint-friendly programming' },
-            { id: 'obese', label: 'Obese', desc: 'Maximum joint care — low-impact, beginner-friendly' },
+            { id: 'lean', label: 'Very Lean', desc: 'Low body fat, defined muscles — can handle any exercise' },
+            { id: 'athletic', label: 'Average / Normal', desc: 'Regular build, not particularly muscular — balanced approach' },
+            { id: 'stocky', label: 'Naturally Strong', desc: 'Built strong, solid frame — leverage your strength' },
+            { id: 'overweight', label: 'Heavier Build', desc: 'Extra weight, building strength — joint-friendly focus' },
+            { id: 'obese', label: 'Significant Weight', desc: 'Maximum joint care — low-impact, beginner-friendly' },
           ] as const).map(t => (
             <button key={t.id} onClick={() => update({ bodyType: t.id })} className={`p-3 rounded-xl border transition-all text-left ${answers.bodyType === t.id ? 'bg-primary/10 border-primary/50' : 'border-white/10 hover:border-white/20'}`}>
               <div className="font-medium text-sm text-text-primary">{t.label}</div>

@@ -692,6 +692,113 @@ function auditVolumeBalance(days: GeneratedDay[]): { muscle: string; sets: numbe
   }))
 }
 
+/**
+ * Determine RPE (Rate of Perceived Exertion) for a given week in training cycle
+ * RPE 6-7 = easy (can do 4+ more reps)
+ * RPE 8-9 = hard (can do 1-2 more reps)
+ * RPE 5-6 = deload (moving without fatigue)
+ */
+function getWeekRPE(weekNumber: number, totalWeeks: number, primaryGoal: string): { min: number; max: number; description: string } {
+  // Deload weeks (4, 8, 12)
+  if (weekNumber === Math.ceil(totalWeeks / 3) || weekNumber === Math.ceil(2 * totalWeeks / 3) || weekNumber === totalWeeks) {
+    return { min: 5, max: 6, description: 'Deload week: Light, focus on movement quality' }
+  }
+
+  // Early phase (weeks 1-2 or 1-3)
+  if (weekNumber <= Math.ceil(totalWeeks * 0.25)) {
+    return { min: 6, max: 7, description: 'Build phase: Learn form, move with control' }
+  }
+
+  // Mid phase (weeks 3-8)
+  if (weekNumber <= Math.ceil(totalWeeks * 0.65)) {
+    if (weekNumber <= Math.ceil(totalWeeks * 0.45)) {
+      return { min: 7, max: 8, description: 'Accumulation phase: Add weight or reps' }
+    }
+    return { min: 8, max: 9, description: 'Intensity phase: Push hard, challenge yourself' }
+  }
+
+  // Final weeks
+  return { min: 6, max: 7, description: 'Taper phase: Reduce intensity, maintain movement' }
+}
+
+/**
+ * Check push/pull balance and quad/hamstring balance
+ * Critical for preventing imbalances that cause injuries
+ */
+function checkPushPullBalance(days: GeneratedDay[]): { balanced: boolean; pushSets: number; pullSets: number; issues: string[] } {
+  let pushSets = 0
+  let pullSets = 0
+  const issues: string[] = []
+
+  days.forEach(day => {
+    day.exercises.forEach(ex => {
+      const info = exerciseDb.find(e => e.id === ex.id)
+      if (!info || ex.isDurationBased) return
+
+      // Classify as push or pull
+      const lower = info.name.toLowerCase()
+      const isPush = info.primaryMuscle === 'chest' || info.primaryMuscle === 'shoulders' ||
+                     info.primaryMuscle === 'triceps' || lower.includes('press') || lower.includes('push')
+      const isPull = info.primaryMuscle === 'back' || info.primaryMuscle === 'biceps' ||
+                     info.primaryMuscle === 'traps' || lower.includes('pull') || lower.includes('row') ||
+                     lower.includes('curl')
+
+      if (isPush) pushSets += ex.sets
+      if (isPull) pullSets += ex.sets
+    })
+  })
+
+  // Check balance (should be within ±2 sets)
+  const difference = Math.abs(pushSets - pullSets)
+  if (difference > 2) {
+    issues.push(`Push/Pull imbalance: ${pushSets} push vs ${pullSets} pull sets. Risk: shoulder issues.`)
+  }
+
+  // Check for rear delts (critical for shoulder health)
+  const hasRearDelts = days.some(day =>
+    day.exercises.some(ex => {
+      const info = exerciseDb.find(e => e.id === ex.id)
+      if (!info) return false
+      const lower = info.name.toLowerCase()
+      return (lower.includes('face pull') || lower.includes('reverse') || lower.includes('rear delt') ||
+              lower.includes('band pull') && lower.includes('apart'))
+    })
+  )
+  if (!hasRearDelts) {
+    issues.push(`No rear delt work detected. Add face pulls or reverse flyes for shoulder health.`)
+  }
+
+  return { balanced: issues.length === 0, pushSets, pullSets, issues }
+}
+
+/**
+ * Check quad/hamstring balance
+ * Imbalance leads to knee issues
+ */
+function checkLegBalance(days: GeneratedDay[]): { balanced: boolean; quadSets: number; hamstringSets: number; issues: string[] } {
+  let quadSets = 0
+  let hamstringSets = 0
+  const issues: string[] = []
+
+  days.forEach(day => {
+    day.exercises.forEach(ex => {
+      const info = exerciseDb.find(e => e.id === ex.id)
+      if (!info || ex.isDurationBased) return
+
+      if (info.primaryMuscle === 'quads') quadSets += ex.sets
+      if (info.primaryMuscle === 'hamstrings') hamstringSets += ex.sets
+    })
+  })
+
+  // Check balance
+  const difference = Math.abs(quadSets - hamstringSets)
+  if (difference > 2) {
+    issues.push(`Quad/Hamstring imbalance: ${quadSets} quad vs ${hamstringSets} hamstring sets. Risk: knee issues.`)
+  }
+
+  return { balanced: issues.length === 0, quadSets, hamstringSets, issues }
+}
+
 function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition, sessionDuration?: number): number {
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
@@ -892,6 +999,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (answers.primaryGoal === 'fat-loss' && !isDurationBased) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
+
+      // Add RPE guidance for week 1 (can be adjusted week-to-week)
+      const week1RPE = getWeekRPE(1, answers.timelineWeeks, answers.primaryGoal)
+      if (!isDurationBased && (answers.fitnessLevel === 'regular-exerciser' || answers.fitnessLevel === 'some-experience')) {
+        notes = (notes ? notes + ' ' : '') + `RPE ${week1RPE.min}-${week1RPE.max}: ${week1RPE.description}`
+      }
+
       const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, ex.type === 'compound', bodyComposition, answers.sessionDuration)
       return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec, isDurationBased: isDurationBased || false }
     })
@@ -962,9 +1076,27 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     }
   }
 
+  // Check for critical imbalances (push/pull, quad/hamstring)
+  const pushPullBalance = checkPushPullBalance(days)
+  const legBalance = checkLegBalance(days)
+  let balanceWarnings = ''
+  if (!pushPullBalance.balanced) {
+    balanceWarnings += ' ⚠️ ' + pushPullBalance.issues[0]
+  }
+  if (!legBalance.balanced) {
+    balanceWarnings += ' ⚠️ ' + legBalance.issues[0]
+  }
+
+  // Build deload week guidance
+  let deloadNote = ''
+  if (answers.timelineWeeks >= 8) {
+    const deloadWeeks = [Math.ceil(answers.timelineWeeks / 3), Math.ceil(2 * answers.timelineWeeks / 3), answers.timelineWeeks]
+    deloadNote = ` Deload weeks: ${deloadWeeks.join(', ')} (reduce volume 40-50%, maintain movement patterns).`
+  }
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
