@@ -269,7 +269,7 @@ export function Questionnaire() {
                     bodyType: answers.bodyType as any,
                   })
                   next()
-                }} disabled={!answers.name?.trim() || !answers.bodyType}>Next <FiArrowRight /></Button>
+                }} disabled={!answers.name?.trim() || !answers.bodyType}><FiArrowRight /> Next</Button>
               </div>
             </div>
           )}
@@ -594,7 +594,7 @@ function NavButtons({ onBack, onNext, nextDisabled }: { onBack: () => void; onNe
   return (
     <div className="flex justify-between pt-2">
       <Button variant="secondary" onClick={onBack}><FiArrowLeft /> Back</Button>
-      <Button onClick={onNext} disabled={nextDisabled}>Next <FiArrowRight /></Button>
+      <Button onClick={onNext} disabled={nextDisabled}><FiArrowRight /> Next</Button>
     </div>
   )
 }

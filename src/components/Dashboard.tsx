@@ -383,7 +383,7 @@ export function Dashboard() {
               })()}
             </div>
             <Link href="/history" className="block mt-3 text-center">
-              <Button variant="secondary" size="sm">View Full History <FiArrowRight /></Button>
+              <Button variant="secondary" size="sm"><FiArrowRight /> View Full History</Button>
             </Link>
           </Card>
         )}
