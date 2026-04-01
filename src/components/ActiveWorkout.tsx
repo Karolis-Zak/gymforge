@@ -12,7 +12,7 @@ import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { ProgressRing } from './ui/ProgressRing'
-import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat } from 'react-icons/fi'
+import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat, FiLightbulb } from 'react-icons/fi'
 import Confetti from 'react-confetti'
 
 const FALLBACK_REST_SECONDS = 60
@@ -891,7 +891,7 @@ export const ActiveWorkout: React.FC = () => {
                               <ul className="space-y-1.5">
                                 {exerciseInfo.tips.map((tip, i) => (
                                   <li key={i} className="text-sm text-accent flex items-start gap-2">
-                                    <span className="mt-0.5">💡</span> {tip}
+                                    <FiLightbulb className="mt-0.5 flex-shrink-0" size={14} /> {tip}
                                   </li>
                                 ))}
                               </ul>

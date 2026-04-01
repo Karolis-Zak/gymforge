@@ -63,7 +63,6 @@ export function PlanBuilder() {
   const [exercises, setExercises] = useState<Exercise[]>([])
 
   const handleAddExercise = (ex: { id: string; name: string; sets: number; reps: number; notes: string }) => {
-    if (exercises.some(e => e.name === ex.name)) return
     setExercises(prev => [...prev, { ...ex, id: ex.id || Math.random().toString(36).substring(2) }])
   }
 

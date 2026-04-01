@@ -7,7 +7,7 @@ import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVid
 import { getExerciseCategory } from '../../data/exerciseCategories'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
-import { FiChevronDown, FiChevronUp, FiVideo, FiExternalLink, FiSearch, FiZap } from 'react-icons/fi'
+import { FiChevronDown, FiChevronUp, FiVideo, FiExternalLink, FiSearch, FiZap, FiLightbulb } from 'react-icons/fi'
 
 interface ExerciseListProps {
   selectedMuscles: MuscleGroup[]
@@ -27,14 +27,6 @@ const difficultyFilterStyles = {
 
 const EQUIPMENT_OPTIONS: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'band', 'ez-bar', 'smith-machine', 'pull-up-bar']
 const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced']
-const SORT_MODES = [
-  { id: 'smart', label: 'Smart' },
-  { id: 'az', label: 'A-Z' },
-  { id: 'difficulty', label: 'Difficulty' },
-  { id: 'equipment', label: 'Equipment' },
-] as const
-
-type SortMode = typeof SORT_MODES[number]['id']
 
 // Smart scoring — staple isolation exercises for the target muscle rank highest
 // No random component — deterministic sort so exercises don't jump around on re-render
@@ -51,19 +43,8 @@ const EQUIPMENT_ORDER: Record<string, number> = {
   kettlebell: 6, bodyweight: 7, band: 8, 'smith-machine': 9, 'pull-up-bar': 10, none: 11,
 }
 
-function sortExercises(exercises: typeof exerciseDb, mode: SortMode): typeof exerciseDb {
-  return [...exercises].sort((a, b) => {
-    if (mode === 'smart') return getSmartScore(b) - getSmartScore(a)
-    if (mode === 'az') return a.name.localeCompare(b.name)
-    if (mode === 'difficulty') {
-      const order = { beginner: 0, intermediate: 1, advanced: 2 }
-      return (order[a.difficulty] || 0) - (order[b.difficulty] || 0) || a.name.localeCompare(b.name)
-    }
-    if (mode === 'equipment') {
-      return (EQUIPMENT_ORDER[a.equipment] || 99) - (EQUIPMENT_ORDER[b.equipment] || 99) || a.name.localeCompare(b.name)
-    }
-    return 0
-  })
+function sortExercises(exercises: typeof exerciseDb): typeof exerciseDb {
+  return [...exercises].sort((a, b) => getSmartScore(b) - getSmartScore(a))
 }
 
 export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
@@ -71,7 +52,6 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Set<Difficulty>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [sortMode, setSortMode] = useState<SortMode>('smart')
   const [showSecondary, setShowSecondary] = useState(false)
 
   const toggleEquipment = (eq: Equipment) => {
@@ -99,8 +79,8 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   // PRIMARY: exercises where selected muscle IS the primary target
   const primaryMatches = useMemo(() => {
     const matches = exerciseDb.filter(ex => selectedMuscles.includes(ex.primaryMuscle))
-    return sortExercises(applyFilters(matches), sortMode)
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, sortMode, hasEquipmentFilter, hasDifficultyFilter])
+    return sortExercises(applyFilters(matches))
+  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
 
   // SECONDARY: exercises that also work the selected muscles (but primary is different)
   const secondaryMatches = useMemo(() => {
@@ -108,8 +88,8 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
       !selectedMuscles.includes(ex.primaryMuscle) &&
       ex.secondaryMuscles.some(m => selectedMuscles.includes(m))
     )
-    return sortExercises(applyFilters(matches), sortMode)
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, sortMode, hasEquipmentFilter, hasDifficultyFilter])
+    return sortExercises(applyFilters(matches))
+  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
 
   // COMPOUND: exercises hitting multiple selected muscles (only when 2+ selected)
   const compoundMatches = useMemo(() => {
@@ -120,8 +100,8 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         const all = [ex.primaryMuscle, ...ex.secondaryMuscles]
         return selectedMuscles.filter(m => all.includes(m)).length >= 2
       })
-    ), sortMode)
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, sortMode, hasEquipmentFilter, hasDifficultyFilter])
+    ))
+  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
 
   // IDs to exclude from regular sections (shown in compound section)
   const compoundIds = useMemo(() => new Set(compoundMatches.map(ex => ex.id)), [compoundMatches])
@@ -333,7 +313,7 @@ function ExerciseCard({ ex, expandedId, setExpandedId, idPrefix = '', selectedMu
             <div>
               <h5 className="text-xs text-text-muted uppercase tracking-wider mb-2">Tips</h5>
               {ex.tips.map((tip, i) => (
-                <p key={i} className="text-sm text-accent flex items-start gap-2"><span className="mt-0.5">💡</span> {tip}</p>
+                <p key={i} className="text-sm text-accent flex items-start gap-2"><FiLightbulb className="mt-0.5 flex-shrink-0" size={14} /> {tip}</p>
               ))}
             </div>
           )}
