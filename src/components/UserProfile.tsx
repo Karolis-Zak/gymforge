@@ -153,7 +153,7 @@ export const UserProfileForm: React.FC = () => {
           <StatCard title="Age" value={profile?.age || '-'} color="primary" />
           <StatCard title="Height" value={profile?.height ? `${profile.height}cm` : '-'} color="accent" />
           <StatCard title="Weight" value={profile?.weight ? `${profile.weight}kg` : '-'} color="success" />
-          <StatCard title="Gender" value={profile?.gender || '-'} color="warning" />
+          <StatCard title="Gender" value={profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : '-'} color="warning" />
         </div>
       )}
 
