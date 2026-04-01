@@ -155,12 +155,23 @@ function getAllowedDifficulties(complexity: string): Difficulty[] {
 }
 
 // Exercises that should be completely excluded for wrist injuries (not just penalized)
-function shouldExcludeForWristInjury(ex: ExerciseData): boolean {
+function shouldExcludeForWristInjury(ex: ExerciseData, isAcuteWristInjury: boolean): boolean {
   const lower = ex.name.toLowerCase()
-  // Dead hang, plate pinch, and wrist curls/extensions are inappropriate for any wrist injury
-  return (lower.includes('dead hang') ||
-          lower.includes('plate pinch') ||
-          (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
+
+  // SEVERE: Dead hang, plate pinch, wrist curls — exclude for ANY wrist injury
+  const isSevereWristExercise = (lower.includes('dead hang') ||
+                                  lower.includes('plate pinch') ||
+                                  (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
+
+  // MODERATE: Pull-ups, dips, inverted rows — exclude only for ACUTE wrist injuries
+  const isModerateWristExercise = (lower.includes('pull-up') || lower.includes('pull up') ||
+                                    lower.includes('chin-up') || lower.includes('chin up') ||
+                                    lower.includes('dip') || lower.includes('inverted row'))
+
+  if (isSevereWristExercise) return true // Always exclude severe
+  if (isAcuteWristInjury && isModerateWristExercise) return true // Exclude moderate only for acute
+
+  return false
 }
 
 function getRestSeconds(goal: string, level: string): number {
@@ -351,18 +362,22 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const exerciseCount = getExerciseCount(answers.sessionDuration, answers.fitnessLevel, answers.primaryGoal)
   const sortedDays = [...answers.specificDays].sort((a, b) => WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b))
 
+  // Check if user has ACUTE wrist injury (for stricter exclusions)
+  const hasAcuteWristInjury = answers.injuries.includes('wrists') &&
+                               (!answers.injurySeverity['wrists'] || answers.injurySeverity['wrists'] === 'acute')
+
   let pool = exerciseDb.filter(ex =>
     (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
     !avoidedMuscles.includes(ex.primaryMuscle) &&
     !ex.secondaryMuscles.some(m => avoidedMuscles.includes(m)) &&
     allowedDifficulties.includes(ex.difficulty) &&
-    !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex))
+    !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury))
   )
   if (pool.length < 10) {
     pool = exerciseDb.filter(ex =>
       (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
       !avoidedMuscles.includes(ex.primaryMuscle) && allowedDifficulties.includes(ex.difficulty) &&
-      !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex))
+      !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury))
     )
   }
 
