@@ -132,7 +132,8 @@ export const UserProfileForm: React.FC = () => {
               type="number"
               value={profile?.height || ''}
               onChange={handleChange}
-              min={0}
+              min={100}
+              max={250}
               step={0.1}
               placeholder="175"
             />
@@ -142,7 +143,8 @@ export const UserProfileForm: React.FC = () => {
               type="number"
               value={profile?.weight || ''}
               onChange={handleChange}
-              min={0}
+              min={30}
+              max={300}
               step={0.1}
               placeholder="75"
             />
