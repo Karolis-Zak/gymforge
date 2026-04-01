@@ -269,6 +269,23 @@ const INJURY_MAP: Record<string, MuscleGroup[]> = {
   knees: ['quads', 'hamstrings'], wrists: ['forearms'],
   hips: ['glutes', 'hamstrings'], ankles: ['calves'], neck: ['traps'],
 }
+
+/**
+ * Map focus areas to appropriate split days
+ * Respects split structure: don't add triceps to Pull days, back to Push days, etc.
+ */
+function distributeFocusAreas(focusAreas: MuscleGroup[], dayMuscles: MuscleGroup[]): MuscleGroup[] {
+  // Core and calves go on every day
+  const alwaysIncluded: MuscleGroup[] = focusAreas.filter(m => m === 'core' || m === 'calves')
+
+  // Other focus areas only add if they match the day's natural split
+  const contextualFocus = focusAreas.filter(m => {
+    if (m === 'core' || m === 'calves') return false
+    return dayMuscles.includes(m)
+  })
+
+  return [...new Set([...dayMuscles, ...alwaysIncluded, ...contextualFocus])]
+}
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 const WEEKDAY_LABELS: Record<string, string> = {
   monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
@@ -320,28 +337,39 @@ function shouldExcludeForWristInjury(ex: ExerciseData, isAcuteWristInjury: boole
   return false
 }
 
-function getRestSeconds(goal: string, level: string, composition?: BodyComposition): number {
+/**
+ * Get rest time for an exercise based on goal, level, and exercise type
+ * Accounts for compound vs isolation and session duration constraint
+ */
+function getRestSeconds(goal: string, level: string, isCompound: boolean, composition?: BodyComposition, sessionDuration?: number): number {
   // Heavier/less fit people need more rest for joint recovery
   const extraRest = composition && composition.impactTolerance === 'low' ? 30 : 0
 
-  if (level === 'complete-beginner') return 75 + extraRest
-  if (level === 'some-experience') {
-    if (goal === 'strength') return 90 + extraRest
-    if (goal === 'fat-loss' || goal === 'endurance') return 45 + extraRest
-    return 60 + extraRest
+  // For tight time windows (30 min), compounds must have shorter rest or they don't fit
+  const timeConstraint = sessionDuration && sessionDuration <= 30 ? -15 : 0
+
+  if (level === 'complete-beginner') {
+    return isCompound ? (75 + extraRest + timeConstraint) : (45 + extraRest)
   }
-  if (goal === 'strength') return 120 + extraRest
-  if (goal === 'muscle-building') return 75 + extraRest
-  if (goal === 'toning') return 60 + extraRest
-  if (goal === 'fat-loss') return 45 + extraRest
-  if (goal === 'endurance') return 30 + extraRest
-  return 60 + extraRest
+  if (level === 'some-experience') {
+    if (goal === 'strength') return isCompound ? (90 + extraRest) : (60 + extraRest)
+    if (goal === 'fat-loss' || goal === 'endurance') return isCompound ? (45 + extraRest) : (30 + extraRest)
+    return isCompound ? (60 + extraRest) : (45 + extraRest)
+  }
+  // Regular exerciser
+  if (goal === 'strength') return isCompound ? (120 + extraRest) : (75 + extraRest)
+  if (goal === 'muscle-building') return isCompound ? (75 + extraRest) : (60 + extraRest)
+  if (goal === 'toning') return isCompound ? (60 + extraRest) : (45 + extraRest)
+  if (goal === 'fat-loss') return isCompound ? (45 + extraRest) : (30 + extraRest)
+  if (goal === 'endurance') return isCompound ? (40 + extraRest) : (25 + extraRest)
+  return isCompound ? (60 + extraRest) : (45 + extraRest)
 }
 
 function getExerciseCount(targetDuration: number, level: string, goal: string, composition?: BodyComposition): number {
   const warmup = level === 'complete-beginner' ? 8 : 5
   const available = targetDuration - warmup - 3
-  const restSec = getRestSeconds(goal, level, composition)
+  // Use compound rest for calculation (more conservative)
+  const restSec = getRestSeconds(goal, level, true, composition, targetDuration)
   const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
   const min = targetDuration <= 30 ? 4 : 5
@@ -527,11 +555,14 @@ function sortExercises(exercises: GeneratedExercise[]): GeneratedExercise[] {
   })
 }
 
-function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition): number {
-  const restSec = getRestSeconds(goal, level, composition)
+function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition, sessionDuration?: number): number {
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
   exercises.forEach(ex => {
+    // Determine if exercise is likely compound based on rest time (compounds get longer rest)
+    const isCompound = (ex.restSeconds || 0) > 50
+    const restSec = ex.restSeconds || getRestSeconds(goal, level, isCompound, composition, sessionDuration)
+
     if (ex.isDurationBased) {
       // Duration-based exercise: 30sec + 5sec prep per set + rest between sets
       total += (ex.sets * ((5 + 30) / 60)) + ((ex.sets - 1) * restSec / 60)
@@ -592,16 +623,32 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const usedThisWeek = new Set<string>()
   const days: GeneratedDay[] = []
   const daysToGenerate = split.days.slice(0, sortedDays.length)
-  // Only add cardio finishers if there's time in the session (>50 min with warmup)
-  const canAddCardio = answers.sessionDuration > 50
-  const cardioCount = canAddCardio && answers.cardioPreference === 'heavy' ? 2 : canAddCardio && answers.cardioPreference === 'moderate' ? 1 : 0
+
+  // CARDIO STRATEGY:
+  // If user selects cardio AND has tight time (<=30 min), reduce exercises per day to fit cardio
+  // If user has loose time (>50 min), add cardio finishers
+  const needsCardio = answers.cardioPreference !== 'none'
+  let adjustedExerciseCount = exerciseCount
+  let cardioCount = 0
+
+  if (needsCardio) {
+    if (answers.sessionDuration > 50) {
+      // Plenty of time: add cardio finishers
+      cardioCount = answers.cardioPreference === 'heavy' ? 2 : 1
+    } else if (answers.sessionDuration <= 30) {
+      // Tight time: reduce exercises by 1, add cardio finisher instead
+      adjustedExerciseCount = Math.max(3, exerciseCount - 1)
+      cardioCount = 1
+    }
+  }
 
   daysToGenerate.forEach((splitDay, i) => {
     const dayOfWeek = sortedDays[i]
     let targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
-    // Guarantee ALL user-selected focus areas appear on every day (across all days)
+    // Intelligently distribute focus areas — only add to days where they belong
+    // (e.g., triceps only to Push days, back only to Pull days)
     const validFocusAreas = answers.focusAreas.filter(m => !avoidedMuscles.includes(m))
-    targetMuscles = [...new Set([...targetMuscles, ...validFocusAreas])]
+    targetMuscles = distributeFocusAreas(validFocusAreas, targetMuscles)
 
     const majorTargets = targetMuscles.filter(m => MAJOR_MUSCLES.has(m))
     const minorTargets = targetMuscles.filter(m => !MAJOR_MUSCLES.has(m))
@@ -638,7 +685,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
     // Reserve slots for focus minors so they don't get squeezed out
     const reservedForMinors = Math.min(focusMinors.length, 1)
-    const mainSlots = exerciseCount - reservedForMinors
+    const mainSlots = adjustedExerciseCount - reservedForMinors
 
     // PHASE 1: One compound per MAJOR muscle (different movement patterns)
     // Back is special — it benefits from TWO compounds (a row + a pull) if slots allow
@@ -663,26 +710,26 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
     // PHASE 3: Focus minor muscles — GUARANTEED slot (reserved above)
     for (const muscle of focusMinors) {
-      if (selected.length >= exerciseCount) break
+      if (selected.length >= adjustedExerciseCount) break
       const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
       if (best) addExercise(best.ex)
     }
 
     // PHASE 4: Fill remaining — any muscle, different patterns, prefer unfilled muscles
-    if (selected.length < exerciseCount) {
+    if (selected.length < adjustedExerciseCount) {
       const unfilled = [...majorTargets, ...focusMinors].filter(m => !muscleCount[m])
       const filled = majorTargets.filter(m => muscleCount[m])
       for (const muscle of [...unfilled, ...filled]) {
-        if (selected.length >= exerciseCount) break
+        if (selected.length >= adjustedExerciseCount) break
         const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
         if (best) addExercise(best.ex)
       }
     }
 
     // PHASE 5: Absolute fill — still respects pattern constraints but allows any muscle
-    if (selected.length < exerciseCount) {
+    if (selected.length < adjustedExerciseCount) {
       for (const { ex } of scored) {
-        if (selected.length >= exerciseCount) break
+        if (selected.length >= adjustedExerciseCount) break
         if (canAdd(ex)) addExercise(ex)
       }
     }
@@ -707,7 +754,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (answers.primaryGoal === 'fat-loss' && !isDurationBased) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
-      const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, bodyComposition)
+      const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, ex.type === 'compound', bodyComposition, answers.sessionDuration)
       return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec, isDurationBased: isDurationBased || false }
     })
 
@@ -725,7 +772,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       splitName: splitDay.name,
       exercises,
       targetMuscles,
-      estimatedMinutes: estimateDuration(exercises, answers.fitnessLevel, answers.primaryGoal, answers.warmupPreference, bodyComposition),
+      estimatedMinutes: estimateDuration(exercises, answers.fitnessLevel, answers.primaryGoal, answers.warmupPreference, bodyComposition, answers.sessionDuration),
     })
   })
 
@@ -734,9 +781,10 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const secondaryLabel = answers.secondaryGoal ? ` & ${SECONDARY_GOAL_NAMES[answers.secondaryGoal] || answers.secondaryGoal}` : ''
   const warmupNote = answers.warmupPreference === 'full' ? ' Start with 10 min warmup.' : answers.warmupPreference === 'quick' ? ' Start with 5 min warmup.' : ''
 
-  // Only claim cardio finishers if there's room in the session (>50 min with warmup)
-  const hasTimeForCardio = answers.sessionDuration > 50 && answers.cardioPreference !== 'none'
-  const cardioNote = hasTimeForCardio ? ' Includes cardio finishers.' : ''
+  // Describe cardio if included
+  const cardioNote = needsCardio && (cardioCount > 0 || answers.cardioPreference !== 'none')
+    ? ` ${answers.sessionDuration > 50 ? 'Includes cardio finishers.' : 'Incorporates cardio intervals.'}`
+    : ''
 
   // Body composition note if available
   let bodyCompNote = ''

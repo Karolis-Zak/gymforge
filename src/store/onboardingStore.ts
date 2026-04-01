@@ -9,7 +9,7 @@ export interface OnboardingAnswers {
   gender: 'male' | 'female' | 'other' | ''
   height: number
   weight: number
-  bodyType: 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese' | ''
+  bodyType: 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese' | ''  // Note: All 5 body types now visible in UI
 
   // Fitness Level
   fitnessLevel: 'complete-beginner' | 'some-experience' | 'regular-exerciser'
