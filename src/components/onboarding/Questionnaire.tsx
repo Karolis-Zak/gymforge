@@ -31,7 +31,7 @@ const INJURY_AREAS = [
   { id: 'neck', label: 'Neck' },
 ]
 
-const GOALS = [
+const GOALS: Array<{ id: OnboardingAnswers['primaryGoal']; label: string; desc: string; icon: React.ReactNode }> = [
   { id: 'strength', label: 'Build Strength', desc: 'Get stronger, lift heavier', icon: <FiTarget /> },
   { id: 'muscle-building', label: 'Build Muscle', desc: 'Grow bigger muscles', icon: <FiAward /> },
   { id: 'toning', label: 'Body Toning', desc: 'Define muscles, look lean', icon: <FiStar /> },
@@ -41,11 +41,16 @@ const GOALS = [
   { id: 'flexibility', label: 'Improve Flexibility', desc: 'Move better', icon: <FiMaximize2 /> },
 ]
 
-const LOCATIONS = [
+const LOCATIONS: Array<{ id: OnboardingAnswers['trainingLocation']; label: string; desc: string; icon: React.ReactNode }> = [
   { id: 'gym', label: 'At a Gym', desc: 'Full gym access', icon: <FiMapPin /> },
   { id: 'home', label: 'At Home', desc: 'Home equipment', icon: <FiHome /> },
   { id: 'outdoor', label: 'Outdoors', desc: 'Parks, outdoors', icon: <FiSun /> },
   { id: 'mixed', label: 'Mixed', desc: 'Combination', icon: <FiCompass /> },
+]
+
+const CARDIO_OPTIONS: Array<{ v: OnboardingAnswers['cardioPreference']; l: string }> = [
+  { v: 'none', l: 'No cardio' }, { v: 'light', l: 'Light (walks)' },
+  { v: 'moderate', l: 'Moderate (20 min)' }, { v: 'heavy', l: 'Heavy (30+ min)' },
 ]
 
 const SPLIT_LABELS: Record<number, string> = { 2: 'Full Body', 3: 'PPL', 4: 'Upper/Lower', 5: '5-Day', 6: 'PPL ×2' }
@@ -78,6 +83,13 @@ function capitalize(text: string): string {
     .join(' ')
 }
 
+function toValidBodyType(bt: string): 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese' | undefined {
+  if (bt === 'lean' || bt === 'athletic' || bt === 'stocky' || bt === 'overweight' || bt === 'obese') {
+    return bt
+  }
+  return undefined
+}
+
 export function Questionnaire() {
   const router = useRouter()
   const { profile, updateProfile } = useUserStore()
@@ -94,7 +106,7 @@ export function Questionnaire() {
       // Step 1: Always prioritize current profile data (not old stored answers)
       name: profile?.name || '',
       age: profile?.age || 0,
-      gender: (profile?.gender as any) || '',
+      gender: (profile?.gender || '') as OnboardingAnswers['gender'],
       height: profile?.height || 0,
       weight: profile?.weight || 0,
     }
@@ -149,7 +161,7 @@ export function Questionnaire() {
       gender: profile?.gender || answers.gender || undefined,
       height: profile?.height || answers.height,
       weight: profile?.weight || answers.weight,
-      bodyType: (profile?.bodyType || answers.bodyType) as any,
+      bodyType: profile?.bodyType || toValidBodyType(answers.bodyType),
     })
 
     const allIds: string[] = []
@@ -266,7 +278,7 @@ export function Questionnaire() {
                     gender: answers.gender || undefined,
                     height: answers.height || undefined,
                     weight: answers.weight || undefined,
-                    bodyType: answers.bodyType as any,
+                    bodyType: toValidBodyType(answers.bodyType),
                   })
                   next()
                 }} disabled={!answers.name?.trim() || !answers.bodyType}><FiArrowRight /> Next</Button>
@@ -329,7 +341,7 @@ export function Questionnaire() {
                 <label className="text-sm font-medium text-text-secondary block mb-2">Primary goal</label>
                 <div className="grid grid-cols-2 gap-3">
                   {GOALS.map(g => (
-                    <SelectionCard key={g.id} icon={g.icon} label={g.label} description={g.desc} selected={answers.primaryGoal === g.id} onClick={() => update({ primaryGoal: g.id as any })} />
+                    <SelectionCard key={g.id} icon={g.icon} label={g.label} description={g.desc} selected={answers.primaryGoal === g.id} onClick={() => update({ primaryGoal: g.id })} />
                   ))}
                 </div>
               </div>
@@ -345,11 +357,8 @@ export function Questionnaire() {
               <div>
                 <label className="text-sm font-medium text-text-secondary block mb-2">Include cardio in your plan?</label>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { v: 'none', l: 'No cardio' }, { v: 'light', l: 'Light (walks)' },
-                    { v: 'moderate', l: 'Moderate (20 min)' }, { v: 'heavy', l: 'Heavy (30+ min)' },
-                  ].map(c => (
-                    <PillToggle key={c.v} label={c.l} selected={answers.cardioPreference === c.v} onClick={() => update({ cardioPreference: c.v as any })} />
+                  {CARDIO_OPTIONS.map(c => (
+                    <PillToggle key={c.v} label={c.l} selected={answers.cardioPreference === c.v} onClick={() => update({ cardioPreference: c.v })} />
                   ))}
                 </div>
               </div>
@@ -374,7 +383,7 @@ export function Questionnaire() {
               <StepHeader title="Equipment & Location" subtitle="Where and with what will you train?" />
               <div className="grid grid-cols-2 gap-3">
                 {LOCATIONS.map(loc => (
-                  <SelectionCard key={loc.id} icon={loc.icon} label={loc.label} description={loc.desc} selected={answers.trainingLocation === loc.id} onClick={() => update({ trainingLocation: loc.id as any })} size="lg" />
+                  <SelectionCard key={loc.id} icon={loc.icon} label={loc.label} description={loc.desc} selected={answers.trainingLocation === loc.id} onClick={() => update({ trainingLocation: loc.id })} size="lg" />
                 ))}
               </div>
               {answers.trainingLocation !== 'outdoor' && (
