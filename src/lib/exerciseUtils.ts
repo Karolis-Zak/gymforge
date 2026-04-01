@@ -20,6 +20,12 @@ export const REST_ADJUSTMENTS = {
   INCREASE_LONG: 60, // seconds
 } as const
 
+// Timed exercise constants (for Plank, Wall Sit, etc.)
+export const TIMED_EXERCISE_DEFAULTS = {
+  MINIMUM_SECONDS: 30,
+  DEFAULT_SECONDS: 30,
+} as const
+
 // Exercise classification keywords
 const BODYWEIGHT_KEYWORDS = [
   'push-up', 'pushup', 'pull-up', 'pullup', 'plank', 'crunch',

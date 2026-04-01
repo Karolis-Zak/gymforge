@@ -3,6 +3,7 @@
 import React from 'react'
 import { ProgressRing } from '../ui/ProgressRing'
 import { FiCheck } from 'react-icons/fi'
+import { TIMED_EXERCISE_DEFAULTS } from '../../lib/exerciseUtils'
 
 interface TimedExerciseCardProps {
   exerciseName: string
@@ -34,13 +35,16 @@ export function TimedExerciseCard({
 
       <p className="text-text-secondary mt-8 mb-4">Hold strong. You've got this.</p>
 
-      {/* Duration adjustment controls */}
+      {/* Duration adjustment controls (minimum 30 seconds) */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => {
-            if (duration > 5) onUpdateDuration(duration - 5)
+            if (duration > TIMED_EXERCISE_DEFAULTS.MINIMUM_SECONDS) {
+              onUpdateDuration(Math.max(TIMED_EXERCISE_DEFAULTS.MINIMUM_SECONDS, duration - 5))
+            }
           }}
-          className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all"
+          disabled={duration <= TIMED_EXERCISE_DEFAULTS.MINIMUM_SECONDS}
+          className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           -5s
         </button>
