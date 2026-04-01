@@ -41,7 +41,7 @@ const motivationalQuotes = [
 
 export const ActiveWorkout: React.FC = () => {
   const router = useRouter()
-  const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
+  const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise, updateExerciseRPE } = useWorkoutLogStore()
   const { plans } = useWorkoutStore()
   const { defaultRestSeconds } = useUserStore()
   const { answers } = useOnboardingStore()
@@ -434,6 +434,7 @@ export const ActiveWorkout: React.FC = () => {
         onToggleCollapse={(exId, collapsed) => setCollapsedExercises(prev => ({ ...prev, [exId]: collapsed }))}
         getPB={getPB}
         onShowGuide={(exId) => setShowGuide(prev => ({ ...prev, [exId]: true }))}
+        onUpdateRPE={updateExerciseRPE}
       />
 
       {/* ===== Floating Finish Early Button ===== */}

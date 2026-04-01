@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import type { ExerciseLog } from '../store/workoutLogStore'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, Tooltip, Filler
@@ -40,9 +41,19 @@ export function DashboardStats({
   onToggleStat,
   chartOptions,
 }: DashboardStatsProps) {
+  // Calculate average RPE from exercises with RPE logged
+  const rpeValues = completedLogs.flatMap(log =>
+    log.exercises
+      .filter((ex: ExerciseLog) => ex.rpe)
+      .map((ex: ExerciseLog) => ex.rpe as number)
+  )
+  const avgRPE = rpeValues.length > 0
+    ? (rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length).toFixed(1)
+    : null
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Current Streak */}
         <button onClick={() => onToggleStat('streak')} className="text-left">
           <Card className={`transition-all ${expandedStat === 'streak' ? 'border-primary/30' : ''}`} padding="sm">
@@ -100,6 +111,22 @@ export function DashboardStats({
             </div>
           </Card>
         </button>
+
+        {/* Average RPE */}
+        {avgRPE && (
+          <button onClick={() => onToggleStat('rpe')} className="text-left hidden lg:block">
+            <Card className={`transition-all ${expandedStat === 'rpe' ? 'border-accent/30' : ''}`} padding="sm">
+              <div className="p-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Avg RPE</span>
+                  <FiZap className="text-accent text-sm" />
+                </div>
+                <div className="text-2xl font-bold font-display text-accent">{avgRPE}</div>
+                <div className="text-xs text-text-muted mt-0.5">effort level</div>
+              </div>
+            </Card>
+          </button>
+        )}
       </div>
 
       {/* Expanded Stat Detail */}
@@ -228,6 +255,42 @@ export function DashboardStats({
             <div>
               <p className="text-lg font-bold text-text-primary">{stats.totalWorkouts > 0 ? Math.round((stats.completedWorkouts / stats.totalWorkouts) * 100) : 0}%</p>
               <p className="text-xs text-text-muted">Completion</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {expandedStat === 'rpe' && avgRPE && (
+        <Card className="animate-fade-in border-accent/20">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-text-primary">Average Effort (RPE)</h3>
+            <button onClick={() => onToggleStat('')} className="text-text-muted" aria-label="Collapse"><FiChevronUp size={14} /></button>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-end gap-2">
+              <div className="text-4xl font-bold font-display text-accent">{avgRPE}</div>
+              <div className="text-text-muted">/ 10</div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="text-sm text-text-secondary">
+                {Number(avgRPE) <= 5 ? '✓ Controlled effort — good recovery between sessions' :
+                 Number(avgRPE) <= 7 ? '✓ Good balance of intensity and sustainability' :
+                 '💪 Pushing hard — ensure adequate rest and recovery'}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div>
+                <p className="text-xs text-text-muted mb-1">Total Exercises</p>
+                <p className="font-bold text-text-primary">{rpeValues.length}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted mb-1">Min RPE</p>
+                <p className="font-bold text-text-primary">{Math.min(...rpeValues)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted mb-1">Max RPE</p>
+                <p className="font-bold text-text-primary">{Math.max(...rpeValues)}</p>
+              </div>
             </div>
           </div>
         </Card>

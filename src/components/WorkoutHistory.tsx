@@ -126,6 +126,15 @@ export function WorkoutHistory() {
                               </tbody>
                             </table>
                           </div>
+                          {ex.rpe && (
+                            <div className="mt-2 flex items-center gap-2 text-xs">
+                              <span className="text-text-muted">RPE:</span>
+                              <Badge variant="primary" size="sm">{ex.rpe}/10</Badge>
+                              {ex.rpe <= 5 && <span className="text-text-muted">⬅️ Easy</span>}
+                              {ex.rpe > 5 && ex.rpe <= 7 && <span className="text-text-muted">✓ Good</span>}
+                              {ex.rpe > 7 && <span className="text-text-muted">➡️ Hard</span>}
+                            </div>
+                          )}
                         </div>
                       )
                     })}

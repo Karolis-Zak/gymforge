@@ -15,6 +15,7 @@ interface ExerciseListPanelProps {
   onToggleCollapse: (exerciseId: string, collapsed: boolean) => void
   getPB: (exerciseId: string) => number | null
   onShowGuide: (exerciseId: string) => void
+  onUpdateRPE?: (exerciseId: string, rpe: number | undefined) => void
 }
 
 export function ExerciseListPanel({
@@ -24,6 +25,7 @@ export function ExerciseListPanel({
   onToggleCollapse,
   getPB,
   onShowGuide,
+  onUpdateRPE,
 }: ExerciseListPanelProps) {
   return (
     <div className="space-y-3">
@@ -106,6 +108,33 @@ export function ExerciseListPanel({
                   </div>
                 ))}
               </div>
+
+              {/* RPE Input (show when exercise is done) */}
+              {allSetsDone && onUpdateRPE && (
+                <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <label className="text-xs font-medium text-text-secondary uppercase tracking-wider block mb-2">How hard was it? (RPE)</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((rpe) => (
+                      <button
+                        key={rpe}
+                        onClick={() => onUpdateRPE(exercise.id, exercise.rpe === rpe ? undefined : rpe)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                          exercise.rpe === rpe
+                            ? 'bg-primary text-white shadow-glow'
+                            : 'bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        {rpe}
+                      </button>
+                    ))}
+                  </div>
+                  {exercise.rpe && (
+                    <p className="text-xs text-text-muted mt-2">
+                      {exercise.rpe <= 5 ? '⬅️ Too easy' : exercise.rpe <= 7 ? '✓ Good effort' : '➡️ Pushed hard'}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Quick buttons */}
               <div className="flex gap-2 mt-3">
