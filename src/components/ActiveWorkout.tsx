@@ -12,7 +12,7 @@ import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { ProgressRing } from './ui/ProgressRing'
-import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat, FiLightbulb } from 'react-icons/fi'
+import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat, FiLightbulb, FiAward } from 'react-icons/fi'
 import Confetti from 'react-confetti'
 
 const FALLBACK_REST_SECONDS = 60
@@ -917,7 +917,7 @@ export const ActiveWorkout: React.FC = () => {
       {/* ===== ALL DONE ===== */}
       {allDone && (
         <Card className="border-success/30 bg-success/5 text-center py-12">
-          <div className="text-6xl mb-4">🎉</div>
+          <div className="text-6xl mb-4"><FiAward className="text-success" size={64} /></div>
           <h2 className="text-3xl font-display font-bold text-text-primary mb-2">Workout Complete!</h2>
           <p className="text-text-secondary mb-6">You crushed all {totalSets} sets in {formatTime(timer)}</p>
           <button
