@@ -210,23 +210,38 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         </div>
       )}
 
-      {/* ===== Secondary matches — ALSO WORKS ===== */}
-      {secondaryMatches.length > 0 && (
+      {/* ===== Secondary matches — show differently based on whether primary has results ===== */}
+      {secondaryMatches.filter(ex => !compoundIds.has(ex.id)).length > 0 && (
         <div className="space-y-2 pt-4">
-          <button onClick={() => setShowSecondary(!showSecondary)} className="flex items-center gap-2 w-full">
-            <div className="flex-1 h-px bg-white/5" />
-            <span className="text-xs text-text-muted flex items-center gap-1">
-              Also targets {muscleLabel} ({secondaryMatches.filter(ex => !compoundIds.has(ex.id)).length})
-              {showSecondary ? <FiChevronUp size={10} /> : <FiChevronDown size={10} />}
-            </span>
-            <div className="flex-1 h-px bg-white/5" />
-          </button>
-          {showSecondary && (
-            <div className="space-y-2 opacity-70">
-              {secondaryMatches.filter(ex => !compoundIds.has(ex.id)).map(ex =>
-                <ExerciseCard key={`secondary-${ex.id}`} ex={ex} expandedId={expandedId} setExpandedId={setExpandedId} idPrefix="secondary-" selectedMuscles={selectedMuscles} showPrimaryLabel />
+          {primaryMatches.filter(ex => !compoundIds.has(ex.id)).length > 0 ? (
+            /* Primary has results — show secondary as collapsible section */
+            <>
+              <button onClick={() => setShowSecondary(!showSecondary)} className="flex items-center gap-2 w-full">
+                <div className="flex-1 h-px bg-white/5" />
+                <span className="text-xs text-text-muted flex items-center gap-1">
+                  Also targets {muscleLabel} ({secondaryMatches.filter(ex => !compoundIds.has(ex.id)).length})
+                  {showSecondary ? <FiChevronUp size={10} /> : <FiChevronDown size={10} />}
+                </span>
+                <div className="flex-1 h-px bg-white/5" />
+              </button>
+              {showSecondary && (
+                <div className="space-y-2 opacity-70">
+                  {secondaryMatches.filter(ex => !compoundIds.has(ex.id)).map(ex =>
+                    <ExerciseCard key={`secondary-${ex.id}`} ex={ex} expandedId={expandedId} setExpandedId={setExpandedId} idPrefix="secondary-" selectedMuscles={selectedMuscles} showPrimaryLabel />
+                  )}
+                </div>
               )}
-            </div>
+            </>
+          ) : (
+            /* No primary results — show secondary exercises directly with explanation */
+            <>
+              <p className="text-xs text-text-muted">No {muscleLabel.toLowerCase()}-only exercises match your equipment filter. Showing exercises that also target {muscleLabel.toLowerCase()}:</p>
+              <div className="space-y-2">
+                {secondaryMatches.filter(ex => !compoundIds.has(ex.id)).map(ex =>
+                  <ExerciseCard key={`secondary-${ex.id}`} ex={ex} expandedId={expandedId} setExpandedId={setExpandedId} idPrefix="secondary-" selectedMuscles={selectedMuscles} showPrimaryLabel />
+                )}
+              </div>
+            </>
           )}
         </div>
       )}

@@ -246,6 +246,16 @@ const curatedVideos: Record<string, string> = {
   'band chest fly': 'NDzLixr_k7I',
   'band calf raise': 'utU05RX7fEw',
   'band shrug': '_6wJaVW7TyA',
+
+  // === ADDITIONAL CORE EXERCISES (8) ===
+  'dumbbell woodchop': 'b65s5BtdOEc',
+  'dumbbell side bend': 'yBW9PwwsmNM',
+  'weighted crunch': 'dkGwcfo9zto',
+  'barbell rollout': '3C1TRMJveXo',
+  'landmine rotation': 'MswsBPLGhE8',
+  'weighted decline crunch': 'xfNAzPwNRqw',
+  'machine crunch': 'dkGwcfo9zto',
+  'dumbbell russian twist': 'MKfv0WiTeEQ',
 }
 
 /**
