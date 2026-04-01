@@ -40,16 +40,7 @@ export function Step6Preferences({ answers, update, onNext, onBack }: Step6Prefe
           ))}
         </div>
       </div>
-      <div>
-        <label className="text-sm font-medium text-text-secondary block mb-2">Hit each muscle group how often?</label>
-        <div className="flex flex-wrap gap-2">
-          <PillToggle label="Once per week" selected={answers.muscleFrequency === 'once'} onClick={() => update({ muscleFrequency: 'once' })} />
-          <PillToggle label="Twice per week" selected={answers.muscleFrequency === 'twice'} onClick={() => update({ muscleFrequency: 'twice' })} />
-          <PillToggle label="Auto-balanced" selected={answers.muscleFrequency === 'auto'} onClick={() => update({ muscleFrequency: 'auto' })} />
-        </div>
-        <p className="text-xs text-text-muted mt-2">Auto adjusts based on your schedule and goals.</p>
-      </div>
-      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!answers.varietyPreference || !answers.muscleFrequency} />
+      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!answers.varietyPreference} />
     </div>
   )
 }

@@ -84,7 +84,6 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
           <div className="space-y-1">
             <SummaryRow label="Training Style" value={capitalize(answers.varietyPreference)} onEdit={() => onEditStep(6)} />
             <SummaryRow label="Focus Areas" value={muscleGroupLabels(answers.focusAreas)} onEdit={() => onEditStep(6)} />
-            <SummaryRow label="Muscle Frequency" value={capitalize(answers.muscleFrequency)} onEdit={() => onEditStep(6)} />
           </div>
         </div>
 

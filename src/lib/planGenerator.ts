@@ -1,5 +1,6 @@
 import { exercises as exerciseDb, type ExerciseData, type MuscleGroup, type Difficulty } from '../data/exercises'
 import { getExerciseCategory } from '../data/exerciseCategories'
+import { GOAL_NAMES, SECONDARY_GOAL_NAMES } from './planConstants'
 import type { OnboardingAnswers } from '../store/onboardingStore'
 
 // Body composition assessment — used to adapt programming
@@ -96,6 +97,7 @@ export interface GeneratedExercise {
   reps: number
   notes: string
   restSeconds?: number
+  isDurationBased?: boolean  // true for timed/carry/cardio exercises (reps = seconds)
 }
 
 export interface GeneratedDay {
@@ -229,7 +231,7 @@ const EQUIPMENT_ORDER: Record<string, number> = {
   barbell: 1, 'trap-bar': 1, 'smith-machine': 2, dumbbell: 3, 'ez-bar': 4,
   kettlebell: 5, cable: 6, machine: 7, bodyweight: 8, band: 9, 'pull-up-bar': 8, none: 10,
 }
-const CARDIO_EXERCISES = ['mountain-climber', 'bear-crawl', 'flutter-kick', 'band-squat']
+const CARDIO_EXERCISES = ['mountain-climber', 'bear-crawl', 'flutter-kick']
 
 function getAvoidedMuscles(injuries: string[], severity: Record<string, string>): MuscleGroup[] {
   const avoided = new Set<MuscleGroup>()
@@ -463,7 +465,7 @@ function scoreExercise(
     }
   }
 
-  if (isTimedExercise(ex.name) || isCarryExercise(ex.name)) score -= 6
+  if (isTimedExercise(ex.name) || isCarryExercise(ex.name) || isCardioStyleExercise(ex.name)) score -= 6
 
   return score
 }
@@ -483,11 +485,11 @@ function estimateDuration(exercises: GeneratedExercise[], level: string, goal: s
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
   exercises.forEach(ex => {
-    const isTimed = ex.notes?.includes('seconds')
-    if (isTimed) {
-      // Timed exercise: 30sec per set + rest between sets
-      total += (ex.sets * 0.5) + ((ex.sets - 1) * restSec / 60)
+    if (ex.isDurationBased) {
+      // Duration-based exercise: 30sec + 5sec prep per set + rest between sets
+      total += (ex.sets * ((5 + 30) / 60)) + ((ex.sets - 1) * restSec / 60)
     } else {
+      // Rep-based exercise: ~1.5min per set + rest between sets
       total += (ex.sets * 1.5) + ((ex.sets - 1) * restSec / 60)
     }
   })
@@ -550,9 +552,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   daysToGenerate.forEach((splitDay, i) => {
     const dayOfWeek = sortedDays[i]
     let targetMuscles = splitDay.muscles.filter(m => !avoidedMuscles.includes(m))
-    // If user selected focus areas, ensure they're in target muscles for this day (to guarantee inclusion)
-    const focusAreasInTargets = answers.focusAreas.filter(m => !avoidedMuscles.includes(m) && !targetMuscles.includes(m))
-    targetMuscles = [...targetMuscles, ...focusAreasInTargets]
+    // Guarantee ALL user-selected focus areas appear on every day (across all days)
+    const validFocusAreas = answers.focusAreas.filter(m => !avoidedMuscles.includes(m))
+    targetMuscles = [...new Set([...targetMuscles, ...validFocusAreas])]
 
     const majorTargets = targetMuscles.filter(m => MAJOR_MUSCLES.has(m))
     const minorTargets = targetMuscles.filter(m => !MAJOR_MUSCLES.has(m))
@@ -645,17 +647,18 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       const vol = getVolume(answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, ex.type === 'compound')
       let { sets, reps } = vol
       let notes = ex.tips[0] || ''
+      let isDurationBased = false
 
-      if (isTimedExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Hold for 30 seconds per set.' }
-      else if (isCarryExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Walk for 30 seconds per set.' }
-      else if (isCardioStyleExercise(ex.name)) { reps = 30; sets = 3; notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.' }
+      if (isTimedExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Hold for 30 seconds per set.' }
+      else if (isCarryExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Walk for 30 seconds per set.' }
+      else if (isCardioStyleExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.' }
 
       if (answers.fitnessLevel === 'complete-beginner' && ex.type === 'compound') notes = 'Focus on form over weight. ' + notes
-      if (answers.primaryGoal === 'fat-loss' && !isTimedExercise(ex.name) && !isCarryExercise(ex.name) && !isCardioStyleExercise(ex.name)) {
+      if (answers.primaryGoal === 'fat-loss' && !isDurationBased) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
       const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, bodyComposition)
-      return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec }
+      return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec, isDurationBased: isDurationBased || false }
     })
 
     exercises = sortExercises(exercises)
@@ -663,7 +666,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     if (cardioCount > 0) {
       const cardioPool = pool.filter(ex => CARDIO_EXERCISES.includes(ex.id) && !selected.some(s => s.id === ex.id))
       cardioPool.slice(0, cardioCount).forEach(ex => {
-        exercises.push({ id: ex.id, name: ex.name, sets: 3, reps: 15, notes: 'Cardio finisher — minimal rest between sets.', restSeconds: 30 })
+        exercises.push({ id: ex.id, name: ex.name, sets: 3, reps: 30, notes: 'Cardio finisher — perform for 30 seconds per set, minimal rest between sets.', restSeconds: 30, isDurationBased: true })
       })
     }
 
@@ -677,16 +680,8 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   })
 
   const levelLabel = answers.fitnessLevel === 'complete-beginner' ? 'Beginner' : answers.fitnessLevel === 'some-experience' ? 'Intermediate' : 'Advanced'
-  const goalNames: Record<string, string> = {
-    'strength': 'Strength', 'muscle-building': 'Muscle Building', 'toning': 'Tone & Define',
-    'fat-loss': 'Fat Burn', 'general-fitness': 'Fitness', 'endurance': 'Endurance', 'flexibility': 'Flexibility',
-  }
-  const secondaryNames: Record<string, string> = {
-    'strength': 'Strength', 'fat-loss': 'Conditioning', 'muscle-building': 'Hypertrophy',
-    'toning': 'Toning', 'endurance': 'Endurance',
-  }
-  const goalLabel = goalNames[answers.primaryGoal] || 'Fitness'
-  const secondaryLabel = answers.secondaryGoal ? ` & ${secondaryNames[answers.secondaryGoal] || answers.secondaryGoal}` : ''
+  const goalLabel = GOAL_NAMES[answers.primaryGoal] || 'Fitness'
+  const secondaryLabel = answers.secondaryGoal ? ` & ${SECONDARY_GOAL_NAMES[answers.secondaryGoal] || answers.secondaryGoal}` : ''
   const warmupNote = answers.warmupPreference === 'full' ? ' Start with 10 min warmup.' : answers.warmupPreference === 'quick' ? ' Start with 5 min warmup.' : ''
 
   // Only claim cardio finishers if there's room in the session (>50 min with warmup)
