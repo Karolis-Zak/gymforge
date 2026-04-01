@@ -89,7 +89,7 @@ export const WorkoutPlans: React.FC = () => {
         </Card>
       ) : (
         <Card className="text-center py-12">
-          <p className="text-text-secondary">No plans match &quot;{searchTerm}&quot;</p>
+          <p className="text-text-secondary">No plans match {`"${searchTerm}"`}</p>
         </Card>
       )}
     </div>

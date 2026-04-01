@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FiHome, FiUser, FiClipboard, FiPlay, FiTrendingUp, FiZap, FiCompass, FiSun, FiMoon, FiBook, FiSearch } from 'react-icons/fi'
+import { FiHome, FiUser, FiClipboard, FiPlay, FiTrendingUp, FiCompass, FiSun, FiMoon, FiBook, FiSearch } from 'react-icons/fi'
 import { useWorkoutLogStore } from '../../store/workoutLogStore'
 import { useUserStore } from '../../store/userStore'
 
