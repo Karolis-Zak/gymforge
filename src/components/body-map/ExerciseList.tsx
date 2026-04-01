@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { exercises as exerciseDb, type MuscleGroup, type Equipment, type Difficulty } from '../../data/exercises'
 import { getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
+import { difficultyColors, difficultyFilterStyles } from '../../lib/difficultyStyles'
+import { getSmartScore } from '../../lib/exerciseUtils'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVideos'
 import { getExerciseCategory } from '../../data/exerciseCategories'
 import { Card } from '../ui/Card'
@@ -13,30 +15,8 @@ interface ExerciseListProps {
   selectedMuscles: MuscleGroup[]
 }
 
-const difficultyColors = {
-  beginner: 'success' as const,
-  intermediate: 'warning' as const,
-  advanced: 'danger' as const,
-}
-
-const difficultyFilterStyles = {
-  beginner: 'bg-success/15 text-success border-success/30',
-  intermediate: 'bg-warning/15 text-warning border-warning/30',
-  advanced: 'bg-danger/15 text-danger border-danger/30',
-}
-
 const EQUIPMENT_OPTIONS: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'kettlebell', 'band', 'ez-bar', 'smith-machine', 'pull-up-bar']
 const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced']
-
-// Smart scoring — staple isolation exercises for the target muscle rank highest
-// No random component — deterministic sort so exercises don't jump around on re-render
-function getSmartScore(ex: typeof exerciseDb[0]): number {
-  const cat = getExerciseCategory(ex.id)
-  let score = cat === 'staple' ? 30 : cat === 'standard' ? 15 : 0
-  score += ex.type === 'isolation' ? 20 : 10
-  score += ex.difficulty === 'beginner' ? 5 : ex.difficulty === 'intermediate' ? 2 : 0
-  return score
-}
 
 const EQUIPMENT_ORDER: Record<string, number> = {
   barbell: 1, dumbbell: 2, 'ez-bar': 3, cable: 4, machine: 5,
@@ -44,7 +24,7 @@ const EQUIPMENT_ORDER: Record<string, number> = {
 }
 
 function sortExercises(exercises: typeof exerciseDb): typeof exerciseDb {
-  return [...exercises].sort((a, b) => getSmartScore(b) - getSmartScore(a))
+  return [...exercises].sort((a, b) => getSmartScore(b, 20, 10) - getSmartScore(a, 20, 10))
 }
 
 export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
@@ -54,12 +34,12 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showSecondary, setShowSecondary] = useState(false)
 
-  const toggleEquipment = (eq: Equipment) => {
+  const toggleEquipment = useCallback((eq: Equipment) => {
     setSelectedEquipment(prev => { const next = new Set(prev); if (next.has(eq)) next.delete(eq); else next.add(eq); return next })
-  }
-  const toggleDifficulty = (d: Difficulty) => {
+  }, [])
+  const toggleDifficulty = useCallback((d: Difficulty) => {
     setSelectedDifficulty(prev => { const next = new Set(prev); if (next.has(d)) next.delete(d); else next.add(d); return next })
-  }
+  }, [])
 
   const hasEquipmentFilter = selectedEquipment.size > 0
   const hasDifficultyFilter = selectedDifficulty.size > 0

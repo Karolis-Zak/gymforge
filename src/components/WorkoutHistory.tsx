@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
+import { calculateVolume } from '../lib/exerciseUtils'
 import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
 import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook } from 'react-icons/fi'
@@ -40,8 +41,7 @@ export function WorkoutHistory() {
             const isExpanded = expandedId === log.id
             const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0)
             const completedSets = log.exercises.reduce((s, ex) => s + ex.sets.filter(set => set.completed).length, 0)
-            const totalVolume = log.exercises.reduce((s, ex) =>
-              s + ex.sets.reduce((ss, set) => ss + ((set.weight || 0) * (set.reps || 0)), 0), 0)
+            const totalVolume = calculateVolume(log.exercises)
 
             return (
               <Card key={log.id} padding="none" className="overflow-hidden">

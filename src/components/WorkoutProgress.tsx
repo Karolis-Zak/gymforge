@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,6 +18,8 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useUserStore } from '../store/userStore'
+import { calculateVolume } from '../lib/exerciseUtils'
+import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import type { WorkoutLog } from '../store/workoutLogStore'
 import { Input } from './ui/Input'
 import { Card } from './ui/Card'
@@ -32,16 +34,6 @@ ChartJS.defaults.borderColor = 'rgba(255,255,255,0.06)'
 ChartJS.defaults.font.family = 'Inter, system-ui, sans-serif'
 
 const CHART_COLORS = ['#00d4ff', '#a855f7', '#22c55e', '#f59e0b', '#ef4444', '#67e8f9']
-
-const DARK_CHART_OPTIONS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: {
-    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569' } },
-    x: { grid: { display: false }, ticks: { color: '#475569', maxRotation: 0 } },
-  },
-} as const
 
 const groupLogsByWeek = (logs: WorkoutLog[]): Record<string, WorkoutLog[]> => {
   const weeks: Record<string, WorkoutLog[]> = {}
@@ -67,41 +59,45 @@ export const WorkoutProgress: React.FC = () => {
 
   const progress = selectedExercise ? getExerciseProgress(selectedExercise) : null
 
-  const completedLogs = logs.filter(l => l.completed)
-  const weeks = groupLogsByWeek(completedLogs)
-  const weekKeys = Object.keys(weeks).sort().slice(-8)
-
-  const volumePerWeek = weekKeys.map(week =>
-    weeks[week].reduce((sum, log) =>
-      sum + log.exercises.reduce((exSum, ex) =>
-        exSum + ex.sets.reduce((setSum, set) =>
-          setSum + ((set.weight || 0) * (set.reps || 0)), 0), 0), 0))
-
-  const workoutsPerWeek = weekKeys.map(week => weeks[week].length)
+  const completedLogs = useMemo(() => logs.filter(l => l.completed), [logs])
 
   // Heatmap data - last 84 days (12 weeks)
-  const streakDays = new Set(completedLogs.map(log => log.date.split('T')[0]))
-  const last84Days = Array.from({ length: 84 }, (_, i) => {
+  const last84Days = useMemo(() => Array.from({ length: 84 }, (_, i) => {
     const d = new Date(Date.now() - (83 - i) * 86400000)
     return d.toISOString().split('T')[0]
-  })
+  }), [])
+
+  const { weeks, weekKeys, volumePerWeek, workoutsPerWeek } = useMemo(() => {
+    const w = groupLogsByWeek(completedLogs)
+    const wk = Object.keys(w).sort().slice(-8)
+    const vw = wk.map(week =>
+      w[week].reduce((sum, log) =>
+        sum + calculateVolume(log.exercises), 0))
+    const wpw = wk.map(week => w[week].length)
+    return { weeks: w, weekKeys: wk, volumePerWeek: vw, workoutsPerWeek: wpw }
+  }, [completedLogs])
+
+  const streakDays = useMemo(() =>
+    new Set(completedLogs.map(log => log.date.split('T')[0])),
+    [completedLogs])
 
   // Muscle group volume distribution
-  const muscleVolume: Record<string, number> = {}
-  completedLogs.forEach(log => {
-    log.exercises.forEach(ex => {
-      const plan = plans.find(p => p.exercises?.some(e => e.id === ex.exerciseId))
-      const exercise = plan?.exercises?.find(e => e.id === ex.exerciseId)
-      const name = exercise?.name || ex.exerciseName || 'Other'
-      const vol = ex.sets.reduce((sum, set) => sum + ((set.weight || 0) * (set.reps || 0)), 0)
-      muscleVolume[name] = (muscleVolume[name] || 0) + vol
+  const topExercises = useMemo(() => {
+    const muscleVolume: Record<string, number> = {}
+    completedLogs.forEach(log => {
+      log.exercises.forEach(ex => {
+        const plan = plans.find(p => p.exercises?.some(e => e.id === ex.exerciseId))
+        const exercise = plan?.exercises?.find(e => e.id === ex.exerciseId)
+        const name = exercise?.name || ex.exerciseName || 'Other'
+        const vol = ex.sets.reduce((sum, set) => sum + ((set.weight || 0) * (set.reps || 0)), 0)
+        muscleVolume[name] = (muscleVolume[name] || 0) + vol
+      })
     })
-  })
-
-  const topExercises = Object.entries(muscleVolume).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    return Object.entries(muscleVolume).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  }, [completedLogs, plans])
   const chartColors = CHART_COLORS
 
-  const darkChartOptions = DARK_CHART_OPTIONS
+  const darkChartOptions = BASE_CHART_OPTIONS
 
   return (
     <div className="animate-fade-in space-y-8">

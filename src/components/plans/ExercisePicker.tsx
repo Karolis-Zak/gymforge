@@ -4,6 +4,8 @@ import React, { useState, useMemo } from 'react'
 import { exercises } from '../../data/exercises'
 import { searchExercises, getAllMuscleGroups, getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
 import { getExerciseCategory } from '../../data/exerciseCategories'
+import { difficultyColors, difficultyFilterStyles } from '../../lib/difficultyStyles'
+import { getSmartScore, isWristDangerousExercise } from '../../lib/exerciseUtils'
 import type { MuscleGroup, Difficulty } from '../../data/exercises'
 import { useOnboardingStore } from '../../store/onboardingStore'
 import { Badge } from '../ui/Badge'
@@ -12,18 +14,6 @@ import { FiPlus, FiSearch, FiX } from 'react-icons/fi'
 
 interface ExercisePickerProps {
   onAdd: (exercise: { id: string; name: string; sets: number; reps: number; notes: string }) => void
-}
-
-const difficultyColors = {
-  beginner: 'success' as const,
-  intermediate: 'warning' as const,
-  advanced: 'danger' as const,
-}
-
-const difficultyFilterStyles = {
-  beginner: 'bg-success/15 text-success border-success/30',
-  intermediate: 'bg-warning/15 text-warning border-warning/30',
-  advanced: 'bg-danger/15 text-danger border-danger/30',
 }
 
 const SET_PRESETS = [
@@ -36,34 +26,6 @@ const SET_PRESETS = [
 ]
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced']
-
-// Check if exercise is wrist-dangerous based on injury severity
-function isWristDangerousForPicker(exerciseName: string, injuries: string[], injurySeverity: Record<string, string>): boolean {
-  const lower = exerciseName.toLowerCase()
-  if (!injuries.includes('wrists')) return false
-
-  const isAcuteWrist = !injurySeverity['wrists'] || injurySeverity['wrists'] === 'acute'
-
-  // SEVERE: always exclude
-  const isSevere = (lower.includes('dead hang') ||
-                    lower.includes('plate pinch') ||
-                    (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
-
-  // MODERATE: exclude only for acute
-  const isModerate = (lower.includes('pull-up') || lower.includes('pull up') ||
-                      lower.includes('chin-up') || lower.includes('chin up') ||
-                      lower.includes('dip') || lower.includes('inverted row'))
-
-  return isSevere || (isAcuteWrist && isModerate)
-}
-
-function smartScore(ex: typeof exercises[0]): number {
-  const cat = getExerciseCategory(ex.id)
-  let score = cat === 'staple' ? 30 : cat === 'standard' ? 15 : 0
-  score += ex.type === 'isolation' ? 10 : 5
-  score += ex.difficulty === 'beginner' ? 5 : ex.difficulty === 'intermediate' ? 2 : 0
-  return score
-}
 
 export function ExercisePicker({ onAdd }: ExercisePickerProps) {
   const { answers } = useOnboardingStore()
@@ -85,8 +47,11 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
   const filtered = useMemo(() => {
     let results = searchExercises(query, muscleFilter ? { muscle: muscleFilter as MuscleGroup } : undefined)
     if (hasDifficultyFilter) results = results.filter(ex => difficultyFilter.has(ex.difficulty))
-    if (userInjuries.includes('wrists')) results = results.filter(ex => !isWristDangerousForPicker(ex.name, userInjuries, userInjurySeverity))
-    return results.sort((a, b) => smartScore(b) - smartScore(a)).slice(0, 50)
+    if (userInjuries.includes('wrists')) {
+      const isAcuteWrist = !userInjurySeverity['wrists'] || userInjurySeverity['wrists'] === 'acute'
+      results = results.filter(ex => !isWristDangerousExercise(ex.name, isAcuteWrist))
+    }
+    return results.sort((a, b) => getSmartScore(b, 10, 5) - getSmartScore(a, 10, 5)).slice(0, 50)
   }, [query, muscleFilter, difficultyFilter, hasDifficultyFilter, userInjuries, userInjurySeverity])
 
   const muscleGroups = getAllMuscleGroups()

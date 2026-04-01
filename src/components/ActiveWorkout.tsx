@@ -1,18 +1,22 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useUserStore } from '../store/userStore'
 import { useOnboardingStore } from '../store/onboardingStore'
 import { exercises as exerciseDb } from '../data/exercises'
-import { getExerciseVideoId, getExerciseSearchUrl } from '../data/exerciseVideos'
+import { WorkoutPreviewScreen } from './workout/WorkoutPreviewScreen'
+import { SwapExerciseModal } from './workout/SwapExerciseModal'
+import { RestTimerCard } from './workout/RestTimerCard'
+import { ExerciseFocusCard } from './workout/ExerciseFocusCard'
+import { ExerciseListPanel } from './workout/ExerciseListPanel'
 import {
   AUDIO, REST_ADJUSTMENTS,
   findExerciseInfo, isBodyweightExercise, isTimedExercise,
   isUnilateralExercise, getWristStressLevel, isWristDangerousExercise,
-  formatTime
+  formatTime, beep, suggestSwapExercises
 } from '../lib/exerciseUtils'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
@@ -34,67 +38,6 @@ const motivationalQuotes = [
   'One more rep.',
 ]
 
-const beep = () => {
-  try {
-    if (typeof window === 'undefined') return
-    const AC = (window as any).AudioContext || (window as any).webkitAudioContext
-    if (!AC) return
-    const ctx = new AC()
-    const o = ctx.createOscillator()
-    const g = ctx.createGain()
-    o.type = 'sine'
-    o.frequency.value = AUDIO.FREQUENCY
-    o.connect(g)
-    g.connect(ctx.destination)
-    g.gain.value = AUDIO.GAIN
-    o.start(0)
-    o.stop(ctx.currentTime + AUDIO.DURATION)
-    o.onended = () => ctx.close()
-  } catch { /* ignore audio errors */ }
-}
-
-
-// Suggest smart swap alternatives based on current exercise context
-function suggestSwapExercises(currentExerciseName: string, injuries: string[] = [], injurySeverity: Record<string, string> = {}, allExercises = exerciseDb): typeof exerciseDb {
-  const current = findExerciseInfo(currentExerciseName)
-  if (!current) return []
-
-  // Check for acute wrist injury
-  const hasAcuteWristInjury = injuries.includes('wrists') &&
-                              (!injurySeverity['wrists'] || injurySeverity['wrists'] === 'acute')
-
-  // Score exercises for relevance as swaps
-  const scored = exerciseDb
-    .filter(ex => ex.id !== current.id) // Don't suggest the same exercise
-    .filter(ex => !(injuries.includes('wrists') && isWristDangerousExercise(ex.name, hasAcuteWristInjury))) // Filter by wrist safety
-    .map(ex => {
-      let score = 0
-
-      // Same primary muscle = high priority
-      if (ex.primaryMuscle === current.primaryMuscle) score += 10
-
-      // Same type (compound/isolation) = helpful
-      if (ex.type === current.type) score += 5
-
-      // Same equipment = convenient (user likely has it)
-      if (ex.equipment === current.equipment) score += 3
-
-      // Secondary muscle overlap = bonus
-      if (ex.secondaryMuscles.some(m => current.secondaryMuscles.includes(m))) score += 2
-
-      // Similar difficulty = appropriate challenge
-      const difficultyOrder = { beginner: 0, intermediate: 1, advanced: 2 }
-      const diffDist = Math.abs(difficultyOrder[ex.difficulty] - difficultyOrder[current.difficulty])
-      if (diffDist <= 1) score += 3 - diffDist
-
-      return { ex, score }
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 4) // Return top 4 suggestions
-    .map(s => s.ex)
-
-  return scored
-}
 
 export const ActiveWorkout: React.FC = () => {
   const router = useRouter()
@@ -218,58 +161,12 @@ export const ActiveWorkout: React.FC = () => {
 
   // PREVIEW SCREEN — before workout starts
   if (!workoutStarted) {
-    const exerciseInfo = (name: string) => findExerciseInfo(name)
     return (
-      <div className="animate-fade-in space-y-6 max-w-2xl mx-auto">
-        <div className="text-center">
-          <h1 className="text-3xl font-display font-bold text-text-primary">{currentWorkout.planName}</h1>
-          <p className="text-text-secondary mt-2">
-            {currentWorkout.exercises.length} exercises &middot; {currentWorkout.exercises.reduce((s, ex) => s + ex.sets.length, 0)} sets
-          </p>
-        </div>
-
-        {/* Exercise overview */}
-        <Card>
-          <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">Today&apos;s Exercises</h3>
-          <div className="space-y-3">
-            {currentWorkout.exercises.map((ex, i) => {
-              const info = exerciseInfo(ex.exerciseName)
-              const isBW = isBodyweightExercise(ex.exerciseName)
-              return (
-                <div key={ex.id} className="flex items-center gap-3 py-2">
-                  <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary text-sm font-medium">{ex.exerciseName}</p>
-                    <p className="text-xs text-text-muted">
-                      {ex.sets.length} sets × {ex.sets[0]?.reps || '?'} {isTimedExercise(ex.exerciseName) ? 'sec' : 'reps'}
-                      {!isBW && ex.sets[0]?.weight ? ` @ ${ex.sets[0].weight}kg` : ''}
-                      {info ? ` · ${info.primaryMuscle}` : ''}
-                    </p>
-                  </div>
-                  {info && (
-                    <Badge variant={info.difficulty === 'beginner' ? 'success' : info.difficulty === 'intermediate' ? 'warning' : 'danger'} size="sm">
-                      {info.difficulty}
-                    </Badge>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </Card>
-
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <Button variant="secondary" size="lg" onClick={() => { cancelWorkout(); router.push('/plans') }} className="flex-1">
-            <FiX /> Cancel
-          </Button>
-          <button
-            onClick={() => { setWorkoutStarted(true); setIsTimerRunning(true) }}
-            className="flex-1 h-14 bg-gradient-primary text-white text-lg font-display font-bold rounded-2xl shadow-glow hover:shadow-[0_0_40px_rgba(0,212,255,0.3)] active:scale-[0.97] transition-all duration-200 flex items-center justify-center gap-3"
-          >
-            <FiPlay /> Begin Workout
-          </button>
-        </div>
-      </div>
+      <WorkoutPreviewScreen
+        currentWorkout={currentWorkout}
+        onStart={() => { setWorkoutStarted(true); setIsTimerRunning(true) }}
+        onCancel={() => { cancelWorkout(); router.push('/plans') }}
+      />
     )
   }
 
@@ -290,32 +187,32 @@ export const ActiveWorkout: React.FC = () => {
   }
 
   // Get rest seconds for a specific exercise (from plan or default)
-  const getRestForExercise = (exerciseId: string): number => {
+  const getRestForExercise = useCallback((exerciseId: string): number => {
     if (!workoutPlan) return DEFAULT_REST_SECONDS
     const exercise = currentWorkout?.exercises.find(e => e.id === exerciseId)
     if (!exercise) return DEFAULT_REST_SECONDS
     const planEx = workoutPlan.exercises.find(e => e.id === exercise.exerciseId)
     return planEx?.restSeconds || DEFAULT_REST_SECONDS
-  }
+  }, [workoutPlan, currentWorkout, DEFAULT_REST_SECONDS])
 
   // Complete a set and start rest timer
-  const handleCompleteSet = (exerciseId: string, setIndex: number, markAsCompleted: boolean, setsLength: number) => {
+  const handleCompleteSet = useCallback((exerciseId: string, setIndex: number, markAsCompleted: boolean, setsLength: number) => {
     completeSet(exerciseId, setIndex, markAsCompleted)
     if (markAsCompleted && setIndex < setsLength - 1) {
       const restTime = getRestForExercise(exerciseId)
       setRestTimers(prev => ({ ...prev, [exerciseId]: restTime }))
       setRestActive(prev => ({ ...prev, [exerciseId]: true }))
     }
-  }
+  }, [completeSet, getRestForExercise])
 
-  const handleFinish = () => {
+  const handleFinish = useCallback(() => {
     if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
     completeWorkout(timer)
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 4000)
     setToast('Workout complete!')
     setTimeout(() => { setToast(null); router.push('/progress') }, 2000)
-  }
+  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router])
 
   // Weight progression suggestion
   const getSuggestedWeight = (exerciseId: string): number | null => {
@@ -330,18 +227,22 @@ export const ActiveWorkout: React.FC = () => {
     return hitTarget ? lastWeight + 2.5 : null
   }
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     if (confirm('Cancel this workout? Your progress will be lost.')) {
       cancelWorkout()
       router.push('/plans')
     }
-  }
+  }, [cancelWorkout, router])
 
   const handleShare = () => {
     const summary = `GymForge Workout: ${currentWorkout.planName}\n${completedSets}/${totalSets} sets completed.`
-    navigator.clipboard.writeText(summary)
-    setToast('Copied to clipboard!')
-    setTimeout(() => setToast(null), 2000)
+    navigator.clipboard.writeText(summary).then(() => {
+      setToast('Copied to clipboard!')
+      setTimeout(() => setToast(null), 2000)
+    }).catch(() => {
+      setToast('Could not copy — check browser permissions')
+      setTimeout(() => setToast(null), 3000)
+    })
   }
 
   return (
@@ -418,94 +319,23 @@ export const ActiveWorkout: React.FC = () => {
       )}
 
       {/* ===== Swap Exercise Modal ===== */}
-      {swappingExerciseId && (
-        <Card className="animate-fade-in border-accent/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-bold text-text-primary">Pick a replacement</h3>
-            <Button variant="ghost" size="sm" onClick={() => { setSwappingExerciseId(null); setSwapQuery('') }}><FiX /></Button>
-          </div>
-
-          {/* Smart Suggestions */}
-          {swapSuggestions.length > 0 && (
-            <div className="mb-5">
-              <p className="text-xs text-text-muted uppercase tracking-wider mb-2.5 font-medium">Recommended for you</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {swapSuggestions.map(ex => (
-                  <button
-                    key={ex.id}
-                    onClick={() => {
-                      swapExercise(swappingExerciseId, ex.id, ex.name)
-                      setSwappingExerciseId(null)
-                      setSwapQuery('')
-                      setSwapSuggestions([])
-                      setToast(`Swapped to ${ex.name}`)
-                      setTimeout(() => setToast(null), 2000)
-                    }}
-                    className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/15 hover:border-primary/50 transition-all text-left group"
-                  >
-                    <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors line-clamp-2">{ex.name}</span>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <Badge variant="primary" size="sm">{ex.primaryMuscle}</Badge>
-                      <Badge variant="neutral" size="sm">{ex.equipment}</Badge>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Search Alternative */}
-          <div className="border-t border-white/5 pt-4">
-            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 font-medium">Search exercises</p>
-            <div className="relative">
-              <input
-                type="text"
-                value={swapQuery}
-                onChange={e => setSwapQuery(e.target.value)}
-                placeholder="Find any exercise..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
-                autoFocus={swapSuggestions.length === 0}
-              />
-            </div>
-
-            {/* Search Results */}
-            {swapQuery && (() => {
-              const hasAcuteWristInjury = userInjuries.includes('wrists') &&
-                                         (!userInjurySeverity['wrists'] || userInjurySeverity['wrists'] === 'acute')
-              const searchResults = exerciseDb
-                .filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase()))
-                .filter(ex => !(userInjuries.includes('wrists') && isWristDangerousExercise(ex.name, hasAcuteWristInjury)))
-
-              return (
-                <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1">
-                  {searchResults
-                    .slice(0, 8)
-                    .map(ex => (
-                      <button
-                        key={ex.id}
-                        onClick={() => {
-                          swapExercise(swappingExerciseId, ex.id, ex.name)
-                          setSwappingExerciseId(null)
-                          setSwapQuery('')
-                          setSwapSuggestions([])
-                          setToast(`Swapped to ${ex.name}`)
-                          setTimeout(() => setToast(null), 2000)
-                        }}
-                        className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between group"
-                      >
-                        <span className="text-sm text-text-secondary group-hover:text-text-primary">{ex.name}</span>
-                        <Badge variant="neutral" size="sm">{ex.primaryMuscle}</Badge>
-                      </button>
-                    ))}
-                  {searchResults.length === 0 && (
-                    <p className="text-sm text-text-muted text-center py-3">No exercises found</p>
-                  )}
-                </div>
-              )
-            })()}
-          </div>
-        </Card>
-      )}
+      <SwapExerciseModal
+        exerciseId={swappingExerciseId}
+        swapSuggestions={swapSuggestions}
+        swapQuery={swapQuery}
+        onQueryChange={setSwapQuery}
+        onClose={() => { setSwappingExerciseId(null); setSwapQuery('') }}
+        onSwap={(newExId, newExName) => {
+          swapExercise(swappingExerciseId!, newExId, newExName)
+          setSwappingExerciseId(null)
+          setSwapQuery('')
+          setSwapSuggestions([])
+          setToast(`Swapped to ${newExName}`)
+          setTimeout(() => setToast(null), 2000)
+        }}
+        userInjuries={userInjuries}
+        userInjurySeverity={userInjurySeverity}
+      />
 
       {/* ===== CENTRAL FOCUS: Current Exercise ===== */}
       {currentExercise && !allDone && (() => {
@@ -522,344 +352,61 @@ export const ActiveWorkout: React.FC = () => {
           <Card className="border-primary/30 bg-gradient-to-b from-primary/5 to-transparent" padding="lg">
             {/* REST TIMER - takes over the whole card */}
             {isResting ? (
-              <div className="flex flex-col items-center py-8">
-                <p className="text-sm text-text-muted uppercase tracking-wider mb-2">Rest Between Sets</p>
-                <p className="text-text-secondary text-sm mb-6">Next: Set {currentSetIdx + 1} of {currentExercise.sets.length}</p>
-                <ProgressRing value={restTime} max={Math.max(restTime + 10, DEFAULT_REST_SECONDS)} size={180} strokeWidth={10} color="#00d4ff">
-                  <span className="text-5xl font-display font-bold text-primary">{restTime}</span>
-                  <span className="text-xs text-text-muted mt-1">seconds</span>
-                </ProgressRing>
-                <p className="text-text-secondary mt-6 mb-2">Breathe and recover.</p>
-                {/* Rest time controls */}
-                <div className="flex gap-2 mb-4">
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: Math.max(0, (prev[currentExercise.id] || 0) - REST_ADJUSTMENTS.DECREASE) }))}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    -{REST_ADJUSTMENTS.DECREASE}s
-                  </button>
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + REST_ADJUSTMENTS.INCREASE_SHORT }))}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    +{REST_ADJUSTMENTS.INCREASE_SHORT}s
-                  </button>
-                  <button onClick={() => setRestTimers(prev => ({ ...prev, [currentExercise.id]: (prev[currentExercise.id] || 0) + REST_ADJUSTMENTS.INCREASE_LONG }))}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary transition-all">
-                    +{REST_ADJUSTMENTS.INCREASE_LONG}s
-                  </button>
-                </div>
-                <Button variant="primary" size="md" onClick={() => setRestActive(prev => ({ ...prev, [currentExercise.id]: false }))}>
-                  <FiSkipForward /> Skip Rest
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                {/* Exercise Name + Badges */}
-                <div className="text-center mb-4">
-                  <h2 className="text-3xl font-display font-bold text-text-primary">{currentExercise.exerciseName}</h2>
-                  <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-                    {exerciseInfo && (
-                      <>
-                        <Badge variant="primary">{exerciseInfo.primaryMuscle}</Badge>
-                        <Badge variant="neutral">{exerciseInfo.equipment}</Badge>
-                        <Badge variant={exerciseInfo.difficulty === 'beginner' ? 'success' : exerciseInfo.difficulty === 'intermediate' ? 'warning' : 'danger'}>
-                          {exerciseInfo.difficulty}
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                  <p className="text-sm text-text-muted mt-3">
-                    Set {currentSetIdx + 1} of {currentExercise.sets.length}
-                  </p>
-
-                  {/* Weight progression suggestion */}
-                  {suggestedWeight && !isBW && (
-                    <div className="mt-2 bg-success/10 border border-success/20 rounded-xl px-3 py-1.5 text-xs text-success flex items-center gap-1">
-                      <FiArrowRight size={12} /> Try {suggestedWeight}kg today — you&apos;ve been consistent!
-                    </div>
-                  )}
-
-                  {/* Quick actions */}
-                  <div className="flex items-center justify-center gap-2 mt-4 pt-2 border-t border-white/10">
-                    <button
-                      onClick={() => setSwappingExerciseId(currentExercise.id)}
-                      className="px-5 py-2 rounded-xl text-sm font-medium text-text-primary bg-accent/10 border border-accent/30 hover:bg-accent/20 hover:border-accent/50 transition-all flex items-center gap-2"
-                    >
-                      <FiRepeat size={14} /> Swap Exercise
-                    </button>
-                  </div>
-                </div>
-
-                {/* Per-side toggle for unilateral exercises */}
-                {isUnilateralExercise(currentExercise.exerciseName) && (
-                  <div className="mb-4 flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => {
-                        const id = currentExercise.id
-                        const enabled = !perSideEnabled[id]
-                        setPerSideEnabled(prev => ({ ...prev, [id]: enabled }))
-                        if (enabled && !currentSide[id]) {
-                          setCurrentSide(prev => ({ ...prev, [id]: 'right' }))
-                        }
-                      }}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                        perSideEnabled[currentExercise.id]
-                          ? 'bg-accent/15 text-accent border-accent/30'
-                          : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'
-                      }`}
-                    >
-                      {perSideEnabled[currentExercise.id] ? '✓ Per-side mode ON' : 'Track each side separately'}
-                    </button>
-
-                    {perSideEnabled[currentExercise.id] && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setCurrentSide(prev => ({ ...prev, [currentExercise.id]: 'right' }))}
-                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                            currentSide[currentExercise.id] === 'right'
-                              ? 'bg-primary/20 text-primary border border-primary/30 shadow-glow'
-                              : 'bg-white/5 text-text-muted border border-white/10'
-                          }`}
-                        >
-                          Right
-                          {sideCompleted[currentExercise.id]?.[currentSetIdx]?.right && (
-                            <FiCheck className="inline ml-1 text-success" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => setCurrentSide(prev => ({ ...prev, [currentExercise.id]: 'left' }))}
-                          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                            currentSide[currentExercise.id] === 'left'
-                              ? 'bg-accent/20 text-accent border border-accent/30 shadow-glow-accent'
-                              : 'bg-white/5 text-text-muted border border-white/10'
-                          }`}
-                        >
-                          Left
-                          {sideCompleted[currentExercise.id]?.[currentSetIdx]?.left && (
-                            <FiCheck className="inline ml-1 text-success" />
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* INPUTS - context-aware based on exercise type */}
-                <div className="flex items-center gap-6 mb-8">
-                  {/* Only show weight for weighted exercises */}
-                  {!isBW && (
-                    <>
-                      <div className="flex flex-col items-center">
-                        <label className="text-xs text-text-muted uppercase tracking-wider mb-2">Weight (kg)</label>
-                        <input
-                          type="number"
-                          value={currentSet?.weight || ''}
-                          onChange={e => updateSetWeight(currentExercise.id, currentSetIdx, Number(e.target.value))}
-                          className="w-28 h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all"
-                          min={0}
-                          step={0.5}
-                          placeholder="0"
-                        />
-                      </div>
-                      <span className="text-3xl text-text-muted font-light mt-6">&times;</span>
-                    </>
-                  )}
-                  <div className="flex flex-col items-center">
-                    <label className="text-xs text-text-muted uppercase tracking-wider mb-2">
-                      {isTimed ? 'Duration (sec)' : 'Reps'}
-                    </label>
-                    <input
-                      type="number"
-                      value={currentSet?.reps || ''}
-                      onChange={e => updateSetReps(currentExercise.id, currentSetIdx, Number(e.target.value))}
-                      className={`${isBW ? 'w-32' : 'w-24'} h-16 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-3xl font-display font-bold text-text-primary focus:outline-none focus:border-primary/60 focus:shadow-glow transition-all`}
-                      min={1}
-                      placeholder={isTimed ? '30' : '10'}
-                    />
-                  </div>
-                </div>
-
-                {/* BIG Complete Button */}
-                {(() => {
-                  const isPerSide = perSideEnabled[currentExercise.id]
-                  const side = currentSide[currentExercise.id] || 'right'
-                  const sides = sideCompleted[currentExercise.id]?.[currentSetIdx]
-                  const bothSidesDone = sides?.left && sides?.right
-
-                  if (isPerSide && !bothSidesDone) {
-                    // Per-side mode: complete current side
-                    const sideLabel = side === 'right' ? 'Right' : 'Left'
-                    const otherSide = side === 'right' ? 'left' : 'right'
-                    const currentSideDone = side === 'right' ? sides?.right : sides?.left
-                    const otherSideDone = side === 'right' ? sides?.left : sides?.right
-
-                    return (
-                      <button
-                        onClick={() => {
-                          // Mark this side as done
-                          setSideCompleted(prev => ({
-                            ...prev,
-                            [currentExercise.id]: {
-                              ...prev[currentExercise.id],
-                              [currentSetIdx]: {
-                                ...(prev[currentExercise.id]?.[currentSetIdx] || { left: false, right: false }),
-                                [side]: true,
-                              }
-                            }
-                          }))
-                          // Switch to other side if not done
-                          if (!otherSideDone) {
-                            setCurrentSide(prev => ({ ...prev, [currentExercise.id]: otherSide }))
-                          }
-                        }}
-                        disabled={currentSideDone}
-                        className={`w-full max-w-sm h-16 text-white text-xl font-display font-bold rounded-2xl shadow-glow active:scale-[0.97] transition-all duration-200 flex items-center justify-center gap-3 ${
-                          currentSideDone
-                            ? 'bg-success/40 opacity-50 cursor-not-allowed'
-                            : side === 'right'
-                              ? 'bg-gradient-primary hover:shadow-[0_0_40px_rgba(0,212,255,0.3)]'
-                              : 'bg-gradient-accent hover:shadow-[0_0_40px_rgba(168,85,247,0.3)]'
-                        }`}
-                      >
-                        <FiCheck className="text-2xl" /> Done {sideLabel}
-                      </button>
-                    )
+              <RestTimerCard
+                exerciseId={currentExercise.id}
+                currentSetIdx={currentSetIdx}
+                totalSets={currentExercise.sets.length}
+                restTime={restTime}
+                defaultRestSeconds={DEFAULT_REST_SECONDS}
+                onAdjustRest={(exId, delta) => setRestTimers(prev => ({ ...prev, [exId]: Math.max(0, (prev[exId] || 0) + delta) }))}
+                onSkipRest={(exId) => setRestActive(prev => ({ ...prev, [exId]: false }))}
+              />
+            ) : (() => {
+              const pb = getPB(currentExercise.exerciseId)
+              const sessionMax = Math.max(...currentExercise.sets.map(s => s.weight || 0))
+              const isNewPB = pb && sessionMax > pb
+              return (
+              <ExerciseFocusCard
+                currentExercise={currentExercise}
+                currentSetIdx={currentSetIdx}
+                exerciseInfo={exerciseInfo}
+                suggestedWeight={suggestedWeight}
+                isBW={isBW}
+                isTimed={isTimed}
+                currentSet={currentSet}
+                pb={pb}
+                isNewPB={isNewPB || false}
+                perSideEnabled={perSideEnabled}
+                currentSide={currentSide}
+                sideCompleted={sideCompleted}
+                showGuide={showGuide}
+                onTogglePerSide={(exId) => {
+                  const enabled = !perSideEnabled[exId]
+                  setPerSideEnabled(prev => ({ ...prev, [exId]: enabled }))
+                  if (enabled && !currentSide[exId]) {
+                    setCurrentSide(prev => ({ ...prev, [exId]: 'right' }))
                   }
-
-                  // Normal mode or both sides done
-                  return (
-                    <button
-                      onClick={() => {
-                        handleCompleteSet(currentExercise.id, currentSetIdx, true, currentExercise.sets.length)
-                        // Reset side tracking for next set
-                        if (isPerSide) {
-                          setSideCompleted(prev => ({
-                            ...prev,
-                            [currentExercise.id]: {
-                              ...prev[currentExercise.id],
-                              [currentSetIdx + 1]: { left: false, right: false }
-                            }
-                          }))
-                          setCurrentSide(prev => ({ ...prev, [currentExercise.id]: 'right' }))
-                        }
-                      }}
-                      className="w-full max-w-sm h-16 bg-gradient-primary text-white text-xl font-display font-bold rounded-2xl shadow-glow hover:shadow-[0_0_40px_rgba(0,212,255,0.3)] active:scale-[0.97] transition-all duration-200 flex items-center justify-center gap-3"
-                    >
-                      {isPerSide && bothSidesDone ? (
-                        <><FiCheck className="text-2xl" /> Both sides done &mdash; {currentSetIdx < currentExercise.sets.length - 1 ? 'Next Set' : 'Complete'}</>
-                      ) : currentSetIdx < currentExercise.sets.length - 1 ? (
-                        <><FiCheck className="text-2xl" /> Done &mdash; Next Set</>
-                      ) : (
-                        <><FiCheck className="text-2xl" /> Complete Exercise</>
-                      )}
-                    </button>
-                  )
-                })()}
-
-                {/* Rest timer info */}
-                <p className="text-xs text-text-muted mt-3">
-                  {currentSetIdx < currentExercise.sets.length - 1
-                    ? `${DEFAULT_REST_SECONDS}s rest timer starts automatically after each set`
-                    : 'Last set for this exercise'}
-                </p>
-
-                {/* Exercise Guide Toggle */}
-                <button
-                  onClick={() => setShowGuide(prev => ({ ...prev, [currentExercise.id]: !prev[currentExercise.id] }))}
-                  className="mt-4 text-sm text-primary hover:text-primary-light transition-colors flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-2"
-                >
-                  <FiVideo /> {isGuideOpen ? 'Hide guide' : 'Watch how to do this exercise'}
-                </button>
-
-                {/* Exercise Guide Panel with Video + Instructions */}
-                {isGuideOpen && (
-                  <div className="mt-4 w-full max-w-2xl animate-fade-in">
-                    <Card variant="elevated" padding="md">
-                      {/* Video Section */}
-                      {(() => {
-                        const videoId = getExerciseVideoId(currentExercise.exerciseName)
-                        return (
-                          <div className="mb-5">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-display font-bold text-text-primary text-sm flex items-center gap-2">
-                                <FiVideo className="text-primary" /> Form Guide Video
-                              </h4>
-                              <a
-                                href={getExerciseSearchUrl(currentExercise.exerciseName)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-primary hover:text-primary-light flex items-center gap-1 transition-colors"
-                              >
-                                More videos <FiExternalLink />
-                              </a>
-                            </div>
-                            {videoId ? (
-                              <div className="relative w-full rounded-xl overflow-hidden bg-black/30" style={{ paddingBottom: '56.25%' }}>
-                                <iframe
-                                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
-                                  title={`${currentExercise.exerciseName} form guide`}
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                  className="absolute top-0 left-0 w-full h-full rounded-xl"
-                                />
-                              </div>
-                            ) : (
-                              <a
-                                href={getExerciseSearchUrl(currentExercise.exerciseName)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-xl hover:bg-primary/10 transition-all"
-                              >
-                                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                                  <FiVideo className="text-primary text-lg" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-text-primary font-medium text-sm">Watch form guide</p>
-                                  <p className="text-text-muted text-xs">Opens YouTube in a new tab</p>
-                                </div>
-                                <FiExternalLink className="text-primary flex-shrink-0" size={14} />
-                              </a>
-                            )}
-                          </div>
-                        )
-                      })()}
-
-                      {/* Written Instructions */}
-                      {exerciseInfo && (
-                        <>
-                          <h4 className="font-display font-bold text-text-primary text-sm mb-3">Step-by-Step</h4>
-                          <ol className="space-y-2.5">
-                            {exerciseInfo.instructions.map((step, i) => (
-                              <li key={i} className="flex items-start gap-3 text-sm text-text-secondary">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
-                                  {i + 1}
-                                </span>
-                                {step}
-                              </li>
-                            ))}
-                          </ol>
-                          {exerciseInfo.tips.length > 0 && (
-                            <div className="mt-4 pt-3 border-t border-white/5">
-                              <h5 className="text-xs text-text-muted uppercase tracking-wider mb-2">Pro Tips</h5>
-                              <ul className="space-y-1.5">
-                                {exerciseInfo.tips.map((tip, i) => (
-                                  <li key={i} className="text-sm text-accent flex items-start gap-2">
-                                    <FiZap className="mt-0.5 flex-shrink-0" size={14} /> {tip}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {!exerciseInfo && (
-                        <p className="text-sm text-text-muted text-center">
-                          Focus on controlled form and full range of motion.
-                        </p>
-                      )}
-                    </Card>
-                  </div>
-                )}
-              </div>
-            )}
+                }}
+                onSetCurrentSide={(exId, side) => setCurrentSide(prev => ({ ...prev, [exId]: side }))}
+                onUpdateSetWeight={(exId, setIdx, weight) => updateSetWeight(exId, setIdx, weight)}
+                onUpdateSetReps={(exId, setIdx, reps) => updateSetReps(exId, setIdx, reps)}
+                onCompleteSet={handleCompleteSet}
+                onToggleGuide={(exId) => setShowGuide(prev => ({ ...prev, [exId]: !prev[exId] }))}
+                onSwapExercise={(exId) => setSwappingExerciseId(exId)}
+                onSideCompleted={(exId, setIdx, side) => {
+                  setSideCompleted(prev => ({
+                    ...prev,
+                    [exId]: {
+                      ...prev[exId],
+                      [setIdx]: {
+                        ...(prev[exId]?.[setIdx] || { left: false, right: false }),
+                        [side]: true,
+                      }
+                    }
+                  }))
+                }}
+              />
+            )})()}
           </Card>
         )
       })()}
@@ -880,133 +427,14 @@ export const ActiveWorkout: React.FC = () => {
       )}
 
       {/* ===== All Exercises List ===== */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider">All Exercises</h3>
-        {currentWorkout.exercises.map(exercise => {
-          const allSetsDone = exercise.sets.every(s => s.completed)
-          const isCollapsed = collapsedExercises[exercise.id] !== false
-          const isCurrent = currentExercise?.id === exercise.id
-          const pb = getPB(exercise.exerciseId)
-          const sessionMax = Math.max(...exercise.sets.map(s => s.weight || 0))
-          const isNewPB = pb && sessionMax > pb
-          const setsCompleted = exercise.sets.filter(s => s.completed).length
-          const exerciseInfo = findExerciseInfo(exercise.exerciseName)
-          const isBW = isBodyweightExercise(exercise.exerciseName)
-
-          // Compact collapsed view
-          if (isCollapsed && !isCurrent) {
-            return (
-              <div
-                key={exercise.id}
-                className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                  allSetsDone
-                    ? 'bg-success/5 border-success/10 opacity-60'
-                    : 'bg-background-card border-white/5'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    allSetsDone ? 'bg-success/20' : 'bg-white/5'
-                  }`}>
-                    {allSetsDone ? <FiCheck className="text-success" /> : <span className="text-xs text-text-muted">{setsCompleted}/{exercise.sets.length}</span>}
-                  </div>
-                  <span className={`font-medium ${allSetsDone ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
-                    {exercise.exerciseName}
-                  </span>
-                  {isNewPB && <Badge variant="danger" size="sm">New PB!</Badge>}
-                </div>
-                <button
-                  onClick={() => setCollapsedExercises(prev => ({ ...prev, [exercise.id]: false }))}
-                  className="text-text-muted hover:text-text-secondary transition-colors p-1"
-                >
-                  <FiChevronDown size={16} />
-                </button>
-              </div>
-            )
-          }
-
-          // Expanded view (for non-current exercises)
-          if (!isCurrent) {
-            return (
-              <Card key={exercise.id} padding="md" className={allSetsDone ? 'opacity-60' : ''}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-display font-bold text-text-primary">{exercise.exerciseName}</h4>
-                    {allSetsDone && <FiCheck className="text-success" />}
-                    {isNewPB && <Badge variant="danger" size="sm">New PB!</Badge>}
-                    {pb && !isBW && <span className="text-xs text-text-muted">PB: {pb}kg</span>}
-                  </div>
-                  <button
-                    onClick={() => setCollapsedExercises(prev => ({ ...prev, [exercise.id]: true }))}
-                    className="text-text-muted hover:text-text-secondary transition-colors p-1"
-                  >
-                    <FiChevronUp size={16} />
-                  </button>
-                </div>
-
-                {exerciseInfo && (
-                  <div className="mb-3 flex items-center gap-2">
-                    <Badge variant="primary" size="sm">{exerciseInfo.primaryMuscle}</Badge>
-                    <Badge variant="neutral" size="sm">{exerciseInfo.equipment}</Badge>
-                  </div>
-                )}
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-text-muted text-xs uppercase tracking-wider">
-                        <th className="text-left py-1.5 px-2 w-10">Set</th>
-                        {!isBW && <th className="text-left py-1.5 px-2">kg</th>}
-                        <th className="text-left py-1.5 px-2">{isTimedExercise(exercise.exerciseName) ? 'Sec' : 'Reps'}</th>
-                        <th className="text-right py-1.5 px-2 w-20"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {exercise.sets.map((set, idx) => (
-                        <tr key={idx} className={`border-t border-white/5 ${set.completed ? 'opacity-50' : ''}`}>
-                          <td className="py-2 px-2 text-text-muted">{idx + 1}</td>
-                          {!isBW && (
-                            <td className="py-2 px-2">
-                              <input
-                                type="number"
-                                value={set.weight || ''}
-                                onChange={e => updateSetWeight(exercise.id, idx, Number(e.target.value))}
-                                className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-text-primary text-sm focus:outline-none focus:border-primary/50"
-                                disabled={set.completed}
-                              />
-                            </td>
-                          )}
-                          <td className="py-2 px-2">
-                            <input
-                              type="number"
-                              value={set.reps || ''}
-                              onChange={e => updateSetReps(exercise.id, idx, Number(e.target.value))}
-                              className="w-14 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-text-primary text-sm focus:outline-none focus:border-primary/50"
-                              disabled={set.completed}
-                            />
-                          </td>
-                          <td className="py-2 px-2 text-right">
-                            <button
-                              onClick={() => handleCompleteSet(exercise.id, idx, !set.completed, exercise.sets.length)}
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                set.completed ? 'bg-success/20 text-success' : 'bg-white/5 text-text-muted hover:bg-primary/20 hover:text-primary'
-                              }`}
-                            >
-                              {set.completed ? <FiCheck /> : 'Done'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            )
-          }
-
-          return null
-        })}
-      </div>
+      <ExerciseListPanel
+        currentWorkout={currentWorkout}
+        currentExerciseId={currentExercise?.id}
+        collapsedExercises={collapsedExercises}
+        onToggleCollapse={(exId, collapsed) => setCollapsedExercises(prev => ({ ...prev, [exId]: collapsed }))}
+        getPB={getPB}
+        onShowGuide={(exId) => setShowGuide(prev => ({ ...prev, [exId]: true }))}
+      />
 
       {/* ===== Floating Finish Early Button ===== */}
       {!allDone && completedSets > 0 && (
