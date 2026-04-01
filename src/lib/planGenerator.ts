@@ -376,7 +376,7 @@ function getWristStressLevel(name: string): 'severe' | 'moderate' | 'mild' | 'no
 function scoreExercise(
   ex: ExerciseData, focusAreas: MuscleGroup[], familiarExercises: string[],
   comfort: string, usedIds: string[], cautiousMuscles: MuscleGroup[],
-  hasPartner: string, hasBench: boolean, varietyPref: string, injuries: string[] = [],
+  hasPartner: string, hasBench: boolean | null, varietyPref: string, injuries: string[] = [],
   bodyComposition?: BodyComposition,
 ): number {
   let score = 0
