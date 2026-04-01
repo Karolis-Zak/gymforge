@@ -9,6 +9,7 @@ export interface OnboardingAnswers {
   gender: 'male' | 'female' | 'other' | ''
   height: number
   weight: number
+  bodyType: 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese' | ''
 
   // Fitness Level
   fitnessLevel: 'complete-beginner' | 'some-experience' | 'regular-exerciser'
@@ -68,6 +69,7 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
   gender: '',
   height: 0,
   weight: 0,
+  bodyType: '',
   fitnessLevel: 'complete-beginner',
   injuries: [],
   injurySeverity: {},

@@ -229,6 +229,22 @@ export function Questionnaire() {
                 <Input label="Height (cm)" type="number" value={answers.height || ''} onChange={e => update({ height: Number(e.target.value) })} placeholder="175" min={100} max={250} />
                 <Input label="Weight (kg)" type="number" value={answers.weight || ''} onChange={e => update({ weight: Number(e.target.value) })} placeholder="75" min={30} max={300} />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-secondary">How would you describe your build?</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { id: 'lean', label: 'Lean', desc: 'Low body fat, athletic' },
+                    { id: 'athletic', label: 'Athletic', desc: 'Balanced, fit' },
+                    { id: 'stocky', label: 'Stocky', desc: 'Naturally built, strong frame' },
+                    { id: 'overweight', label: 'Overweight', desc: 'Carrying extra weight' },
+                  ] as const).map(t => (
+                    <button key={t.id} onClick={() => update({ bodyType: t.id })} className={`p-3 rounded-xl border transition-all text-left ${answers.bodyType === t.id ? 'bg-primary/10 border-primary/50' : 'border-white/10 hover:border-white/20'}`}>
+                      <div className="font-medium text-sm text-text-primary">{t.label}</div>
+                      <div className="text-xs text-text-muted">{t.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex justify-end pt-2">
                 <Button onClick={() => {
                   // Save profile data immediately so it persists even if user doesn't finish questionnaire
@@ -519,6 +535,7 @@ export function Questionnaire() {
                   <SummaryRow label="Name" value={answers.name} onEdit={() => setStep(1)} />
                   <SummaryRow label="Age / Gender" value={`${answers.age || '?'}, ${answers.gender || '?'}`} onEdit={() => setStep(1)} />
                   {answers.height > 0 && <SummaryRow label="Height / Weight" value={`${answers.height}cm, ${answers.weight}kg`} onEdit={() => setStep(1)} />}
+                  {answers.bodyType && <SummaryRow label="Build" value={answers.bodyType.replace(/-/g, ' ')} onEdit={() => setStep(1)} />}
                   <SummaryRow label="Level" value={answers.fitnessLevel.replace(/-/g, ' ')} onEdit={() => setStep(2)} />
                   {answers.injuries.length > 0 && <SummaryRow label="Injuries" value={answers.injuries.map(i => `${INJURY_AREAS.find(a => a.id === i)?.label || i} (${answers.injurySeverity[i] || 'ongoing'})`).join(', ')} onEdit={() => setStep(2)} />}
                   <SummaryRow label="Goal" value={`${answers.primaryGoal.replace(/-/g, ' ')}${answers.secondaryGoal ? ` + ${answers.secondaryGoal.replace(/-/g, ' ')}` : ''}`} onEdit={() => setStep(3)} />

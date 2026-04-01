@@ -2,6 +2,83 @@ import { exercises as exerciseDb, type ExerciseData, type MuscleGroup, type Diff
 import { getExerciseCategory } from '../data/exerciseCategories'
 import type { OnboardingAnswers } from '../store/onboardingStore'
 
+// Body composition assessment — used to adapt programming
+export interface BodyComposition {
+  bmi: number
+  classification: 'underweight' | 'normal' | 'overweight' | 'obese' | 'very-obese'
+  bodyweightExerciseDifficulty: number // 0-2, lower = harder for this person
+  impactTolerance: 'low' | 'moderate' | 'high'
+  relativeStrength: 'low' | 'moderate' | 'high' // e.g., stocky/bulky people often have high relative strength
+  startingLoadModifier: number // 0.7-1.3, affects starting weight estimates
+}
+
+function assessBodyComposition(height: number, weight: number, bodyType: string): BodyComposition {
+  const bmi = Math.round((weight / (height * height)) * 10000)
+
+  let classification: BodyComposition['classification']
+  if (bmi < 18.5) classification = 'underweight'
+  else if (bmi < 25) classification = 'normal'
+  else if (bmi < 30) classification = 'overweight'
+  else if (bmi < 35) classification = 'obese'
+  else classification = 'very-obese'
+
+  // Map user's self-reported build type to actual impact/strength assessment
+  let bodyweightExerciseDifficulty = 1
+  let impactTolerance: BodyComposition['impactTolerance'] = 'moderate'
+  let relativeStrength: BodyComposition['relativeStrength'] = 'moderate'
+  let startingLoadModifier = 1.0
+
+  if (bodyType === 'lean') {
+    // Lean people typically find bodyweight easier but may be weaker absolutely
+    bodyweightExerciseDifficulty = 1.3
+    impactTolerance = 'high'
+    relativeStrength = 'low'
+    startingLoadModifier = 0.8
+  } else if (bodyType === 'athletic') {
+    // Athletic = baseline
+    bodyweightExerciseDifficulty = 1.0
+    impactTolerance = 'high'
+    relativeStrength = 'moderate'
+    startingLoadModifier = 1.0
+  } else if (bodyType === 'stocky') {
+    // Stocky/bulky people are typically stronger but bodyweight is harder
+    bodyweightExerciseDifficulty = 0.7
+    impactTolerance = 'moderate'
+    relativeStrength = 'high'
+    startingLoadModifier = 1.2
+  } else if (bodyType === 'overweight') {
+    // Overweight reduces bodyweight exercise ease significantly
+    bodyweightExerciseDifficulty = 0.5
+    impactTolerance = 'low'
+    relativeStrength = 'moderate'
+    startingLoadModifier = 0.9
+  } else if (bodyType === 'obese') {
+    // Obese makes bodyweight exercises very hard, low impact important
+    bodyweightExerciseDifficulty = 0.3
+    impactTolerance = 'low'
+    relativeStrength = 'low'
+    startingLoadModifier = 0.7
+  }
+
+  // Override assessment based on BMI if there's a conflict
+  if (bmi >= 30 && bodyweightExerciseDifficulty > 0.6) {
+    bodyweightExerciseDifficulty = Math.min(bodyweightExerciseDifficulty, 0.6)
+    impactTolerance = 'low'
+  }
+  if (bmi < 18.5 && relativeStrength === 'high') {
+    relativeStrength = 'moderate'
+  }
+
+  return {
+    bmi,
+    classification,
+    bodyweightExerciseDifficulty,
+    impactTolerance,
+    relativeStrength,
+    startingLoadModifier,
+  }
+}
+
 export interface GeneratedExercise {
   id: string
   name: string
@@ -174,25 +251,28 @@ function shouldExcludeForWristInjury(ex: ExerciseData, isAcuteWristInjury: boole
   return false
 }
 
-function getRestSeconds(goal: string, level: string): number {
-  if (level === 'complete-beginner') return 75
+function getRestSeconds(goal: string, level: string, composition?: BodyComposition): number {
+  // Heavier/less fit people need more rest for joint recovery
+  const extraRest = composition && composition.impactTolerance === 'low' ? 15 : 0
+
+  if (level === 'complete-beginner') return 75 + extraRest
   if (level === 'some-experience') {
-    if (goal === 'strength') return 90
-    if (goal === 'fat-loss' || goal === 'endurance') return 45
-    return 60
+    if (goal === 'strength') return 90 + extraRest
+    if (goal === 'fat-loss' || goal === 'endurance') return 45 + extraRest
+    return 60 + extraRest
   }
-  if (goal === 'strength') return 120
-  if (goal === 'muscle-building') return 75
-  if (goal === 'toning') return 60
-  if (goal === 'fat-loss') return 45
-  if (goal === 'endurance') return 30
-  return 60
+  if (goal === 'strength') return 120 + extraRest
+  if (goal === 'muscle-building') return 75 + extraRest
+  if (goal === 'toning') return 60 + extraRest
+  if (goal === 'fat-loss') return 45 + extraRest
+  if (goal === 'endurance') return 30 + extraRest
+  return 60 + extraRest
 }
 
-function getExerciseCount(targetDuration: number, level: string, goal: string): number {
+function getExerciseCount(targetDuration: number, level: string, goal: string, composition?: BodyComposition): number {
   const warmup = level === 'complete-beginner' ? 8 : 5
   const available = targetDuration - warmup - 3
-  const restSec = getRestSeconds(goal, level)
+  const restSec = getRestSeconds(goal, level, composition)
   const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
   const min = targetDuration <= 30 ? 4 : 5
@@ -272,6 +352,7 @@ function scoreExercise(
   ex: ExerciseData, focusAreas: MuscleGroup[], familiarExercises: string[],
   comfort: string, usedIds: string[], cautiousMuscles: MuscleGroup[],
   hasPartner: string, hasBench: boolean, varietyPref: string, injuries: string[] = [],
+  bodyComposition?: BodyComposition,
 ): number {
   let score = 0
   if (focusAreas.includes(ex.primaryMuscle)) score += 6
@@ -323,6 +404,27 @@ function scoreExercise(
     else if (wristStress === 'mild') score -= 2
   }
 
+  // Body composition considerations
+  if (bodyComposition) {
+    // Penalize high-impact exercises for people with low impact tolerance
+    if (bodyComposition.impactTolerance === 'low') {
+      const isHighImpact = lower.includes('jump') || lower.includes('plyometric') ||
+                          lower.includes('box') || lower.includes('sprint') ||
+                          lower.includes('burpee') || lower.includes('lunge')
+      if (isHighImpact) score -= 6
+    }
+
+    // Penalize difficult bodyweight exercises for heavier people
+    if (ex.equipment === 'bodyweight' || ex.equipment === 'none') {
+      const difficulty = bodyComposition.bodyweightExerciseDifficulty
+      // If under 0.6, this is quite hard for them — penalize more
+      if (difficulty < 0.6) {
+        const penalty = Math.round((1 - difficulty) * 8)
+        score -= penalty
+      }
+    }
+  }
+
   if (isTimedExercise(ex.name) || isCarryExercise(ex.name)) score -= 6
 
   return score
@@ -338,8 +440,8 @@ function sortExercises(exercises: GeneratedExercise[]): GeneratedExercise[] {
   })
 }
 
-function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string): number {
-  const restSec = getRestSeconds(goal, level)
+function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition): number {
+  const restSec = getRestSeconds(goal, level, composition)
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
   exercises.forEach(ex => {
@@ -359,7 +461,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const avoidedMuscles = getAvoidedMuscles(answers.injuries, answers.injurySeverity)
   const cautiousMuscles = getCautiousMuscles(answers.injuries, answers.injurySeverity)
   const allowedDifficulties = getAllowedDifficulties(answers.exerciseComplexity)
-  const exerciseCount = getExerciseCount(answers.sessionDuration, answers.fitnessLevel, answers.primaryGoal)
+
+  // Assess body composition from height, weight, and user's self-reported body type
+  const bodyComposition = answers.height > 0 && answers.weight > 0
+    ? assessBodyComposition(answers.height, answers.weight, answers.bodyType || 'athletic')
+    : undefined
+
+  const exerciseCount = getExerciseCount(answers.sessionDuration, answers.fitnessLevel, answers.primaryGoal, bodyComposition)
   const sortedDays = [...answers.specificDays].sort((a, b) => WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b))
 
   // Check if user has ACUTE wrist injury (for stricter exclusions)
@@ -400,7 +508,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
     const scored = dayPool.map(ex => ({
-      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries) + (shuffle ? Math.random() * 8 : 0)
+      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries, bodyComposition) + (shuffle ? Math.random() * 8 : 0)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
@@ -491,7 +599,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (answers.primaryGoal === 'fat-loss' && !isTimedExercise(ex.name) && !isCarryExercise(ex.name) && !isCardioStyleExercise(ex.name)) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
-      const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel)
+      const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, bodyComposition)
       return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec }
     })
 
@@ -509,7 +617,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       splitName: splitDay.name,
       exercises,
       targetMuscles,
-      estimatedMinutes: estimateDuration(exercises, answers.fitnessLevel, answers.primaryGoal, answers.warmupPreference),
+      estimatedMinutes: estimateDuration(exercises, answers.fitnessLevel, answers.primaryGoal, answers.warmupPreference, bodyComposition),
     })
   })
 
