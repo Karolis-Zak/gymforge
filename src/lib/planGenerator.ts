@@ -123,64 +123,111 @@ function roundToStandardReps(reps: number): number {
   return standards.reduce((prev, curr) => Math.abs(curr - reps) < Math.abs(prev - reps) ? curr : prev)
 }
 
-function isTimedExercise(name: string): boolean {
+/**
+ * Check if exercise is duration-based (performed for seconds, not reps)
+ * Includes: timed holds, carries, and cardio circuits
+ */
+function isDurationBasedExercise(name: string): boolean {
   const lower = name.toLowerCase()
+
   // Isometric holds (static positions for time)
-  if (lower.includes('plank')) return true
-  if (lower.includes('wall sit')) return true
-  if (lower === 'dead hang' || lower.includes('dead hang')) return true
-  if (lower.includes('plate pinch')) return true
-  // Movement-based duration exercises (cardio/circuit style — performed for seconds, not rep count)
-  if (lower.includes('mountain climber')) return true
-  if (lower.includes('bear crawl')) return true
-  if (lower.includes('flutter kick') || lower.includes('flutter')) return true
-  if (lower.includes('band squat')) return true
+  if (lower.includes('plank') || lower.includes('wall sit') ||
+      lower.includes('dead hang') || lower.includes('plate pinch')) return true
+
+  // Carries (walk/hold for time)
+  if (lower.includes('farmer') || lower.includes('carry') || lower.includes('suitcase')) return true
+
+  // Cardio circuits (performed for time)
+  if (lower.includes('mountain climber') || lower.includes('bear crawl') || lower.includes('flutter')) return true
+
   return false
 }
 
+// Deprecated: Use isDurationBasedExercise instead
+function isTimedExercise(name: string): boolean {
+  const lower = name.toLowerCase()
+  return lower.includes('plank') || lower.includes('wall sit') ||
+         lower.includes('dead hang') || lower.includes('plate pinch') ||
+         lower.includes('mountain climber') || lower.includes('bear crawl') ||
+         lower.includes('flutter kick') || lower.includes('flutter') || lower.includes('band squat')
+}
+
+// Deprecated: Use isDurationBasedExercise instead
 function isCarryExercise(name: string): boolean {
   const lower = name.toLowerCase()
   return lower.includes('farmer') || lower.includes('carry') || lower.includes('suitcase')
 }
 
+// Deprecated: Use isDurationBasedExercise instead
 function isCardioStyleExercise(name: string): boolean {
   const lower = name.toLowerCase()
   return lower.includes('mountain climber') || lower.includes('bear crawl') || lower.includes('flutter')
 }
 
-// Movement pattern detection — prevents picking two exercises of the same pattern
+/**
+ * Detect movement pattern to prevent selecting multiple exercises of the same pattern
+ * Patterns are sorted by priority/specificity to avoid mismatches
+ * Note: In future, consider adding 'movementPattern' field to exercise database
+ */
 function getMovementPattern(ex: ExerciseData): string {
   const lower = ex.name.toLowerCase()
-  // Check curl FIRST (before overhead — "Overhead Cable Curl" is a curl not a press)
-  if (lower.includes('curl') && ex.primaryMuscle === 'biceps') return 'curl'
-  // Check leg curl separately (hamstring curl is NOT a bicep curl)
-  if (lower.includes('curl') && ex.primaryMuscle === 'hamstrings') return 'leg-curl'
-  // Presses (horizontal push)
-  if (lower.includes('bench press') || lower.includes('chest press') || lower.includes('floor press')) return 'horizontal-press'
-  // Overhead press (vertical push)
-  if (lower.includes('overhead') || lower.includes('shoulder press') || lower.includes('military') || lower.includes('arnold')) return 'overhead-press'
-  // Rows (horizontal pull)
-  if (lower.includes('row') && !lower.includes('upright')) return 'row'
-  // Vertical pull
-  if (lower.includes('pulldown') || lower.includes('pull-up') || lower.includes('chin-up') || lower.includes('pull up')) return 'vertical-pull'
-  // Squat pattern
-  if (lower.includes('squat') || lower.includes('leg press')) return 'squat'
-  // Hip hinge
-  if (lower.includes('deadlift') || lower.includes('rdl') || lower.includes('good morning') || lower.includes('hip thrust')) return 'hip-hinge'
-  // Tricep extension pattern
-  if (lower.includes('pushdown') || lower.includes('extension') || lower.includes('skull')) return 'tricep-extension'
-  // Fly/stretch pattern
-  if (lower.includes('fly') || lower.includes('flye') || lower.includes('crossover') || lower.includes('pullover')) return 'fly-stretch'
-  // Lateral raise
-  if (lower.includes('lateral raise') || lower.includes('front raise') || lower.includes('rear delt')) return 'raise'
-  // Lunge pattern
-  if (lower.includes('lunge') || lower.includes('split squat') || lower.includes('step-up')) return 'lunge'
-  // Shrug pattern
-  if (lower.includes('shrug')) return 'shrug'
-  // Wrist curl pattern
-  if (lower.includes('wrist curl') || lower.includes('wrist extension')) return 'wrist-curl'
-  // Push-up / dip pattern
-  if (lower.includes('push-up') || lower.includes('dip')) return 'bodyweight-push'
+
+  // CURLS (check muscle group to differentiate bicep vs leg curl)
+  if (lower.includes('curl')) {
+    return ex.primaryMuscle === 'hamstrings' ? 'leg-curl' : 'curl'
+  }
+
+  // PRESSES (horizontal and vertical)
+  if (lower.includes('bench press') || lower.includes('chest press') || lower.includes('floor press')) {
+    return 'horizontal-press'
+  }
+  if (lower.includes('overhead') || lower.includes('shoulder press') || lower.includes('military') || lower.includes('arnold')) {
+    return 'overhead-press'
+  }
+
+  // ROWS (horizontal pull, excluding upright)
+  if (lower.includes('row') && !lower.includes('upright')) {
+    return 'row'
+  }
+
+  // VERTICAL PULLS
+  if (lower.includes('pulldown') || lower.includes('pull-up') || lower.includes('chin-up') || lower.includes('pull up')) {
+    return 'vertical-pull'
+  }
+
+  // LEG PATTERNS
+  if (lower.includes('squat') || lower.includes('leg press')) {
+    return 'squat'
+  }
+  if (lower.includes('deadlift') || lower.includes('rdl') || lower.includes('good morning') || lower.includes('hip thrust')) {
+    return 'hip-hinge'
+  }
+  if (lower.includes('lunge') || lower.includes('split squat') || lower.includes('step-up')) {
+    return 'lunge'
+  }
+
+  // SHOULDER/ARM ISOLATIONS
+  if (lower.includes('lateral raise') || lower.includes('front raise') || lower.includes('rear delt')) {
+    return 'raise'
+  }
+  if (lower.includes('pushdown') || lower.includes('extension') || lower.includes('skull')) {
+    return 'tricep-extension'
+  }
+  if (lower.includes('fly') || lower.includes('flye') || lower.includes('crossover') || lower.includes('pullover')) {
+    return 'fly-stretch'
+  }
+
+  // OTHER PATTERNS
+  if (lower.includes('shrug')) {
+    return 'shrug'
+  }
+  if (lower.includes('wrist curl') || lower.includes('wrist extension')) {
+    return 'wrist-curl'
+  }
+  if (lower.includes('push-up') || lower.includes('dip')) {
+    return 'bodyweight-push'
+  }
+
   return 'other'
 }
 
@@ -275,7 +322,7 @@ function shouldExcludeForWristInjury(ex: ExerciseData, isAcuteWristInjury: boole
 
 function getRestSeconds(goal: string, level: string, composition?: BodyComposition): number {
   // Heavier/less fit people need more rest for joint recovery
-  const extraRest = composition && composition.impactTolerance === 'low' ? 15 : 0
+  const extraRest = composition && composition.impactTolerance === 'low' ? 30 : 0
 
   if (level === 'complete-beginner') return 75 + extraRest
   if (level === 'some-experience') {
@@ -465,7 +512,7 @@ function scoreExercise(
     }
   }
 
-  if (isTimedExercise(ex.name) || isCarryExercise(ex.name) || isCardioStyleExercise(ex.name)) score -= 6
+  if (isDurationBasedExercise(ex.name)) score -= 6
 
   return score
 }
@@ -649,9 +696,12 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       let notes = ex.tips[0] || ''
       let isDurationBased = false
 
-      if (isTimedExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Hold for 30 seconds per set.' }
-      else if (isCarryExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Walk for 30 seconds per set.' }
-      else if (isCardioStyleExercise(ex.name)) { reps = 30; sets = 3; isDurationBased = true; notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.' }
+      if (isDurationBasedExercise(ex.name)) {
+        reps = 30
+        sets = 3
+        isDurationBased = true
+        notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.'
+      }
 
       if (answers.fitnessLevel === 'complete-beginner' && ex.type === 'compound') notes = 'Focus on form over weight. ' + notes
       if (answers.primaryGoal === 'fat-loss' && !isDurationBased) {

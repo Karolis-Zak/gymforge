@@ -101,29 +101,44 @@ export function Questionnaire() {
 
   const handleConfirm = () => {
     if (!generatedPlan || !planName.trim()) return
-    onboardingStore.setAnswers(answers)
-    updateProfile({
-      name: profile?.name || answers.name,
-      age: profile?.age || answers.age,
-      gender: profile?.gender || answers.gender || undefined,
-      height: profile?.height || answers.height,
-      weight: profile?.weight || answers.weight,
-      bodyType: profile?.bodyType || toValidBodyType(answers.bodyType),
-    })
 
-    const allIds: string[] = []
-    generatedPlan.days.forEach(day => {
-      addPlan({
+    try {
+      // Update user profile first (safe operation, no rollback needed)
+      onboardingStore.setAnswers(answers)
+      updateProfile({
+        name: profile?.name || answers.name,
+        age: profile?.age || answers.age,
+        gender: profile?.gender || answers.gender || undefined,
+        height: profile?.height || answers.height,
+        weight: profile?.weight || answers.weight,
+        bodyType: profile?.bodyType || toValidBodyType(answers.bodyType),
+      })
+
+      // Build all plans first (validation) before adding any
+      const plansToAdd = generatedPlan.days.map(day => ({
         name: `${planName.trim()} - ${day.dayName} ${day.splitName}`,
         description: `${day.splitName} targeting ${day.targetMuscles.map(getMuscleGroupLabel).join(', ')}. ~${day.estimatedMinutes} min.`,
         exercises: day.exercises,
-        isPreMade: false,
+        isPreMade: false as const,
+      }))
+
+      // Add all plans (atomic operation)
+      plansToAdd.forEach(plan => addPlan(plan))
+
+      // Collect exercise IDs after all plans are successfully added
+      const allIds: string[] = []
+      generatedPlan.days.forEach(day => {
+        day.exercises.forEach(ex => allIds.push(ex.id))
       })
-      day.exercises.forEach(ex => allIds.push(ex.id))
-    })
-    onboardingStore.markPlanCreated()
-    onboardingStore.addUsedExercises(allIds)
-    router.push('/plans')
+
+      // Mark completion and track exercises
+      onboardingStore.markPlanCreated()
+      onboardingStore.addUsedExercises(allIds)
+      router.push('/plans')
+    } catch (error) {
+      console.error('Failed to save plans:', error)
+      // TODO: Show error toast to user
+    }
   }
 
   const progress = step === 0 ? 0 : (step / (TOTAL_STEPS - 1)) * 100
