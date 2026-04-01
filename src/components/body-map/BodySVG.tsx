@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import type { MuscleGroup } from '../../data/exercises'
 import { getMuscleGroupLabel } from '../../data/exerciseUtils'
+import { useUserStore } from '../../store/userStore'
 
 interface BodySVGProps {
   selectedMuscles: MuscleGroup[]
@@ -159,19 +160,21 @@ const BODY_OUTLINE_BACK = BODY_OUTLINE_FRONT // Same silhouette for back view
 
 export function BodySVG({ selectedMuscles, onToggleMuscle, view }: BodySVGProps) {
   const [hoveredMuscle, setHoveredMuscle] = useState<MuscleGroup | null>(null)
+  const { theme } = useUserStore()
+  const isLight = theme === 'light'
   const zones = view === 'front' ? FRONT_ZONES : BACK_ZONES
   const outline = view === 'front' ? BODY_OUTLINE_FRONT : BODY_OUTLINE_BACK
 
   const getFill = (muscle: MuscleGroup) => {
     if (selectedMuscles.includes(muscle)) return 'rgba(0, 212, 255, 0.45)'
     if (hoveredMuscle === muscle) return 'rgba(0, 212, 255, 0.2)'
-    return 'rgba(255, 255, 255, 0.06)'
+    return isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)'
   }
 
   const getStroke = (muscle: MuscleGroup) => {
     if (selectedMuscles.includes(muscle)) return 'rgba(0, 212, 255, 0.8)'
     if (hoveredMuscle === muscle) return 'rgba(0, 212, 255, 0.4)'
-    return 'rgba(255, 255, 255, 0.1)'
+    return isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.1)'
   }
 
   return (
@@ -179,8 +182,8 @@ export function BodySVG({ selectedMuscles, onToggleMuscle, view }: BodySVGProps)
       {/* Body outline */}
       <path
         d={outline}
-        fill="rgba(255,255,255,0.02)"
-        stroke="rgba(255,255,255,0.1)"
+        fill={isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.02)'}
+        stroke={isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.1)'}
         strokeWidth="1"
       />
 
