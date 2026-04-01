@@ -58,8 +58,8 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
       <p className="text-sm text-text-secondary">{plan.description}</p>
 
       {/* Day cards */}
-      {plan.days.map((day, i) => (
-        <Card key={i}>
+      {plan.days.map((day) => (
+        <Card key={day.dayName}>
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="font-display font-bold text-text-primary">{day.dayName}</h3>
@@ -75,8 +75,8 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
             ))}
           </div>
           <div className="space-y-1.5">
-            {day.exercises.map((ex, j) => (
-              <div key={ex.id + j} className="py-1.5 text-sm">
+            {day.exercises.map((ex) => (
+              <div key={ex.id} className="py-1.5 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-text-secondary">{ex.name}</span>
                   <div className="flex items-center gap-2">
