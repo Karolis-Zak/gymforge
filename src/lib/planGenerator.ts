@@ -51,6 +51,10 @@ function isCardioStyleExercise(name: string): boolean {
 // Movement pattern detection — prevents picking two exercises of the same pattern
 function getMovementPattern(ex: ExerciseData): string {
   const lower = ex.name.toLowerCase()
+  // Check curl FIRST (before overhead — "Overhead Cable Curl" is a curl not a press)
+  if (lower.includes('curl') && ex.primaryMuscle === 'biceps') return 'curl'
+  // Check leg curl separately (hamstring curl is NOT a bicep curl)
+  if (lower.includes('curl') && ex.primaryMuscle === 'hamstrings') return 'leg-curl'
   // Presses (horizontal push)
   if (lower.includes('bench press') || lower.includes('chest press') || lower.includes('floor press')) return 'horizontal-press'
   // Overhead press (vertical push)
@@ -63,8 +67,6 @@ function getMovementPattern(ex: ExerciseData): string {
   if (lower.includes('squat') || lower.includes('leg press')) return 'squat'
   // Hip hinge
   if (lower.includes('deadlift') || lower.includes('rdl') || lower.includes('good morning') || lower.includes('hip thrust')) return 'hip-hinge'
-  // Curl pattern
-  if (lower.includes('curl') && ex.primaryMuscle === 'biceps') return 'curl'
   // Tricep extension pattern
   if (lower.includes('pushdown') || lower.includes('extension') || lower.includes('skull')) return 'tricep-extension'
   // Fly/stretch pattern
@@ -327,22 +329,32 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (pattern !== 'other') usedPatterns.add(pattern)
     }
 
+    // Reserve slots for focus minors so they don't get squeezed out
+    const reservedForMinors = Math.min(focusMinors.length, 1)
+    const mainSlots = exerciseCount - reservedForMinors
+
     // PHASE 1: One compound per MAJOR muscle (different movement patterns)
+    // Back is special — it benefits from TWO compounds (a row + a pull) if slots allow
     for (const muscle of majorTargets) {
-      if (selected.length >= Math.ceil(exerciseCount * 0.6)) break
+      if (selected.length >= Math.ceil(mainSlots * 0.6)) break
       const best = scored.find(s => s.ex.type === 'compound' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
       if (best) addExercise(best.ex)
+    }
+    // Back gets a second compound if it only has one and there's a different pattern available
+    if (muscleCount['back'] === 1 && selected.length < Math.ceil(mainSlots * 0.6)) {
+      const secondBack = scored.find(s => s.ex.type === 'compound' && s.ex.primaryMuscle === 'back' && canAdd(s.ex))
+      if (secondBack) addExercise(secondBack.ex)
     }
 
     // PHASE 2: One isolation per MAJOR muscle (provides stretch/variety)
     for (const muscle of majorTargets) {
-      if (selected.length >= exerciseCount) break
+      if (selected.length >= mainSlots) break
       if ((muscleCount[muscle] || 0) >= MAX_PER_MUSCLE) continue
       const best = scored.find(s => s.ex.type === 'isolation' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
       if (best) addExercise(best.ex)
     }
 
-    // PHASE 3: Focus minor muscles (core, calves, traps) IF user selected them as focus
+    // PHASE 3: Focus minor muscles — GUARANTEED slot (reserved above)
     for (const muscle of focusMinors) {
       if (selected.length >= exerciseCount) break
       const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
