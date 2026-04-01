@@ -152,6 +152,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
     }),
     {
       name: 'workout-plans-storage',
+      version: 1,
       migrate: (persistedState: any, version: number) => {
         // Fix old Plank entries with reps: 1 → reps: 30
         if (persistedState && persistedState.plans) {
