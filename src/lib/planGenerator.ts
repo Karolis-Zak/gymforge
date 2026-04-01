@@ -286,8 +286,10 @@ function getExerciseCount(targetDuration: number, level: string, goal: string, c
   const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
   const min = targetDuration <= 30 ? 4 : 5
-  const max = goal === 'endurance' ? 8 : 10
-  return Math.max(min, Math.min(Math.round(available / timePerEx), max))
+  // Beginners max out at 6 exercises (manageable learning load)
+  // Others can go higher based on goal
+  const maxByLevel = level === 'complete-beginner' ? 6 : (goal === 'endurance' ? 8 : 10)
+  return Math.max(min, Math.min(Math.round(available / timePerEx), maxByLevel))
 }
 
 function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean): { sets: number; reps: number } {
@@ -328,6 +330,19 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
 function requiresPartner(name: string): boolean {
   const lower = name.toLowerCase()
   return lower.includes('leg curl') && (lower.includes('dumbbell') || lower.includes('band'))
+}
+
+// Detect exercises unsuitable for complete beginners (high skill/risk/ROM)
+function isBeginnerSafe(name: string): boolean {
+  const lower = name.toLowerCase()
+  // Extreme ROM or high-skill leg exercises
+  if (lower.includes('nordic') || lower.includes('sissy') || lower.includes('zercher') ||
+      lower.includes('pendulum') || lower.includes('belt squat')) return false
+  // Awkward or uncomfortable variations
+  if (lower.includes('chest-supported') || lower.includes('spider')) return false
+  // High-skill or extreme exercises
+  if (lower.includes('planche') || lower.includes('front lever')) return false
+  return true
 }
 
 // Detect wrist stress level for chronic wrist injuries
@@ -484,19 +499,32 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const hasAcuteWristInjury = answers.injuries.includes('wrists') &&
                                (!answers.injurySeverity['wrists'] || answers.injurySeverity['wrists'] === 'acute')
 
-  let pool = exerciseDb.filter(ex =>
-    (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
-    !avoidedMuscles.includes(ex.primaryMuscle) &&
-    !ex.secondaryMuscles.some(m => avoidedMuscles.includes(m)) &&
-    allowedDifficulties.includes(ex.difficulty) &&
-    !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury))
-  )
+  let pool = exerciseDb.filter(ex => {
+    // Equipment check
+    if (!(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
+    // Injury checks
+    if (avoidedMuscles.includes(ex.primaryMuscle)) return false
+    if (ex.secondaryMuscles.some(m => avoidedMuscles.includes(m))) return false
+    // Difficulty check
+    if (!allowedDifficulties.includes(ex.difficulty)) return false
+    // Wrist injury check
+    if (answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury)) return false
+    // Beginner safety check
+    if (answers.fitnessLevel === 'complete-beginner' && !isBeginnerSafe(ex.name)) return false
+    // Partner requirement check
+    if (answers.hasTrainingPartner === 'no' && requiresPartner(ex.name)) return false
+    return true
+  })
   if (pool.length < 10) {
-    pool = exerciseDb.filter(ex =>
-      (ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment)) &&
-      !avoidedMuscles.includes(ex.primaryMuscle) && allowedDifficulties.includes(ex.difficulty) &&
-      !(answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury))
-    )
+    pool = exerciseDb.filter(ex => {
+      if (!(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
+      if (avoidedMuscles.includes(ex.primaryMuscle)) return false
+      if (!allowedDifficulties.includes(ex.difficulty)) return false
+      if (answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury)) return false
+      if (answers.fitnessLevel === 'complete-beginner' && !isBeginnerSafe(ex.name)) return false
+      if (answers.hasTrainingPartner === 'no' && requiresPartner(ex.name)) return false
+      return true
+    })
   }
 
   const usedThisWeek = new Set<string>()
