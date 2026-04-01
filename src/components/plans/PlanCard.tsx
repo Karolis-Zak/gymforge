@@ -44,16 +44,22 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="primary" size="sm" onClick={onStart} className="flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="primary" size="sm" onClick={onStart} className="flex-1 min-w-[80px]">
             <FiPlay /> Start
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setExpanded(!expanded)}
+            className="flex-1 min-w-[100px]"
+          >
+            {expanded ? <FiChevronUp /> : <FiChevronDown />}
+            {expanded ? 'Hide' : 'Preview'}
           </Button>
           <Link href={`/plans/${plan.id}`}>
             <Button variant="ghost" size="sm" aria-label="Edit plan"><FiEdit2 /></Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Hide exercises' : 'Show exercises'}>
-            {expanded ? <FiChevronUp /> : <FiChevronDown />}
-          </Button>
           {!plan.isPreMade && (
             <Button variant="ghost" size="sm" onClick={onDelete} className="text-danger hover:text-danger">
               <FiTrash2 />
@@ -63,15 +69,23 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
 
         {/* Expanded exercise list */}
         {expanded && (
-          <div className="mt-4 pt-4 border-t border-white/5 space-y-2 animate-fade-in">
-            {plan.exercises.map((ex, i) => (
-              <div key={ex.id || i} className="flex items-center justify-between text-sm py-1">
-                <span className="text-text-secondary">{ex.name}</span>
-                <span className="text-text-muted text-xs">
-                  {ex.sets} x {ex.reps}
-                </span>
-              </div>
-            ))}
+          <div className="mt-4 pt-4 border-t border-white/5 animate-fade-in">
+            <div className="space-y-3">
+              {plan.exercises.map((ex, i) => (
+                <div key={ex.id || i} className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-text-primary font-medium text-sm">{i + 1}. {ex.name}</p>
+                    {ex.notes && (
+                      <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{ex.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-primary font-bold text-sm">{ex.sets} × {ex.reps}</p>
+                    <p className="text-text-muted text-xs">{typeof ex.sets === 'number' && typeof ex.reps === 'number' ? ex.sets * ex.reps : '?'} total</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
