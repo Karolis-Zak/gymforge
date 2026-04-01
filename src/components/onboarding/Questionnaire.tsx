@@ -157,7 +157,6 @@ export function Questionnaire() {
       {/* Steps */}
       {!showPreview && (
         <div className="space-y-6">
-          {/* Step 0: Welcome */}
           {step === 0 && (
             <div className="text-center py-10 animate-fade-in">
               <div className="w-20 h-20 rounded-2xl bg-gradient-mixed flex items-center justify-center mx-auto mb-6">
@@ -176,31 +175,14 @@ export function Questionnaire() {
             </div>
           )}
 
-          {/* Step 1: About You */}
           {step === 1 && <Step1AboutYou answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 2: Fitness Level */}
           {step === 2 && <Step2FitnessLevel answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 3: Goals */}
           {step === 3 && <Step3Goals answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 4: Equipment & Location */}
           {step === 4 && <Step4Equipment answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 5: Schedule */}
           {step === 5 && <Step5Schedule answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 6: Preferences */}
           {step === 6 && <Step6Preferences answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 7: Exercise Preferences */}
           {step === 7 && <Step7ExercisePrefs answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 8: Experience */}
           {step === 8 && <Step8Experience answers={answers} update={update} onNext={next} onBack={back} />}
-
-          {/* Step 9: Review */}
           {step === 9 && <Step9Review answers={answers} onBack={back} onGenerate={handleGenerate} isGenerating={isGenerating} onEditStep={goToStep} />}
         </div>
       )}
