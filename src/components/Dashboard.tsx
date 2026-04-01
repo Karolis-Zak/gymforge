@@ -8,12 +8,12 @@ import { useWorkoutLogStore } from '../store/workoutLogStore'
 import type { WorkoutLog } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useOnboardingStore } from '../store/onboardingStore'
-import { calculateVolume } from '../lib/exerciseUtils'
+import { calculateVolume, getProgressionSuggestion } from '../lib/exerciseUtils'
 import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
-import { FiAward, FiPlay, FiArrowRight, FiCompass } from 'react-icons/fi'
+import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
 
 const CHART_OPTIONS = {
@@ -201,6 +201,68 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Progression Suggestions (from RPE feedback) */}
+      {(() => {
+        const suggestions: Array<{ exerciseName: string; currentWeight: number; rpes: number[]; suggestion: { suggestion: string; nextWeight: number; reason: string } }> = []
+
+        // Group exercises by name across last 5 workouts
+        const exerciseGroups: Record<string, { rpes: number[]; weights: number[] }> = {}
+        completedLogs.slice(0, 5).forEach(log => {
+          log.exercises.forEach(ex => {
+            if (!exerciseGroups[ex.exerciseName]) {
+              exerciseGroups[ex.exerciseName] = { rpes: [], weights: [] }
+            }
+            if (ex.rpe) exerciseGroups[ex.exerciseName].rpes.push(ex.rpe)
+            const weight = Math.max(...ex.sets.map(s => s.weight || 0))
+            if (weight > 0) exerciseGroups[ex.exerciseName].weights.push(weight)
+          })
+        })
+
+        // Find exercises with 3+ RPE logs and consistent weight
+        Object.entries(exerciseGroups).forEach(([name, data]) => {
+          if (data.rpes.length >= 3 && data.weights.length > 0) {
+            const currentWeight = data.weights[data.weights.length - 1]
+            const suggestion = getProgressionSuggestion(name, data.rpes.slice(-3), 7, currentWeight)
+            if (suggestion.suggestion !== 'maintain') {
+              suggestions.push({ exerciseName: name, currentWeight, rpes: data.rpes.slice(-3), suggestion })
+            }
+          }
+        })
+
+        if (suggestions.length > 0) {
+          return (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-display font-bold text-text-primary flex items-center gap-2">
+                  <FiTrendingUp className="text-accent" /> Progression Suggestions
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {suggestions.map((item) => (
+                  <Card key={item.exerciseName} padding="md" className={item.suggestion.suggestion === 'increase' ? 'border-success/20' : 'border-warning/20'}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-text-primary mb-1">{item.exerciseName}</h3>
+                        <p className="text-sm text-text-secondary mb-2">{item.suggestion.reason}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={item.suggestion.suggestion === 'increase' ? 'success' : 'warning'} size="sm">
+                            {item.suggestion.suggestion === 'increase' ? '↑' : '↓'} {item.suggestion.nextWeight}kg
+                          </Badge>
+                          <span className="text-xs text-text-muted">
+                            from {item.currentWeight}kg • RPE {item.rpes.map(r => r.toFixed(1)).join(', ')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        return null
+      })()}
 
       {/* Recent Activity */}
       {recentLogs.length > 0 && (

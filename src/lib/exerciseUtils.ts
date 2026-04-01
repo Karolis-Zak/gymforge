@@ -242,3 +242,52 @@ export function suggestSwapExercises(
 
   return scored
 }
+
+/**
+ * Auto-progression: Suggest weight changes based on RPE feedback vs target RPE
+ * @param exerciseName - Name of the exercise
+ * @param recentRPEs - Array of RPE values from last 2-4 workouts
+ * @param targetRPE - Planned RPE for the week (e.g., 7.0)
+ * @param currentWeight - Current working weight
+ * @returns { suggestion: 'increase' | 'maintain' | 'decrease', nextWeight: number, reason: string }
+ */
+export function getProgressionSuggestion(
+  exerciseName: string,
+  recentRPEs: number[],
+  targetRPE: number,
+  currentWeight: number
+): { suggestion: 'increase' | 'maintain' | 'decrease'; nextWeight: number; reason: string } {
+  if (recentRPEs.length === 0 || !currentWeight || currentWeight <= 0) {
+    return { suggestion: 'maintain', nextWeight: currentWeight, reason: 'Not enough data' }
+  }
+
+  const avgRPE = recentRPEs.reduce((a, b) => a + b, 0) / recentRPEs.length
+  const diff = avgRPE - targetRPE
+
+  // Too easy: avg RPE is 1.5+ below target
+  if (diff < -1.5) {
+    const nextWeight = parseFloat((currentWeight * 1.05).toFixed(1))
+    return {
+      suggestion: 'increase',
+      nextWeight,
+      reason: `RPE ${avgRPE.toFixed(1)} < target ${targetRPE} — exercises feel easy. Try +${(nextWeight - currentWeight).toFixed(1)}kg.`
+    }
+  }
+
+  // Too hard: avg RPE is 1.5+ above target
+  if (diff > 1.5) {
+    const nextWeight = Math.max(0, parseFloat((currentWeight * 0.95).toFixed(1)))
+    return {
+      suggestion: 'decrease',
+      nextWeight,
+      reason: `RPE ${avgRPE.toFixed(1)} > target ${targetRPE} — too challenging. Try ${nextWeight ? `-${(currentWeight - nextWeight).toFixed(1)}kg` : 'bodyweight only'}.`
+    }
+  }
+
+  // Within range: maintain current weight
+  return {
+    suggestion: 'maintain',
+    nextWeight: currentWeight,
+    reason: `RPE ${avgRPE.toFixed(1)} ≈ target ${targetRPE} — weight is appropriate.`
+  }
+}
