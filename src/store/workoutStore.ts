@@ -152,6 +152,20 @@ export const useWorkoutStore = create<WorkoutStore>()(
     }),
     {
       name: 'workout-plans-storage',
+      migrate: (persistedState: any, version: number) => {
+        // Fix old Plank entries with reps: 1 → reps: 30
+        if (persistedState && persistedState.plans) {
+          persistedState.plans = persistedState.plans.map((plan: WorkoutPlan) => ({
+            ...plan,
+            exercises: plan.exercises.map(ex =>
+              ex.name === 'Plank' && ex.reps === 1
+                ? { ...ex, reps: 30, notes: 'Hold for 30 seconds per set' }
+                : ex
+            )
+          }))
+        }
+        return persistedState
+      }
     }
   )
 ) 
