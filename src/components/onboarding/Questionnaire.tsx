@@ -125,7 +125,7 @@ export function Questionnaire() {
     setShowPreview(true)
   }
 
-  const handleShuffle = () => setGeneratedPlan(generatePlan(answers))
+  const handleShuffle = () => setGeneratedPlan(generatePlan(answers, [], true))
 
   const handleConfirm = () => {
     if (!generatedPlan || !planName.trim()) return

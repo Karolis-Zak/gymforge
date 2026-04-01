@@ -268,7 +268,7 @@ function estimateDuration(exercises: GeneratedExercise[], level: string, goal: s
   return Math.round(total)
 }
 
-export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string[] = []): GeneratedPlan {
+export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string[] = [], shuffle: boolean = false): GeneratedPlan {
   const split = SPLIT_CONFIG[answers.daysPerWeek] || SPLIT_CONFIG[3]
   const avoidedMuscles = getAvoidedMuscles(answers.injuries, answers.injurySeverity)
   const cautiousMuscles = getCautiousMuscles(answers.injuries, answers.injurySeverity)
@@ -306,18 +306,19 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
     const scored = dayPool.map(ex => ({
-      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference)
+      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference) + (shuffle ? Math.random() * 8 : 0)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
     const muscleCount: Record<string, number> = {}
-    const usedPatterns = new Set<string>() // NEW: track movement patterns
-    const MAX_PER_MUSCLE = 2
+    const usedPatterns = new Set<string>()
+    // Back needs 3 exercises (row + vertical pull + hinge), other muscles max 2
+    const getMaxForMuscle = (m: string) => m === 'back' ? 3 : 2
 
     // Helper: can we add this exercise?
     const canAdd = (ex: ExerciseData): boolean => {
       if (selected.some(s => s.id === ex.id)) return false
-      if ((muscleCount[ex.primaryMuscle] || 0) >= MAX_PER_MUSCLE) return false
+      if ((muscleCount[ex.primaryMuscle] || 0) >= getMaxForMuscle(ex.primaryMuscle)) return false
       const pattern = getMovementPattern(ex)
       if (pattern !== 'other' && usedPatterns.has(pattern)) return false // NEW: no duplicate patterns
       return true
@@ -349,7 +350,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     // PHASE 2: One isolation per MAJOR muscle (provides stretch/variety)
     for (const muscle of majorTargets) {
       if (selected.length >= mainSlots) break
-      if ((muscleCount[muscle] || 0) >= MAX_PER_MUSCLE) continue
+      if ((muscleCount[muscle] || 0) >= getMaxForMuscle(muscle)) continue
       const best = scored.find(s => s.ex.type === 'isolation' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
       if (best) addExercise(best.ex)
     }
@@ -372,11 +373,11 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       }
     }
 
-    // PHASE 5: Absolute fill — relax pattern constraint if still short
+    // PHASE 5: Absolute fill — still respects pattern constraints but allows any muscle
     if (selected.length < exerciseCount) {
       for (const { ex } of scored) {
         if (selected.length >= exerciseCount) break
-        if (!selected.some(s => s.id === ex.id) && (muscleCount[ex.primaryMuscle] || 0) < MAX_PER_MUSCLE) {
+        if (canAdd(ex)) {
           selected.push(ex)
           muscleCount[ex.primaryMuscle] = (muscleCount[ex.primaryMuscle] || 0) + 1
         }
