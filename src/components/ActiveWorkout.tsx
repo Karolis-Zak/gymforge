@@ -519,33 +519,40 @@ export const ActiveWorkout: React.FC = () => {
             </div>
 
             {/* Search Results */}
-            {swapQuery && (
-              <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1">
-                {exerciseDb
-                  .filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase()))
-                  .slice(0, 8)
-                  .map(ex => (
-                    <button
-                      key={ex.id}
-                      onClick={() => {
-                        swapExercise(swappingExerciseId, ex.id, ex.name)
-                        setSwappingExerciseId(null)
-                        setSwapQuery('')
-                        setSwapSuggestions([])
-                        setToast(`Swapped to ${ex.name}`)
-                        setTimeout(() => setToast(null), 2000)
-                      }}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between group"
-                    >
-                      <span className="text-sm text-text-secondary group-hover:text-text-primary">{ex.name}</span>
-                      <Badge variant="neutral" size="sm">{ex.primaryMuscle}</Badge>
-                    </button>
-                  ))}
-                {exerciseDb.filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase())).length === 0 && (
-                  <p className="text-sm text-text-muted text-center py-3">No exercises found</p>
-                )}
-              </div>
-            )}
+            {swapQuery && (() => {
+              const hasAcuteWristInjury = userInjuries.includes('wrists') &&
+                                         (!userInjurySeverity['wrists'] || userInjurySeverity['wrists'] === 'acute')
+              const searchResults = exerciseDb
+                .filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase()))
+                .filter(ex => !(userInjuries.includes('wrists') && isWristDangerousExercise(ex.name, hasAcuteWristInjury)))
+
+              return (
+                <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1">
+                  {searchResults
+                    .slice(0, 8)
+                    .map(ex => (
+                      <button
+                        key={ex.id}
+                        onClick={() => {
+                          swapExercise(swappingExerciseId, ex.id, ex.name)
+                          setSwappingExerciseId(null)
+                          setSwapQuery('')
+                          setSwapSuggestions([])
+                          setToast(`Swapped to ${ex.name}`)
+                          setTimeout(() => setToast(null), 2000)
+                        }}
+                        className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between group"
+                      >
+                        <span className="text-sm text-text-secondary group-hover:text-text-primary">{ex.name}</span>
+                        <Badge variant="neutral" size="sm">{ex.primaryMuscle}</Badge>
+                      </button>
+                    ))}
+                  {searchResults.length === 0 && (
+                    <p className="text-sm text-text-muted text-center py-3">No exercises found</p>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         </Card>
       )}
