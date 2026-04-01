@@ -953,23 +953,12 @@ export const ActiveWorkout: React.FC = () => {
                     {isNewPB && <Badge variant="danger" size="sm">New PB!</Badge>}
                     {pb && !isBW && <span className="text-xs text-text-muted">PB: {pb}kg</span>}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {!allSetsDone && (
-                      <button
-                        onClick={() => setSwappingExerciseId(exercise.id)}
-                        className="px-3 py-1 text-xs rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-all flex items-center gap-1"
-                        aria-label="Swap exercise"
-                      >
-                        <FiRepeat size={12} /> Swap
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setCollapsedExercises(prev => ({ ...prev, [exercise.id]: true }))}
-                      className="text-text-muted hover:text-text-secondary transition-colors p-1"
-                    >
-                      <FiChevronUp size={16} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setCollapsedExercises(prev => ({ ...prev, [exercise.id]: true }))}
+                    className="text-text-muted hover:text-text-secondary transition-colors p-1"
+                  >
+                    <FiChevronUp size={16} />
+                  </button>
                 </div>
 
                 {exerciseInfo && (
