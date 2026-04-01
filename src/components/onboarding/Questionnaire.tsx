@@ -546,7 +546,7 @@ export function Questionnaire() {
               <Card padding="md">
                 <div className="space-y-3 text-sm">
                   <SummaryRow label="Name" value={answers.name} onEdit={() => setStep(1)} />
-                  <SummaryRow label="Age / Gender" value={`${answers.age || '?'}, ${answers.gender || '?'}`} onEdit={() => setStep(1)} />
+                  <SummaryRow label="Age / Gender" value={`${answers.age || '?'}, ${answers.gender ? capitalize(answers.gender) : '?'}`} onEdit={() => setStep(1)} />
                   {answers.height > 0 && <SummaryRow label="Height / Weight" value={`${answers.height}cm, ${answers.weight}kg`} onEdit={() => setStep(1)} />}
                   {answers.bodyType && <SummaryRow label="Build" value={capitalize(answers.bodyType)} onEdit={() => setStep(1)} />}
                   <SummaryRow label="Level" value={capitalize(answers.fitnessLevel)} onEdit={() => setStep(2)} />
@@ -555,7 +555,7 @@ export function Questionnaire() {
                   <SummaryRow label="Cardio" value={capitalize(answers.cardioPreference)} onEdit={() => setStep(3)} />
                   <SummaryRow label="Location" value={capitalize(answers.trainingLocation)} onEdit={() => setStep(4)} />
                   <SummaryRow label="Equipment" value={answers.availableEquipment.length > 0 ? answers.availableEquipment.map(getEquipmentLabel).join(', ') : 'Bodyweight only'} onEdit={() => setStep(4)} />
-                  <SummaryRow label="Bench" value={answers.hasAdjustableBench ? 'Yes' : 'No'} onEdit={() => setStep(4)} />
+                  <SummaryRow label="Bench" value={answers.hasAdjustableBench === true ? 'Yes' : answers.hasAdjustableBench === false ? 'No' : '?'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Partner" value={answers.hasTrainingPartner === 'yes' ? 'Yes' : answers.hasTrainingPartner === 'sometimes' ? 'Sometimes' : 'No'} onEdit={() => setStep(4)} />
                   <SummaryRow label="Schedule" value={`${answers.daysPerWeek}×/week, ${answers.sessionDuration} min, ${capitalize(answers.warmupPreference)} warm-up`} onEdit={() => setStep(5)} />
                   <SummaryRow label="Days" value={answers.specificDays.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', ')} onEdit={() => setStep(5)} />

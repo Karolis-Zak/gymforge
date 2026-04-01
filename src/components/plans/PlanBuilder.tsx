@@ -179,7 +179,7 @@ export function PlanBuilder() {
 
           <div className="flex justify-end">
             <Button onClick={() => setStep(2)} disabled={!name}>
-              Next <FiArrowRight />
+              <FiArrowRight /> Next
             </Button>
           </div>
         </div>
@@ -232,7 +232,7 @@ export function PlanBuilder() {
             <div className="flex items-center gap-3">
               {exercises.length === 0 && <span className="text-xs text-text-muted">Add at least 1 exercise</span>}
               <Button onClick={() => setStep(3)} disabled={exercises.length === 0}>
-                Review <FiArrowRight />
+                <FiArrowRight /> Review
               </Button>
             </div>
           </div>
