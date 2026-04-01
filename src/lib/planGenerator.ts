@@ -144,8 +144,16 @@ function getAllowedDifficulties(complexity: string): Difficulty[] {
   return ['beginner', 'intermediate', 'advanced']
 }
 
+// Rest time: beginners don't lift heavy enough for long rest regardless of goal
 function getRestSeconds(goal: string, level: string): number {
-  if (goal === 'strength') return level === 'complete-beginner' ? 150 : 120
+  if (level === 'complete-beginner') return 75 // always 75s — light weights, focus on form
+  if (level === 'some-experience') {
+    if (goal === 'strength') return 90
+    if (goal === 'fat-loss' || goal === 'endurance') return 45
+    return 60
+  }
+  // Regular exerciser — goal drives rest
+  if (goal === 'strength') return 120
   if (goal === 'muscle-building') return 75
   if (goal === 'toning') return 60
   if (goal === 'fat-loss') return 45
@@ -153,42 +161,49 @@ function getRestSeconds(goal: string, level: string): number {
   return 60
 }
 
+// Minimum 4 exercises per session. Beginners always do 3 sets.
 function getExerciseCount(targetDuration: number, level: string, goal: string): number {
-  const warmup = level === 'complete-beginner' ? 10 : 5
-  const available = targetDuration - warmup - 5
+  const warmup = level === 'complete-beginner' ? 8 : 5
+  const available = targetDuration - warmup - 3
   const restSec = getRestSeconds(goal, level)
-  const avgSets = goal === 'strength' ? 4 : 3
+  const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
-  return Math.max(3, Math.min(Math.floor(available / timePerEx), 10))
+  return Math.max(5, Math.min(Math.round(available / timePerEx), 10))
 }
 
 function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean): { sets: number; reps: number } {
-  let sets = 3
-  let reps = 10
+  let sets: number
+  let reps: number
 
+  // Beginners: ALWAYS 3 sets. Goal only affects reps.
   if (level === 'complete-beginner') {
-    sets = 3; reps = isCompound ? 10 : 12
+    sets = 3
+    if (primaryGoal === 'strength') reps = isCompound ? 8 : 10
+    else if (primaryGoal === 'muscle-building') reps = isCompound ? 10 : 12
+    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
+    else if (primaryGoal === 'endurance') reps = 15
+    else reps = 10
   } else if (level === 'some-experience') {
-    sets = isCompound ? 3 : 3; reps = isCompound ? 8 : 10
+    sets = isCompound ? 3 : 3
+    if (primaryGoal === 'strength') { reps = isCompound ? 6 : 10; if (isCompound) sets = 4 }
+    else if (primaryGoal === 'muscle-building') reps = isCompound ? 8 : 10
+    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
+    else if (primaryGoal === 'endurance') { reps = 15; sets = 2 }
+    else reps = 10
   } else {
-    sets = isCompound ? 4 : 3; reps = isCompound ? 6 : 10
+    if (primaryGoal === 'strength') { sets = isCompound ? 4 : 3; reps = isCompound ? 5 : 8 }
+    else if (primaryGoal === 'muscle-building') { sets = isCompound ? 4 : 3; reps = isCompound ? 8 : 10 }
+    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') { sets = 3; reps = 12 }
+    else if (primaryGoal === 'endurance') { sets = 2; reps = 20 }
+    else { sets = 3; reps = 10 }
   }
 
-  if (primaryGoal === 'strength') { reps = Math.max(reps - 2, 4); sets = Math.min(sets + 1, 5) }
-  if (primaryGoal === 'fat-loss') { reps = Math.min(reps + 3, 15) }
-  if (primaryGoal === 'toning') { reps = Math.min(reps + 2, 15); sets = 3 }
-  if (primaryGoal === 'endurance') { reps = Math.min(reps + 5, 20); sets = Math.max(sets - 1, 2) }
-  if (primaryGoal === 'muscle-building') { reps = Math.min(Math.max(reps, 8), 12); sets = Math.max(sets, 3) }
+  // Secondary goal nudge
+  if (secondaryGoal === 'strength' && reps > 8) reps = Math.max(reps - 2, 8)
+  if (secondaryGoal === 'muscle-building' && reps < 8) reps = 8
+  if (secondaryGoal === 'fat-loss' && reps < 10) reps = 10
 
-  if (secondaryGoal === 'strength') { reps = Math.max(reps - 1, 4) }
-  if (secondaryGoal === 'fat-loss') { reps = Math.min(reps + 1, 18) }
-  if (secondaryGoal === 'endurance') { reps = Math.min(reps + 2, 20) }
-  if (secondaryGoal === 'muscle-building' && reps < 8) { reps = 8 }
-  if (secondaryGoal === 'toning') { reps = Math.min(reps + 1, 15) }
-
-  // Round to standard gym numbers
   reps = roundToStandardReps(reps)
-
   return { sets, reps }
 }
 
