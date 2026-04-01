@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
-import { LayoutShell } from '../components/layout/LayoutShell'
+import { RootLayoutClient } from '../components/layout/RootLayoutClient'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="font-body antialiased">
-        <LayoutShell>{children}</LayoutShell>
+        <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
   )
