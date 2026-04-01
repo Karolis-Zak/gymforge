@@ -140,6 +140,43 @@ export const ActiveWorkout: React.FC = () => {
     }
   }, [swappingExerciseId, currentWorkout, userInjuries, userInjurySeverity])
 
+  // Get rest seconds for a specific exercise (from plan or default)
+  // MUST be before early returns to maintain hook count consistency
+  const workoutPlan = plans.find(p => p.id === currentWorkout?.planId)
+  const getRestForExercise = useCallback((exerciseId: string): number => {
+    if (!workoutPlan) return DEFAULT_REST_SECONDS
+    const exercise = currentWorkout?.exercises.find(e => e.id === exerciseId)
+    if (!exercise) return DEFAULT_REST_SECONDS
+    const planEx = workoutPlan.exercises.find(e => e.id === exercise.exerciseId)
+    return planEx?.restSeconds || DEFAULT_REST_SECONDS
+  }, [workoutPlan, currentWorkout, DEFAULT_REST_SECONDS])
+
+  // Complete a set and start rest timer
+  const handleCompleteSet = useCallback((exerciseId: string, setIndex: number, markAsCompleted: boolean, setsLength: number) => {
+    completeSet(exerciseId, setIndex, markAsCompleted)
+    if (markAsCompleted && setIndex < setsLength - 1) {
+      const restTime = getRestForExercise(exerciseId)
+      setRestTimers(prev => ({ ...prev, [exerciseId]: restTime }))
+      setRestActive(prev => ({ ...prev, [exerciseId]: true }))
+    }
+  }, [completeSet, getRestForExercise])
+
+  const handleFinish = useCallback(() => {
+    if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
+    completeWorkout(timer)
+    setShowConfetti(true)
+    setTimeout(() => setShowConfetti(false), 4000)
+    setToast('Workout complete!')
+    setTimeout(() => { setToast(null); router.push('/progress') }, 2000)
+  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router])
+
+  const handleCancel = useCallback(() => {
+    if (confirm('Cancel this workout? Your progress will be lost.')) {
+      cancelWorkout()
+      router.push('/plans')
+    }
+  }, [cancelWorkout, router])
+
   if (!currentWorkout) {
     return (
       <div className="animate-fade-in flex items-center justify-center min-h-[60vh]">
@@ -156,8 +193,6 @@ export const ActiveWorkout: React.FC = () => {
       </div>
     )
   }
-
-  const workoutPlan = plans.find(p => p.id === currentWorkout.planId)
 
   // PREVIEW SCREEN — before workout starts
   if (!workoutStarted) {
@@ -186,34 +221,6 @@ export const ActiveWorkout: React.FC = () => {
     return maxWeight > 0 ? maxWeight : null
   }
 
-  // Get rest seconds for a specific exercise (from plan or default)
-  const getRestForExercise = useCallback((exerciseId: string): number => {
-    if (!workoutPlan) return DEFAULT_REST_SECONDS
-    const exercise = currentWorkout?.exercises.find(e => e.id === exerciseId)
-    if (!exercise) return DEFAULT_REST_SECONDS
-    const planEx = workoutPlan.exercises.find(e => e.id === exercise.exerciseId)
-    return planEx?.restSeconds || DEFAULT_REST_SECONDS
-  }, [workoutPlan, currentWorkout, DEFAULT_REST_SECONDS])
-
-  // Complete a set and start rest timer
-  const handleCompleteSet = useCallback((exerciseId: string, setIndex: number, markAsCompleted: boolean, setsLength: number) => {
-    completeSet(exerciseId, setIndex, markAsCompleted)
-    if (markAsCompleted && setIndex < setsLength - 1) {
-      const restTime = getRestForExercise(exerciseId)
-      setRestTimers(prev => ({ ...prev, [exerciseId]: restTime }))
-      setRestActive(prev => ({ ...prev, [exerciseId]: true }))
-    }
-  }, [completeSet, getRestForExercise])
-
-  const handleFinish = useCallback(() => {
-    if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
-    completeWorkout(timer)
-    setShowConfetti(true)
-    setTimeout(() => setShowConfetti(false), 4000)
-    setToast('Workout complete!')
-    setTimeout(() => { setToast(null); router.push('/progress') }, 2000)
-  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router])
-
   // Weight progression suggestion
   const getSuggestedWeight = (exerciseId: string): number | null => {
     const progress = getExerciseProgress(exerciseId)
@@ -226,13 +233,6 @@ export const ActiveWorkout: React.FC = () => {
     const hitTarget = recent.filter(w => w === lastWeight).length >= 2 && lastReps >= 8
     return hitTarget ? lastWeight + 2.5 : null
   }
-
-  const handleCancel = useCallback(() => {
-    if (confirm('Cancel this workout? Your progress will be lost.')) {
-      cancelWorkout()
-      router.push('/plans')
-    }
-  }, [cancelWorkout, router])
 
   const handleShare = () => {
     const summary = `GymForge Workout: ${currentWorkout.planName}\n${completedSets}/${totalSets} sets completed.`
