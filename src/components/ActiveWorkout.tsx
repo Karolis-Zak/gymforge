@@ -79,6 +79,43 @@ function isUnilateralExercise(exerciseName: string): boolean {
   return unilateralKeywords.some(kw => lower.includes(kw))
 }
 
+// Suggest smart swap alternatives based on current exercise context
+function suggestSwapExercises(currentExerciseName: string, allExercises = exerciseDb): typeof exerciseDb {
+  const current = findExerciseInfo(currentExerciseName)
+  if (!current) return []
+
+  // Score exercises for relevance as swaps
+  const scored = exerciseDb
+    .filter(ex => ex.id !== current.id) // Don't suggest the same exercise
+    .map(ex => {
+      let score = 0
+
+      // Same primary muscle = high priority
+      if (ex.primaryMuscle === current.primaryMuscle) score += 10
+
+      // Same type (compound/isolation) = helpful
+      if (ex.type === current.type) score += 5
+
+      // Same equipment = convenient (user likely has it)
+      if (ex.equipment === current.equipment) score += 3
+
+      // Secondary muscle overlap = bonus
+      if (ex.secondaryMuscles.some(m => current.secondaryMuscles.includes(m))) score += 2
+
+      // Similar difficulty = appropriate challenge
+      const difficultyOrder = { beginner: 0, intermediate: 1, advanced: 2 }
+      const diffDist = Math.abs(difficultyOrder[ex.difficulty] - difficultyOrder[current.difficulty])
+      if (diffDist <= 1) score += 3 - diffDist
+
+      return { ex, score }
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4) // Return top 4 suggestions
+    .map(s => s.ex)
+
+  return scored
+}
+
 export const ActiveWorkout: React.FC = () => {
   const router = useRouter()
   const { currentWorkout, logs, completeSet, updateSetWeight, updateSetReps, completeWorkout, cancelWorkout, getExerciseProgress, updateSessionNotes, swapExercise } = useWorkoutLogStore()
@@ -102,6 +139,7 @@ export const ActiveWorkout: React.FC = () => {
   const [showNotesPanel, setShowNotesPanel] = useState(false)
   const [swappingExerciseId, setSwappingExerciseId] = useState<string | null>(null)
   const [swapQuery, setSwapQuery] = useState('')
+  const [swapSuggestions, setSwapSuggestions] = useState<typeof exerciseDb>([])
   // Per-side tracking
   const [perSideEnabled, setPerSideEnabled] = useState<Record<string, boolean>>({})
   const [currentSide, setCurrentSide] = useState<Record<string, 'left' | 'right'>>({})
@@ -163,6 +201,18 @@ export const ActiveWorkout: React.FC = () => {
       return changed ? next : prev
     })
   }, [currentWorkout])
+
+  // Generate smart suggestions when swap modal opens
+  useEffect(() => {
+    if (swappingExerciseId && currentWorkout) {
+      const exercise = currentWorkout.exercises.find(ex => ex.id === swappingExerciseId)
+      if (exercise) {
+        const suggestions = suggestSwapExercises(exercise.exerciseName)
+        setSwapSuggestions(suggestions)
+        setSwapQuery('')
+      }
+    }
+  }, [swappingExerciseId, currentWorkout])
 
   if (!currentWorkout) {
     return (
@@ -394,40 +444,81 @@ export const ActiveWorkout: React.FC = () => {
       {/* ===== Swap Exercise Modal ===== */}
       {swappingExerciseId && (
         <Card className="animate-fade-in border-accent/30">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display font-bold text-text-primary text-sm">Swap Exercise</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-bold text-text-primary">Pick a replacement</h3>
             <Button variant="ghost" size="sm" onClick={() => { setSwappingExerciseId(null); setSwapQuery('') }}><FiX /></Button>
           </div>
-          <input
-            type="text"
-            value={swapQuery}
-            onChange={e => setSwapQuery(e.target.value)}
-            placeholder="Search for replacement..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50 mb-3"
-            autoFocus
-          />
-          <div className="max-h-48 overflow-y-auto space-y-1">
-            {exerciseDb
-              .filter(ex => swapQuery && ex.name.toLowerCase().includes(swapQuery.toLowerCase()))
-              .slice(0, 10)
-              .map(ex => (
-                <button
-                  key={ex.id}
-                  onClick={() => {
-                    swapExercise(swappingExerciseId, ex.id, ex.name)
-                    setSwappingExerciseId(null)
-                    setSwapQuery('')
-                    setToast(`Swapped to ${ex.name}`)
-                    setTimeout(() => setToast(null), 2000)
-                  }}
-                  className="w-full text-left p-2 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between"
-                >
-                  <span className="text-sm text-text-primary">{ex.name}</span>
-                  <Badge variant="neutral" size="sm">{ex.primaryMuscle}</Badge>
-                </button>
-              ))}
-            {swapQuery && exerciseDb.filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase())).length === 0 && (
-              <p className="text-sm text-text-muted text-center py-3">No exercises found</p>
+
+          {/* Smart Suggestions */}
+          {swapSuggestions.length > 0 && (
+            <div className="mb-5">
+              <p className="text-xs text-text-muted uppercase tracking-wider mb-2.5 font-medium">Recommended for you</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {swapSuggestions.map(ex => (
+                  <button
+                    key={ex.id}
+                    onClick={() => {
+                      swapExercise(swappingExerciseId, ex.id, ex.name)
+                      setSwappingExerciseId(null)
+                      setSwapQuery('')
+                      setSwapSuggestions([])
+                      setToast(`Swapped to ${ex.name}`)
+                      setTimeout(() => setToast(null), 2000)
+                    }}
+                    className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/15 hover:border-primary/50 transition-all text-left group"
+                  >
+                    <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors line-clamp-2">{ex.name}</span>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <Badge variant="primary" size="sm">{ex.primaryMuscle}</Badge>
+                      <Badge variant="neutral" size="sm">{ex.equipment}</Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Search Alternative */}
+          <div className="border-t border-white/5 pt-4">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 font-medium">Search exercises</p>
+            <div className="relative">
+              <input
+                type="text"
+                value={swapQuery}
+                onChange={e => setSwapQuery(e.target.value)}
+                placeholder="Find any exercise..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                autoFocus={swapSuggestions.length === 0}
+              />
+            </div>
+
+            {/* Search Results */}
+            {swapQuery && (
+              <div className="mt-2.5 max-h-40 overflow-y-auto space-y-1">
+                {exerciseDb
+                  .filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase()))
+                  .slice(0, 8)
+                  .map(ex => (
+                    <button
+                      key={ex.id}
+                      onClick={() => {
+                        swapExercise(swappingExerciseId, ex.id, ex.name)
+                        setSwappingExerciseId(null)
+                        setSwapQuery('')
+                        setSwapSuggestions([])
+                        setToast(`Swapped to ${ex.name}`)
+                        setTimeout(() => setToast(null), 2000)
+                      }}
+                      className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between group"
+                    >
+                      <span className="text-sm text-text-secondary group-hover:text-text-primary">{ex.name}</span>
+                      <Badge variant="neutral" size="sm">{ex.primaryMuscle}</Badge>
+                    </button>
+                  ))}
+                {exerciseDb.filter(ex => ex.name.toLowerCase().includes(swapQuery.toLowerCase())).length === 0 && (
+                  <p className="text-sm text-text-muted text-center py-3">No exercises found</p>
+                )}
+              </div>
             )}
           </div>
         </Card>
@@ -503,12 +594,12 @@ export const ActiveWorkout: React.FC = () => {
                   )}
 
                   {/* Quick actions */}
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center justify-center gap-2 mt-4 pt-2 border-t border-white/10">
                     <button
                       onClick={() => setSwappingExerciseId(currentExercise.id)}
-                      className="text-xs text-text-muted hover:text-primary transition-colors flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5"
+                      className="px-5 py-2 rounded-xl text-sm font-medium text-text-primary bg-accent/10 border border-accent/30 hover:bg-accent/20 hover:border-accent/50 transition-all flex items-center gap-2"
                     >
-                      <FiRepeat size={12} /> Swap
+                      <FiRepeat size={14} /> Swap Exercise
                     </button>
                   </div>
                 </div>
@@ -862,10 +953,14 @@ export const ActiveWorkout: React.FC = () => {
                     {isNewPB && <Badge variant="danger" size="sm">New PB!</Badge>}
                     {pb && !isBW && <span className="text-xs text-text-muted">PB: {pb}kg</span>}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     {!allSetsDone && (
-                      <button onClick={() => setSwappingExerciseId(exercise.id)} className="text-text-muted hover:text-primary transition-colors p-1" aria-label="Swap exercise">
-                        <FiRepeat size={14} />
+                      <button
+                        onClick={() => setSwappingExerciseId(exercise.id)}
+                        className="px-3 py-1 text-xs rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-all flex items-center gap-1"
+                        aria-label="Swap exercise"
+                      >
+                        <FiRepeat size={12} /> Swap
                       </button>
                     )}
                     <button
