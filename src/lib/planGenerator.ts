@@ -78,6 +78,8 @@ function getMovementPattern(ex: ExerciseData): string {
   if (lower.includes('lunge') || lower.includes('split squat') || lower.includes('step-up')) return 'lunge'
   // Shrug pattern
   if (lower.includes('shrug')) return 'shrug'
+  // Wrist curl pattern
+  if (lower.includes('wrist curl') || lower.includes('wrist extension')) return 'wrist-curl'
   // Push-up / dip pattern
   if (lower.includes('push-up') || lower.includes('dip')) return 'bodyweight-push'
   return 'other'
@@ -174,7 +176,8 @@ function getExerciseCount(targetDuration: number, level: string, goal: string): 
   const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
   const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
   const min = targetDuration <= 30 ? 4 : 5
-  return Math.max(min, Math.min(Math.round(available / timePerEx), 10))
+  const max = goal === 'endurance' ? 8 : 10
+  return Math.max(min, Math.min(Math.round(available / timePerEx), max))
 }
 
 function getVolume(level: string, primaryGoal: string, secondaryGoal: string, isCompound: boolean): { sets: number; reps: number } {
@@ -186,20 +189,20 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
     if (primaryGoal === 'strength') reps = isCompound ? 8 : 10
     else if (primaryGoal === 'muscle-building') reps = isCompound ? 10 : 12
     else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
-    else if (primaryGoal === 'endurance') reps = 15
+    else if (primaryGoal === 'endurance') reps = isCompound ? 12 : 15
     else reps = 10
   } else if (level === 'some-experience') {
     sets = isCompound ? 3 : 3
     if (primaryGoal === 'strength') { reps = isCompound ? 6 : 10; if (isCompound) sets = 4 }
     else if (primaryGoal === 'muscle-building') reps = isCompound ? 8 : 10
     else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
-    else if (primaryGoal === 'endurance') { reps = 15; sets = 2 }
+    else if (primaryGoal === 'endurance') { reps = isCompound ? 12 : 15; sets = 2 }
     else reps = 10
   } else {
     if (primaryGoal === 'strength') { sets = isCompound ? 4 : 3; reps = isCompound ? 5 : 8 }
     else if (primaryGoal === 'muscle-building') { sets = isCompound ? 4 : 3; reps = isCompound ? 8 : 10 }
     else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') { sets = 3; reps = 12 }
-    else if (primaryGoal === 'endurance') { sets = 2; reps = 20 }
+    else if (primaryGoal === 'endurance') { sets = 2; reps = isCompound ? 12 : 15 }
     else { sets = 3; reps = 10 }
   }
 
@@ -246,7 +249,12 @@ function scoreExercise(
     if (lower.includes('incline') || lower.includes('decline') || lower.includes('chest-supported') || lower.includes('spider') || lower.includes('seal row')) score -= 8
   }
   if (usedIds.includes(ex.id)) score -= 5
-  if (cautiousMuscles.includes(ex.primaryMuscle) && ex.type === 'compound') score -= 3
+  if (cautiousMuscles.includes(ex.primaryMuscle)) {
+    score -= ex.type === 'compound' ? 5 : 2
+    // Extra penalty for high-impact movements on cautious joints
+    const l = ex.name.toLowerCase()
+    if (l.includes('lunge') || l.includes('jump') || l.includes('plyometric') || l.includes('box jump')) score -= 4
+  }
   if (isTimedExercise(ex.name) || isCarryExercise(ex.name)) score -= 6
 
   return score
@@ -387,10 +395,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     if (selected.length < exerciseCount) {
       for (const { ex } of scored) {
         if (selected.length >= exerciseCount) break
-        if (canAdd(ex)) {
-          selected.push(ex)
-          muscleCount[ex.primaryMuscle] = (muscleCount[ex.primaryMuscle] || 0) + 1
-        }
+        if (canAdd(ex)) addExercise(ex)
       }
     }
 
@@ -447,7 +452,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${answers.cardioPreference !== 'none' ? ' Includes cardio finishers.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${answers.cardioPreference !== 'none' ? ' Includes cardio finishers.' : ''}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
