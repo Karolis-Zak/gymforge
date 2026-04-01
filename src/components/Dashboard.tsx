@@ -13,7 +13,7 @@ import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
-import { FiAward, FiPlay, FiArrowRight, FiRefreshCw, FiCompass } from 'react-icons/fi'
+import { FiAward, FiPlay, FiArrowRight, FiCompass } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
 
 const CHART_OPTIONS = {
@@ -36,7 +36,6 @@ export function Dashboard() {
   const router = useRouter()
   const { profile } = useUserStore()
   const { currentWorkout, logs, getWorkoutStats, startWorkout } = useWorkoutLogStore()
-  const { shouldSuggestRefresh, snoozeRefresh } = useOnboardingStore()
   const { plans } = useWorkoutStore()
   const stats = getWorkoutStats()
   const [expandedStat, setExpandedStat] = useState<string | null>(null)
@@ -171,29 +170,6 @@ export function Dashboard() {
         onToggleStat={toggleStat}
         chartOptions={CHART_OPTIONS}
       />
-
-      {/* Refresh Banner */}
-      {shouldSuggestRefresh() && (
-        <Card className="border-accent/30 bg-accent/5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
-                <FiRefreshCw className="text-accent text-xl" />
-              </div>
-              <div>
-                <h3 className="font-bold text-text-primary">Time to Switch It Up!</h3>
-                <p className="text-sm text-text-secondary">Fresh exercises keep progress moving.</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={snoozeRefresh}>Later</Button>
-              <Link href="/get-started">
-                <Button variant="primary" size="sm"><FiRefreshCw /> Refresh</Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Quick Start */}
       {plans.length > 0 && !currentWorkout && (

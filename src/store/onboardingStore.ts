@@ -51,15 +51,10 @@ interface OnboardingStore {
   completedAt: string | null
   planCreatedAt: string | null
   usedExerciseIds: string[]
-  refreshCount: number
-  snoozedUntil: string | null
 
   setAnswers: (answers: OnboardingAnswers) => void
   markPlanCreated: () => void
   addUsedExercises: (ids: string[]) => void
-  incrementRefresh: () => void
-  snoozeRefresh: () => void
-  shouldSuggestRefresh: () => boolean
   reset: () => void
 }
 
@@ -96,38 +91,22 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
 
 export const useOnboardingStore = create<OnboardingStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       answers: null,
       completedAt: null,
       planCreatedAt: null,
       usedExerciseIds: [],
-      refreshCount: 0,
-      snoozedUntil: null,
 
       setAnswers: (answers) => set({ answers, completedAt: new Date().toISOString() }),
       markPlanCreated: () => set({ planCreatedAt: new Date().toISOString() }),
       addUsedExercises: (ids) => set(state => ({
         usedExerciseIds: [...new Set([...state.usedExerciseIds, ...ids])]
       })),
-      incrementRefresh: () => set(state => ({
-        refreshCount: state.refreshCount + 1,
-        planCreatedAt: new Date().toISOString(),
-        snoozedUntil: null,
-      })),
-      snoozeRefresh: () => set({
-        snoozedUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      }),
-      shouldSuggestRefresh: () => {
-        const state = get()
-        if (!state.planCreatedAt || !state.answers) return false
-        if (state.snoozedUntil && new Date(state.snoozedUntil) > new Date()) return false
-        const daysSince = (Date.now() - new Date(state.planCreatedAt).getTime()) / (1000 * 60 * 60 * 24)
-        const interval = state.answers.varietyPreference === 'variety' ? 14 : state.answers.varietyPreference === 'balanced' ? 21 : 28
-        return daysSince >= interval
-      },
       reset: () => set({
-        answers: null, completedAt: null, planCreatedAt: null,
-        usedExerciseIds: [], refreshCount: 0, snoozedUntil: null,
+        answers: null,
+        completedAt: null,
+        planCreatedAt: null,
+        usedExerciseIds: [],
       }),
     }),
     { name: 'onboarding-storage' }
