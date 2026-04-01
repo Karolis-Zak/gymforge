@@ -98,6 +98,8 @@ export interface GeneratedExercise {
   notes: string
   restSeconds?: number
   isDurationBased?: boolean  // true for timed/carry/cardio exercises (reps = seconds)
+  warmupSets?: Array<{ weight: string; reps: number; description: string }>  // Auto-generated warm-up for first compound
+  rotationSchedule?: Array<{ weeks: string; exerciseName: string }>  // Exercise rotation over 12 weeks
 }
 
 export interface GeneratedDay {
@@ -121,6 +123,67 @@ const MAJOR_MUSCLES: Set<MuscleGroup> = new Set(['chest', 'back', 'shoulders', '
 function roundToStandardReps(reps: number): number {
   const standards = [4, 5, 6, 8, 10, 12, 15, 20]
   return standards.reduce((prev, curr) => Math.abs(curr - reps) < Math.abs(prev - reps) ? curr : prev)
+}
+
+/**
+ * Find alternative exercises with the same movement pattern
+ * Used for smart rotation (Bench → Incline → Floor Press)
+ */
+function findRotationAlternatives(exerciseId: string, movementPattern: string, pool: ExerciseData[]): ExerciseData[] {
+  const baseExercise = exerciseDb.find(e => e.id === exerciseId)
+  if (!baseExercise) return []
+
+  // Find exercises with:
+  // 1. Same primary muscle
+  // 2. Same movement pattern
+  // 3. Same equipment (or compatible)
+  return pool.filter(ex => {
+    if (ex.id === exerciseId) return false // Exclude base exercise
+    if (ex.primaryMuscle !== baseExercise.primaryMuscle) return false
+    if (getMovementPattern(ex) !== movementPattern) return false
+    // Prefer same or similar equipment
+    if (Math.abs((EQUIPMENT_ORDER[ex.equipment] || 10) - (EQUIPMENT_ORDER[baseExercise.equipment] || 10)) > 2) return false
+    return true
+  })
+}
+
+/**
+ * Generate warm-up sets for a compound exercise
+ * Protocol: 50% × 8, 70% × 5, 85% × 2
+ */
+function generateWarmupSets(exerciseName: string, estimatedWeight: number = 100): Array<{ weight: string; reps: number; description: string }> {
+  return [
+    { weight: `${Math.round(estimatedWeight * 0.5)}`, reps: 8, description: 'Light, get joints moving' },
+    { weight: `${Math.round(estimatedWeight * 0.7)}`, reps: 5, description: 'Build up to working weight' },
+    { weight: `${Math.round(estimatedWeight * 0.85)}`, reps: 2, description: 'Final prep, near working weight' },
+  ]
+}
+
+/**
+ * Create a rotation schedule for an exercise across 12 weeks
+ * Rotates every 3-4 weeks within same movement pattern
+ */
+function createRotationSchedule(exerciseId: string, movementPattern: string, totalWeeks: number, pool: ExerciseData[]): Array<{ weeks: string; exerciseName: string }> {
+  const alternatives = findRotationAlternatives(exerciseId, movementPattern, pool)
+  if (alternatives.length === 0) return [] // No alternatives, no rotation
+
+  const baseExercise = exerciseDb.find(e => e.id === exerciseId)
+  if (!baseExercise) return []
+
+  const rotationSchedule: Array<{ weeks: string; exerciseName: string }> = []
+  const rotationDuration = 3 // Rotate every 3 weeks
+  const allExercises = [baseExercise, ...alternatives.slice(0, 3)] // Max 4 variations
+
+  for (let week = 1; week <= totalWeeks; week += rotationDuration) {
+    const exerciseIndex = Math.floor((week - 1) / rotationDuration) % allExercises.length
+    const endWeek = Math.min(week + rotationDuration - 1, totalWeeks)
+    rotationSchedule.push({
+      weeks: week === endWeek ? `${week}` : `${week}-${endWeek}`,
+      exerciseName: allExercises[exerciseIndex].name,
+    })
+  }
+
+  return rotationSchedule
 }
 
 /**
@@ -982,11 +1045,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     selected.forEach(ex => usedThisWeek.add(ex.id))
 
     // Build exercise entries
-    let exercises: GeneratedExercise[] = selected.map(ex => {
+    let exercises: GeneratedExercise[] = selected.map((ex, exIndex) => {
       const vol = getVolume(answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, ex.type === 'compound', answers.bodyType)
       let { sets, reps } = vol
       let notes = ex.tips[0] || ''
       let isDurationBased = false
+      let warmupSets: GeneratedExercise['warmupSets'] | undefined
+      let rotationSchedule: GeneratedExercise['rotationSchedule'] | undefined
 
       if (isDurationBasedExercise(ex.name)) {
         reps = 30
@@ -1007,7 +1072,31 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       }
 
       const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, ex.type === 'compound', bodyComposition, answers.sessionDuration)
-      return { id: ex.id, name: ex.name, sets, reps, notes, restSeconds: restSec, isDurationBased: isDurationBased || false }
+
+      // TIER 2: Smart warm-up for first compound exercise on the day
+      const isFirstCompound = exIndex === 0 && ex.type === 'compound' && !isDurationBased
+      if (isFirstCompound && answers.fitnessLevel !== 'complete-beginner') {
+        warmupSets = generateWarmupSets(ex.name)
+        notes = (notes ? notes + ' ' : '') + 'Do warm-up sets first: 50%×8, 70%×5, 85%×2.'
+      }
+
+      // TIER 2: Smart rotation schedule for compounds
+      if (ex.type === 'compound' && answers.timelineWeeks >= 8 && !isDurationBased) {
+        const pattern = getMovementPattern(ex)
+        rotationSchedule = createRotationSchedule(ex.id, pattern, answers.timelineWeeks, pool)
+      }
+
+      return {
+        id: ex.id,
+        name: ex.name,
+        sets,
+        reps,
+        notes,
+        restSeconds: restSec,
+        isDurationBased: isDurationBased || false,
+        warmupSets,
+        rotationSchedule: rotationSchedule && rotationSchedule.length > 1 ? rotationSchedule : undefined
+      }
     })
 
     exercises = sortExercises(exercises)
@@ -1094,9 +1183,27 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     deloadNote = ` Deload weeks: ${deloadWeeks.join(', ')} (reduce volume 40-50%, maintain movement patterns).`
   }
 
+  // Check for rotation schedules (Tier 2)
+  const hasRotation = days.some(day =>
+    day.exercises.some(ex => ex.rotationSchedule && ex.rotationSchedule.length > 1)
+  )
+  let rotationNote = ''
+  if (hasRotation && answers.timelineWeeks >= 8) {
+    rotationNote = ' Exercises rotate every 3 weeks to prevent plateaus and boredom — see each exercise for rotation schedule.'
+  }
+
+  // Check for warm-ups (Tier 2)
+  const hasWarmup = days.some(day =>
+    day.exercises.some(ex => ex.warmupSets && ex.warmupSets.length > 0)
+  )
+  let warmupProtocolNote = ''
+  if (hasWarmup) {
+    warmupProtocolNote = ' Each day: Do warm-up sets (50%×8, 70%×5, 85%×2) before first compound lift.'
+  }
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${rotationNote}${warmupProtocolNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
