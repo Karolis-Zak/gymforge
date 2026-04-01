@@ -1,11 +1,14 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { Sidebar } from './Sidebar'
-import { BottomNav } from './BottomNav'
+import React, { useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useHydration } from '../../hooks/useHydration'
 import { useUserStore } from '../../store/userStore'
 import { ErrorBoundary } from '../ui/ErrorBoundary'
+
+// Only render on client to avoid hydration mismatch with Zustand stores
+const Sidebar = dynamic(() => import('./Sidebar').then(m => m.Sidebar), { ssr: false, loading: () => <div className="hidden md:block" /> })
+const BottomNav = dynamic(() => import('./BottomNav').then(m => m.BottomNav), { ssr: false, loading: () => <div className="md:hidden" /> })
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const hydrated = useHydration()
