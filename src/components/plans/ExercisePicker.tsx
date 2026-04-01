@@ -5,6 +5,7 @@ import { exercises } from '../../data/exercises'
 import { searchExercises, getAllMuscleGroups, getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
 import { getExerciseCategory } from '../../data/exerciseCategories'
 import type { MuscleGroup, Difficulty } from '../../data/exercises'
+import { useOnboardingStore } from '../../store/onboardingStore'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { FiPlus, FiSearch, FiX } from 'react-icons/fi'
@@ -36,6 +37,26 @@ const SET_PRESETS = [
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced']
 
+// Check if exercise is wrist-dangerous based on injury severity
+function isWristDangerousForPicker(exerciseName: string, injuries: string[], injurySeverity: Record<string, string>): boolean {
+  const lower = exerciseName.toLowerCase()
+  if (!injuries.includes('wrists')) return false
+
+  const isAcuteWrist = !injurySeverity['wrists'] || injurySeverity['wrists'] === 'acute'
+
+  // SEVERE: always exclude
+  const isSevere = (lower.includes('dead hang') ||
+                    lower.includes('plate pinch') ||
+                    (lower.includes('wrist') && (lower.includes('curl') || lower.includes('extension'))))
+
+  // MODERATE: exclude only for acute
+  const isModerate = (lower.includes('pull-up') || lower.includes('pull up') ||
+                      lower.includes('chin-up') || lower.includes('chin up') ||
+                      lower.includes('dip') || lower.includes('inverted row'))
+
+  return isSevere || (isAcuteWrist && isModerate)
+}
+
 function smartScore(ex: typeof exercises[0]): number {
   const cat = getExerciseCategory(ex.id)
   let score = cat === 'staple' ? 30 : cat === 'standard' ? 15 : 0
@@ -45,6 +66,10 @@ function smartScore(ex: typeof exercises[0]): number {
 }
 
 export function ExercisePicker({ onAdd }: ExercisePickerProps) {
+  const { answers } = useOnboardingStore()
+  const userInjuries = answers?.injuries || []
+  const userInjurySeverity = answers?.injurySeverity || {}
+
   const [query, setQuery] = useState('')
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | ''>('')
   const [difficultyFilter, setDifficultyFilter] = useState<Set<Difficulty>>(new Set())
@@ -60,8 +85,9 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
   const filtered = useMemo(() => {
     let results = searchExercises(query, muscleFilter ? { muscle: muscleFilter as MuscleGroup } : undefined)
     if (hasDifficultyFilter) results = results.filter(ex => difficultyFilter.has(ex.difficulty))
+    if (userInjuries.includes('wrists')) results = results.filter(ex => !isWristDangerousForPicker(ex.name, userInjuries, userInjurySeverity))
     return results.sort((a, b) => smartScore(b) - smartScore(a)).slice(0, 50)
-  }, [query, muscleFilter, difficultyFilter, hasDifficultyFilter])
+  }, [query, muscleFilter, difficultyFilter, hasDifficultyFilter, userInjuries, userInjurySeverity])
 
   const muscleGroups = getAllMuscleGroups()
 
