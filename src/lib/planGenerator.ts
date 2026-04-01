@@ -664,6 +664,34 @@ function sortExercises(exercises: GeneratedExercise[]): GeneratedExercise[] {
   })
 }
 
+/**
+ * Audit volume per muscle group across all days
+ * Warns if any muscle gets <6 sets/week or >16 sets/week
+ */
+function auditVolumeBalance(days: GeneratedDay[]): { muscle: string; sets: number; status: 'low' | 'high' | 'balanced' }[] {
+  const volumePerMuscle: Record<string, number> = {}
+
+  days.forEach(day => {
+    day.exercises.forEach(ex => {
+      const info = exerciseDb.find(e => e.id === ex.id)
+      if (!info) return
+
+      const allMuscles = [info.primaryMuscle, ...info.secondaryMuscles]
+      const setsForExercise = ex.isDurationBased ? 0 : ex.sets  // Don't count cardio finishers toward volume
+
+      allMuscles.forEach(muscle => {
+        volumePerMuscle[muscle] = (volumePerMuscle[muscle] || 0) + setsForExercise
+      })
+    })
+  })
+
+  return Object.entries(volumePerMuscle).map(([muscle, sets]) => ({
+    muscle,
+    sets,
+    status: sets < 6 ? 'low' : sets > 16 ? 'high' : 'balanced'
+  }))
+}
+
 function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition, sessionDuration?: number): number {
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
   let total = warmupMins + 3
@@ -923,9 +951,20 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     }
   }
 
+  // Audit volume balance (helpful for understanding coverage)
+  const volumeAudit = auditVolumeBalance(days)
+  const imbalancedMuscles = volumeAudit.filter(m => m.status !== 'balanced')
+  let volumeNote = ''
+  if (imbalancedMuscles.length > 0) {
+    const lowVol = imbalancedMuscles.filter(m => m.status === 'low').map(m => m.muscle).slice(0, 2)
+    if (lowVol.length > 0) {
+      volumeNote = ` Note: ${lowVol.join(', ')} are lightly trained — consider adding variety week-to-week.`
+    }
+  }
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
   }
