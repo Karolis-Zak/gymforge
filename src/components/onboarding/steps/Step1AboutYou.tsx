@@ -23,7 +23,7 @@ export function Step1AboutYou({ answers, update, onNext, onBack }: Step1AboutYou
     <div className="animate-fade-in space-y-5">
       <StepHeader title="About You" subtitle="Basic info to personalise your plan." />
       <Input label="What should we call you?" value={answers.name} onChange={e => update({ name: e.target.value })} placeholder="Your name" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label="Age" type="number" value={answers.age || ''} onChange={e => update({ age: Number(e.target.value) })} placeholder="25" min={13} max={99} />
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-text-secondary">Gender</label>
@@ -34,7 +34,7 @@ export function Step1AboutYou({ answers, update, onNext, onBack }: Step1AboutYou
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input label="Height (cm)" type="number" value={answers.height || ''} onChange={e => update({ height: Number(e.target.value) })} placeholder="175" min={100} max={250} />
         <Input label="Weight (kg)" type="number" value={answers.weight || ''} onChange={e => update({ weight: Number(e.target.value) })} placeholder="75" min={30} max={300} />
       </div>
@@ -43,7 +43,7 @@ export function Step1AboutYou({ answers, update, onNext, onBack }: Step1AboutYou
           <label className="text-sm font-medium text-text-secondary block mb-1">How would you describe your build?</label>
           <p className="text-xs text-text-muted mb-2">This helps us customize exercises based on your body type, not just weight.</p>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {([
             { id: 'lean', label: 'Lean', desc: 'Low body fat, athletic' },
             { id: 'athletic', label: 'Athletic', desc: 'Balanced, fit' },

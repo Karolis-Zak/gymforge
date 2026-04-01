@@ -18,7 +18,7 @@ export function Step3Goals({ answers, update, onNext, onBack }: Step3GoalsProps)
       <StepHeader title="Your Goals" subtitle="What are you training for?" />
       <div>
         <label className="text-sm font-medium text-text-secondary block mb-2">Primary goal</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {GOALS.map(g => (
             <SelectionCard key={g.id} icon={g.icon} label={g.label} description={g.desc} selected={answers.primaryGoal === g.id} onClick={() => update({ primaryGoal: g.id })} />
           ))}

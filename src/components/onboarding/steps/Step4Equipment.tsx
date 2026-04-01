@@ -21,7 +21,7 @@ export function Step4Equipment({ answers, update, onNext, onBack }: Step4Equipme
   return (
     <div className="animate-fade-in space-y-5">
       <StepHeader title="Equipment & Location" subtitle="Where and with what will you train?" />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {LOCATIONS.map(loc => (
           <SelectionCard key={loc.id} icon={loc.icon} label={loc.label} description={loc.desc} selected={answers.trainingLocation === loc.id} onClick={() => update({ trainingLocation: loc.id })} size="lg" />
         ))}
@@ -30,7 +30,7 @@ export function Step4Equipment({ answers, update, onNext, onBack }: Step4Equipme
         <div>
           <label className="text-sm font-medium text-text-secondary block mb-2">What equipment do you have access to?</label>
           <p className="text-xs text-text-muted mb-3">Bodyweight exercises are always included. Select any equipment you can use.</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {EQUIPMENT_OPTIONS.map(eq => (
               <PillToggle key={eq} label={getEquipmentLabel(eq)} selected={answers.availableEquipment.includes(eq)} onClick={() => update({ availableEquipment: toggleInArray(answers.availableEquipment, eq) })} />
             ))}

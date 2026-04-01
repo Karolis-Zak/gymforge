@@ -34,7 +34,7 @@ export function Step6Preferences({ answers, update, onNext, onBack }: Step6Prefe
       <div>
         <label className="text-sm font-medium text-text-secondary block mb-2">Focus on these muscle groups (optional)</label>
         <p className="text-xs text-text-muted mb-3">We&apos;ll prioritize these, but balance everything else.</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {muscleGroups.map(mg => (
             <PillToggle key={mg} label={getMuscleGroupLabel(mg)} selected={answers.focusAreas.includes(mg)} onClick={() => update({ focusAreas: toggleInArray(answers.focusAreas, mg) })} />
           ))}

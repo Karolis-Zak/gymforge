@@ -24,10 +24,10 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
   const daysLabel = answers.specificDays.map(d => WEEKDAYS.find(w => w.id === d)?.label).filter(Boolean).join(', ')
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-4 sm:space-y-6">
       <StepHeader title="Review Your Answers" subtitle="Make sure everything looks right before we create your plan." />
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">About You</h3>
           <div className="space-y-1">
