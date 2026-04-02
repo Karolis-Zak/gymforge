@@ -1411,9 +1411,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   description += '3. Write down: how many reps you completed, and how hard it felt (see RPE scale below)\n'
   description += '4. After week 1, you\'ll know if you need heavier/lighter weights\n\n'
   description += 'PROGRESSION:\n'
-  description += '• Weeks 1-4: Focus on form and consistency. Don\'t rush weight increases.\n'
-  description += '• Weeks 5-' + (answers.timelineWeeks - 1) + ': Once form feels solid, add weight when you hit the top of your rep range easily. Example: If it says "3 × 12" and you hit 12 reps feeling strong, add ~5% weight next week.\n'
-  if (answers.timelineWeeks >= 8) {
+  if (answers.timelineWeeks <= 4) {
+    description += '• Week 1: Focus on form and consistency. Don\'t rush weight increases.\n'
+    description += '• Weeks 2-' + (answers.timelineWeeks - 1) + ': Once form feels solid, add weight when you hit the top of your rep range easily. Example: If it says "3 × 12" and you hit 12 reps feeling strong, add ~5% weight next week.\n'
+    description += '• Week ' + answers.timelineWeeks + ': Deload (easy week to recover — reduce volume 40-50%).\n\n'
+  } else {
+    description += '• Weeks 1-4: Focus on form and consistency. Don\'t rush weight increases.\n'
+    description += '• Weeks 5-' + (answers.timelineWeeks - 1) + ': Once form feels solid, add weight when you hit the top of your rep range easily. Example: If it says "3 × 12" and you hit 12 reps feeling strong, add ~5% weight next week.\n'
     description += '• Week ' + answers.timelineWeeks + ': Deload (easy week to recover — reduce volume 40-50%).\n\n'
   }
   description += 'HOW TO TRACK WEIGHT CHANGES:\n'
@@ -1431,16 +1435,23 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   description += 'RPE is how HARD the set felt, on a scale of 0–10:\n\n'
   description += 'RPE 6 = Moderate effort\n'
   description += '  "I could do 4 more reps if I had to" → Use this in Week 1 (learning phase)\n\n'
-  description += 'RPE 7 = Harder\n'
-  description += '  "I could do 3 more reps if I pushed" → Weeks 2-4\n\n'
-  description += 'RPE 8 = Very hard\n'
-  description += '  "I could do 2 more reps, but it\'s tough" → Weeks 5-' + (answers.timelineWeeks - 1) + '\n\n'
-  description += 'RPE 9 = Almost to failure\n'
-  description += '  "I could do 1 more rep, barely" → Weeks 5-' + (answers.timelineWeeks - 1) + ' (only on main lifts)\n\n'
-  if (answers.timelineWeeks >= 8) {
-    description += 'RPE 5 = Super easy (recovery week only)\n'
-    description += '  "I barely broke a sweat" → Week ' + answers.timelineWeeks + '\n\n'
+  if (answers.timelineWeeks <= 4) {
+    description += 'RPE 7 = Harder\n'
+    description += '  "I could do 3 more reps if I pushed" → Week 1\n\n'
+    description += 'RPE 8 = Very hard\n'
+    description += '  "I could do 2 more reps, but it\'s tough" → Weeks 2-' + (answers.timelineWeeks - 1) + '\n\n'
+    description += 'RPE 9 = Almost to failure\n'
+    description += '  "I could do 1 more rep, barely" → Weeks 2-' + (answers.timelineWeeks - 1) + ' (only on main lifts)\n\n'
+  } else {
+    description += 'RPE 7 = Harder\n'
+    description += '  "I could do 3 more reps if I pushed" → Weeks 2-4\n\n'
+    description += 'RPE 8 = Very hard\n'
+    description += '  "I could do 2 more reps, but it\'s tough" → Weeks 5-' + (answers.timelineWeeks - 1) + '\n\n'
+    description += 'RPE 9 = Almost to failure\n'
+    description += '  "I could do 1 more rep, barely" → Weeks 5-' + (answers.timelineWeeks - 1) + ' (only on main lifts)\n\n'
   }
+  description += 'RPE 5 = Super easy (recovery week only)\n'
+  description += '  "I barely broke a sweat" → Week ' + answers.timelineWeeks + '\n\n'
   description += 'WHAT THIS MEANS:\n'
   description += 'You don\'t have to lift to absolute failure. RPE lets you train hard but safely. Example: If it says "3 × 10 — RPE 7", do 10 reps feeling like you have 3 more in the tank.\n\n'
 
