@@ -8,6 +8,7 @@ export interface UserProfile {
   height: number // in cm
   weight: number // in kg
   bodyType?: 'lean' | 'athletic' | 'stocky' | 'overweight' | 'obese'
+  typicalDumbbellWeight?: number | null // in kg, default starting weight for exercises
   units: {
     weight: 'kg' | 'lbs'
     height: 'cm' | 'in'
@@ -39,6 +40,7 @@ const DEFAULT_PROFILE: UserProfile = {
   age: 0,
   height: 0,
   weight: 0,
+  typicalDumbbellWeight: null,
   units: {
     weight: 'kg',
     height: 'cm'

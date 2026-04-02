@@ -114,6 +114,7 @@ export function Questionnaire() {
         height: profile?.height || answers.height,
         weight: profile?.weight || answers.weight,
         bodyType: profile?.bodyType || toValidBodyType(answers.bodyType),
+        typicalDumbbellWeight: answers.typicalDumbbellWeight ?? profile?.typicalDumbbellWeight,
       })
 
       // Build all plans first (validation) before adding any

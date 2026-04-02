@@ -22,7 +22,7 @@ export function RecoveryInsights() {
   // Calculate averages
   const avgSleep = (weeklyLogs.reduce((sum, l) => sum + (l.sleep || 7), 0) / weeklyLogs.length).toFixed(1)
   const avgSoreness = (weeklyLogs.reduce((sum, l) => sum + l.soreness, 0) / weeklyLogs.length).toFixed(1)
-  const avgFatigue = (weeklyLogs.reduce((sum, l) => sum + l.fatigue, 0) / weeklyLogs.length).toFixed(1)
+  const avgFatigue = (weeklyLogs.reduce((sum, l) => sum + (l.fatigue || 3), 0) / weeklyLogs.length).toFixed(1)
 
   const qualityCounts = {
     poor: weeklyLogs.filter(l => l.quality === 'poor').length,

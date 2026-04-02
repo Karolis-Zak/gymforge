@@ -43,6 +43,7 @@ export interface OnboardingAnswers {
 
   // Experience
   comfortWithFreeWeights: 'yes' | 'somewhat' | 'not-yet'
+  typicalDumbbellWeight: number | null  // in kg, or null if unknown
   familiarExercises: string[]
 }
 
@@ -86,6 +87,7 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
   exerciseComplexity: 'simple',
   muscleFrequency: 'auto',
   comfortWithFreeWeights: 'somewhat',
+  typicalDumbbellWeight: null,
   familiarExercises: [],
 }
 

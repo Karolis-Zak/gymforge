@@ -6,7 +6,7 @@ export interface RecoveryLog {
   quality: 'poor' | 'fair' | 'good' | 'excellent' // how well recovered
   sleep?: number // hours slept
   soreness: number // 1-5 scale (1=none, 5=extreme)
-  fatigue: number // 1-5 scale (1=fresh, 5=exhausted)
+  fatigue?: number // 1-5 scale (1=fresh, 5=exhausted) — optional, defaults to 3 if not provided
   notes?: string
 }
 
@@ -53,7 +53,7 @@ export const useRecoveryStore = create<RecoveryStore>()(
         const avgQuality = logs.reduce((sum, l) => sum + qualityScores[l.quality], 0) / logs.length
         const avgSleep = logs.reduce((sum, l) => sum + (l.sleep || 7), 0) / logs.length
         const avgSoreness = 1 - (logs.reduce((sum, l) => sum + l.soreness, 0) / logs.length) / 5
-        const avgFatigue = 1 - (logs.reduce((sum, l) => sum + l.fatigue, 0) / logs.length) / 5
+        const avgFatigue = 1 - (logs.reduce((sum, l) => sum + (l.fatigue || 3), 0) / logs.length) / 5
 
         // Weighted score: quality 40%, sleep 20%, soreness 20%, fatigue 20%
         const score = (avgQuality / 4) * 0.4 +

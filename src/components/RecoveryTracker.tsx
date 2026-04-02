@@ -6,7 +6,6 @@ import { Card, Badge, Button } from './ui'
 import { FiMinus, FiPlus, FiCheckCircle } from 'react-icons/fi'
 
 const sorenessLabels = ['Really Poor', 'Poor', 'Medium', 'Good', 'Really Good']
-const fatigueLabels = ['Exhausted', 'Tired', 'Medium', 'Fresh', 'Really Fresh']
 const qualityLabels: Record<'poor' | 'fair' | 'good' | 'excellent', string> = {
   poor: 'Poor',
   fair: 'Fair',
@@ -23,7 +22,6 @@ export function RecoveryTracker() {
   const [quality, setQuality] = useState<'poor' | 'fair' | 'good' | 'excellent'>(todayLog?.quality || 'good')
   const [sleep, setSleep] = useState(todayLog?.sleep?.toString() || '7')
   const [soreness, setSoreness] = useState(todayLog?.soreness || 2)
-  const [fatigue, setFatigue] = useState(todayLog?.fatigue || 2)
   const [notes, setNotes] = useState(todayLog?.notes || '')
 
   const weeklyScore = getWeeklyRecoveryScore()
@@ -33,7 +31,6 @@ export function RecoveryTracker() {
       quality,
       sleep: parseFloat(sleep) || 7,
       soreness,
-      fatigue,
       notes: notes.trim() || undefined,
     }
 
@@ -168,27 +165,6 @@ export function RecoveryTracker() {
                 title={sorenessLabels[val - 1]}
               >
                 {['😣', '😕', '😐', '🙂', '😊'][val - 1]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Fatigue */}
-        <div>
-          <label className="block text-xs font-semibold text-text-muted uppercase mb-2">Fatigue level</label>
-          <div className="grid grid-cols-5 gap-1.5">
-            {[1, 2, 3, 4, 5].map(val => (
-              <button
-                key={val}
-                onClick={() => setFatigue(val)}
-                className={`py-1.5 px-2 rounded border transition-all text-xs font-medium text-center ${
-                  fatigue === val
-                    ? 'bg-warning/20 text-warning border-warning/50'
-                    : 'bg-white/5 text-text-secondary border-white/10 hover:bg-white/10'
-                }`}
-                title={fatigueLabels[val - 1]}
-              >
-                {['😫', '😔', '🙂', '😀', '⚡'][val - 1]}
               </button>
             ))}
           </div>
