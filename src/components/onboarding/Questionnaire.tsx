@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useUserStore } from '../../store/userStore'
 import { useWorkoutStore } from '../../store/workoutStore'
 import { useOnboardingStore, DEFAULT_ANSWERS, type OnboardingAnswers } from '../../store/onboardingStore'
+import { useToast } from '../../store/toastStore'
 import { generatePlan, type GeneratedPlan } from '../../lib/planGenerator'
 import { getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
 import { Button } from '../ui/Button'
@@ -41,6 +42,7 @@ export function Questionnaire() {
   const { profile, updateProfile } = useUserStore()
   const { addPlan } = useWorkoutStore()
   const onboardingStore = useOnboardingStore()
+  const toast = useToast()
 
   const [step, setStep] = useState(0)
   const [answers, setLocalAnswers] = useState<OnboardingAnswers>(() => {
@@ -136,8 +138,7 @@ export function Questionnaire() {
       onboardingStore.addUsedExercises(allIds)
       router.push('/plans')
     } catch (error) {
-      console.error('Failed to save plans:', error)
-      // TODO: Show error toast to user
+      toast.error('Failed to save your plan. Please try again.')
     }
   }
 
