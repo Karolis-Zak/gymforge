@@ -147,21 +147,20 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
           <p className="text-text-muted text-sm text-center py-4">No exercises found</p>
         )}
         {filtered.map(ex => (
-          <div key={ex.id}
-            className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group">
+          <button key={ex.id} onClick={() => handleAdd(ex)}
+            className="w-full flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/10 border border-white/5 hover:border-primary/30 transition-all group cursor-pointer text-left">
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-text-primary text-sm">{ex.name}</div>
+              <div className="font-medium text-text-primary text-sm group-hover:text-primary transition-colors">{ex.name}</div>
               <div className="flex items-center gap-1.5 mt-1">
                 <Badge variant={difficultyColors[ex.difficulty] || 'neutral'} size="sm">{ex.difficulty}</Badge>
                 <Badge variant="neutral" size="sm">{getEquipmentLabel(ex.equipment)}</Badge>
                 <Badge variant="neutral" size="sm">{getMuscleGroupLabel(ex.primaryMuscle)}</Badge>
               </div>
             </div>
-            <button onClick={() => handleAdd(ex)}
-              className="ml-3 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary/30 transition-all">
+            <div className="ml-3 w-8 h-8 rounded-lg bg-primary/30 text-primary flex items-center justify-center group-hover:bg-primary/40 transition-all flex-shrink-0">
               <FiPlus />
-            </button>
-          </div>
+            </div>
+          </button>
         ))}
       </div>
     </div>

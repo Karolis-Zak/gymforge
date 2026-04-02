@@ -84,21 +84,21 @@ export function RecoveryTracker() {
 
   return (
     <Card>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-lg font-display font-bold text-text-primary">Recovery Log</h3>
+          <h3 className="text-base md:text-lg font-display font-bold text-text-primary">Recovery Log</h3>
           <p className="text-xs text-text-muted mt-0.5">Today's check-in</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-accent">{weeklyScore}%</div>
+          <div className="text-xl md:text-2xl font-bold text-accent">{weeklyScore}%</div>
           <p className="text-xs text-text-muted">Weekly</p>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* Recovery Quality */}
         <div>
-          <label className="block text-xs font-semibold text-text-muted uppercase mb-2">How recovered?</label>
+          <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Recovered?</label>
           <div className="grid grid-cols-4 gap-1.5">
             {(['poor', 'fair', 'good', 'excellent'] as const).map(q => (
               <button

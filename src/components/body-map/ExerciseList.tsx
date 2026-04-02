@@ -42,6 +42,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
 
   const hasEquipmentFilter = selectedEquipment.size > 0
   const hasDifficultyFilter = selectedDifficulty.size > 0
+  const [showEquipmentFilter, setShowEquipmentFilter] = useState(false)
 
   // Apply equipment + difficulty + search filters to full pool
   const applyFilters = (exercises: typeof exerciseDb) => {
@@ -101,13 +102,13 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   const muscleLabel = selectedMuscles.map(getMuscleGroupLabel).join(' & ')
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Selected muscles + count */}
       <div className="flex items-center gap-2 flex-wrap">
         {selectedMuscles.map(m => (
           <Badge key={m} variant="primary" size="md">{getMuscleGroupLabel(m)}</Badge>
         ))}
-        <span className="text-sm text-text-muted">{primaryMatches.length} exercises</span>
+        <span className="text-xs md:text-sm text-text-muted">{primaryMatches.length} exercises</span>
       </div>
 
       {/* Search */}
@@ -117,19 +118,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
           placeholder="Search exercises..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50 transition-all" />
       </div>
 
-      {/* Equipment filter */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-        <button onClick={() => setSelectedEquipment(new Set())}
-          className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${!hasEquipmentFilter ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>All</button>
-        {EQUIPMENT_OPTIONS.map(eq => (
-          <button key={eq} onClick={() => toggleEquipment(eq)}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${selectedEquipment.has(eq) ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
-            {getEquipmentLabel(eq)}
-          </button>
-        ))}
-      </div>
-
-      {/* Difficulty filter */}
+      {/* Difficulty filter (always visible) */}
       <div className="flex gap-1.5">
         <button onClick={() => setSelectedDifficulty(new Set())}
           className={`px-3 py-1.5 text-xs rounded-full border transition-all ${!hasDifficultyFilter ? 'bg-accent/15 text-accent border-accent/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>All Levels</button>
@@ -139,6 +128,41 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
             {d.charAt(0).toUpperCase() + d.slice(1)}
           </button>
         ))}
+      </div>
+
+      {/* Equipment filter (collapsible on mobile) */}
+      <div className="hidden md:block">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          <button onClick={() => setSelectedEquipment(new Set())}
+            className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${!hasEquipmentFilter ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>All</button>
+          {EQUIPMENT_OPTIONS.map(eq => (
+            <button key={eq} onClick={() => toggleEquipment(eq)}
+              className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${selectedEquipment.has(eq) ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
+              {getEquipmentLabel(eq)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile equipment filter toggle */}
+      <div className="md:hidden">
+        <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)}
+          className="w-full px-3 py-2 text-xs font-medium text-text-muted bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all flex items-center justify-between">
+          <span>Equipment {hasEquipmentFilter && `(${selectedEquipment.size})`}</span>
+          {showEquipmentFilter ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
+        </button>
+        {showEquipmentFilter && (
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+            <button onClick={() => setSelectedEquipment(new Set())}
+              className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${!hasEquipmentFilter ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>All</button>
+            {EQUIPMENT_OPTIONS.map(eq => (
+              <button key={eq} onClick={() => toggleEquipment(eq)}
+                className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-all ${selectedEquipment.has(eq) ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}`}>
+                {getEquipmentLabel(eq)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
 

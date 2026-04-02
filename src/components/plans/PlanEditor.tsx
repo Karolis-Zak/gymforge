@@ -61,7 +61,10 @@ export function PlanEditor({ planId }: { planId: string }) {
         <Button variant="ghost" size="sm" onClick={() => router.push('/plans')}>
           <FiArrowLeft /> Back
         </Button>
-        <h1 className="text-2xl font-display font-bold text-text-primary">Edit Plan</h1>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-text-primary">Edit Plan</h1>
+          {plan.isPreMade && <p className="text-xs text-text-muted mt-1">This is a template. Changes will create your custom version.</p>}
+        </div>
       </div>
 
       {/* Plan details */}

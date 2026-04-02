@@ -230,9 +230,10 @@ export const ActiveWorkout: React.FC = () => {
   const handleCancel = useCallback(() => {
     if (confirm('Cancel this workout? Your progress will be lost.')) {
       cancelWorkout()
-      router.push('/plans')
+      notify.info('Workout cancelled.')
+      setTimeout(() => router.push('/plans'), 500)
     }
-  }, [cancelWorkout, router])
+  }, [cancelWorkout, router, notify])
 
   if (!currentWorkout) {
     return (
