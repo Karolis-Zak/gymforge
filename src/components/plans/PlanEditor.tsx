@@ -4,9 +4,9 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutStore, type Exercise } from '../../store/workoutStore'
 import { ExercisePicker } from './ExercisePicker'
-import { Card } from '../ui/Card'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
+import { Card } from '../ui'
+import { Button } from '../ui'
+import { Input } from '../ui'
 import { FiArrowLeft, FiTrash2, FiSave, FiMenu, FiChevronUp, FiChevronDown } from 'react-icons/fi'
 
 export function PlanEditor({ planId }: { planId: string }) {

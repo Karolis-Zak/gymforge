@@ -7,8 +7,8 @@ import { difficultyColors, difficultyFilterStyles } from '../../lib/difficultySt
 import { getSmartScore } from '../../lib/exerciseUtils'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVideos'
 import { getExerciseCategory } from '../../data/exerciseCategories'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
+import { Card } from './ui'
+import { Badge } from './ui'
 import { FiChevronDown, FiChevronUp, FiVideo, FiExternalLink, FiSearch, FiZap } from 'react-icons/fi'
 
 interface ExerciseListProps {

@@ -7,7 +7,7 @@ import {
   BarElement, Tooltip, Filler
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
-import { Card } from './ui/Card'
+import { Card } from './ui'
 import { FiZap, FiTrendingUp, FiAward, FiClock, FiChevronUp } from 'react-icons/fi'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Filler)

@@ -8,21 +8,20 @@ import { useUserStore } from '../store/userStore'
 import { useOnboardingStore } from '../store/onboardingStore'
 import { useToast } from '../store/toastStore'
 import { exercises as exerciseDb } from '../data/exercises'
-import { WorkoutPreviewScreen } from './workout/WorkoutPreviewScreen'
-import { SwapExerciseModal } from './workout/SwapExerciseModal'
-import { RestTimerCard } from './workout/RestTimerCard'
-import { ExerciseFocusCard } from './workout/ExerciseFocusCard'
-import { ExerciseListPanel } from './workout/ExerciseListPanel'
+import {
+  ExerciseFocusCard,
+  ExerciseListPanel,
+  RestTimerCard,
+  SwapExerciseModal,
+  WorkoutPreviewScreen,
+} from './workout'
 import {
   AUDIO, REST_ADJUSTMENTS,
   findExerciseInfo, isBodyweightExercise, isTimedExercise,
   isUnilateralExercise, getWristStressLevel, isWristDangerousExercise,
   formatTime, beep, suggestSwapExercises
 } from '../lib/exerciseUtils'
-import { Card } from './ui/Card'
-import { Button } from './ui/Button'
-import { Badge } from './ui/Badge'
-import { ProgressRing } from './ui/ProgressRing'
+import { Card, Button, Badge, ProgressRing } from './ui'
 import { FiCheck, FiClock, FiChevronDown, FiChevronUp, FiPlay, FiSkipForward, FiArrowRight, FiExternalLink, FiVideo, FiX, FiEdit3, FiRepeat, FiZap, FiAward } from 'react-icons/fi'
 import Confetti from 'react-confetti'
 

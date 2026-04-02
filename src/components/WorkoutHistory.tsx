@@ -3,8 +3,8 @@
 import React, { useState } from 'react'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { calculateVolume } from '../lib/exerciseUtils'
-import { Card } from './ui/Card'
-import { Badge } from './ui/Badge'
+import { Card } from './ui'
+import { Badge } from './ui'
 import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook } from 'react-icons/fi'
 
 function formatDuration(seconds?: number): string {

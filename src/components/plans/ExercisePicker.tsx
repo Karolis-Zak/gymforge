@@ -8,8 +8,8 @@ import { difficultyColors, difficultyFilterStyles } from '../../lib/difficultySt
 import { getSmartScore, isWristDangerousExercise } from '../../lib/exerciseUtils'
 import type { MuscleGroup, Difficulty } from '../../data/exercises'
 import { useOnboardingStore } from '../../store/onboardingStore'
-import { Badge } from '../ui/Badge'
-import { Button } from '../ui/Button'
+import { Badge } from '../ui'
+import { Button } from '../ui'
 import { FiPlus, FiSearch, FiX } from 'react-icons/fi'
 
 interface ExercisePickerProps {

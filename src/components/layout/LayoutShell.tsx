@@ -3,8 +3,8 @@
 import React, { useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useUserStore } from '../../store/userStore'
-import { ErrorBoundary } from '../ui/ErrorBoundary'
-import { ToastContainer } from '../ui/ToastContainer'
+import { ErrorBoundary } from './ui'
+import { ToastContainer } from './ui'
 
 // Only render on client to avoid hydration mismatch with Zustand stores
 const Sidebar = dynamic(() => import('./Sidebar').then(m => m.Sidebar), { ssr: false, loading: () => <div className="hidden md:block" /> })

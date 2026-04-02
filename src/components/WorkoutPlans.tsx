@@ -7,8 +7,8 @@ import { useWorkoutStore } from '../store/workoutStore'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import type { WorkoutPlan } from '../store/workoutStore'
 import { PlanCard } from './plans/PlanCard'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
+import { Button } from './ui'
+import { Card } from './ui'
 import { FiPlus, FiSearch } from 'react-icons/fi'
 
 export const WorkoutPlans: React.FC = () => {

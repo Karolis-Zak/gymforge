@@ -5,7 +5,7 @@ import type { MuscleGroup } from '../data/exercises'
 import { getMuscleGroupLabel } from '../data/exerciseUtils'
 import { BodySVG } from './body-map/BodySVG'
 import { ExerciseList } from './body-map/ExerciseList'
-import { Button } from './ui/Button'
+import { Button } from './ui'
 import { FiRotateCw, FiX } from 'react-icons/fi'
 
 export function BodyMap() {

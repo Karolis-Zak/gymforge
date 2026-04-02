@@ -1,9 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
-import { Button } from '../ui/Button'
+import { Card, Badge, Button } from '../ui'
 import type { WorkoutPlan } from '../../store/workoutStore'
 import { FiPlay, FiTrash2, FiChevronDown, FiChevronUp, FiEdit2 } from 'react-icons/fi'
 import Link from 'next/link'

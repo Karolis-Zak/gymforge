@@ -21,9 +21,7 @@ import { useUserStore } from '../store/userStore'
 import { calculateVolume } from '../lib/exerciseUtils'
 import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import type { WorkoutLog } from '../store/workoutLogStore'
-import { Input } from './ui/Input'
-import { Card } from './ui/Card'
-import { StatCard } from './ui/StatCard'
+import { Card, Input, StatCard } from './ui'
 import { FiZap, FiTrendingUp, FiAward, FiCalendar, FiActivity } from 'react-icons/fi'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement, Filler, ArcElement)

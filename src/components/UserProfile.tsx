@@ -3,11 +3,7 @@
 import React, { useState } from 'react'
 import { useUserStore } from '../store/userStore'
 import { useToast } from '../store/toastStore'
-import { Card } from './ui/Card'
-import { Button } from './ui/Button'
-import { Input } from './ui/Input'
-import { ProgressRing } from './ui/ProgressRing'
-import { StatCard } from './ui/StatCard'
+import { Card, Button, Input, ProgressRing, StatCard } from './ui'
 import { FiEdit2, FiCheck, FiUser, FiTarget, FiClock } from 'react-icons/fi'
 
 export const UserProfileForm: React.FC = () => {
