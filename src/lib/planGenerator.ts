@@ -643,20 +643,23 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
     sets = 3
     if (primaryGoal === 'strength') reps = isCompound ? 8 : 10
     else if (primaryGoal === 'muscle-building') reps = isCompound ? 10 : 12
-    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
+    else if (primaryGoal === 'toning') reps = isCompound ? 10 : 12
+    else if (primaryGoal === 'fat-loss') reps = isCompound ? 12 : 15
     else if (primaryGoal === 'endurance') reps = isCompound ? 12 : 15
     else reps = 10
   } else if (level === 'some-experience') {
     sets = isCompound ? 3 : 3
     if (primaryGoal === 'strength') { reps = isCompound ? 6 : 10; if (isCompound) sets = 4 }
     else if (primaryGoal === 'muscle-building') reps = isCompound ? 8 : 10
-    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') reps = 12
+    else if (primaryGoal === 'toning') reps = isCompound ? 10 : 12
+    else if (primaryGoal === 'fat-loss') reps = isCompound ? 12 : 15
     else if (primaryGoal === 'endurance') { reps = isCompound ? 12 : 15; sets = 2 }
     else reps = 10
   } else {
     if (primaryGoal === 'strength') { sets = isCompound ? 4 : 3; reps = isCompound ? 5 : 8 }
     else if (primaryGoal === 'muscle-building') { sets = isCompound ? 4 : 3; reps = isCompound ? 8 : 10 }
-    else if (primaryGoal === 'fat-loss' || primaryGoal === 'toning') { sets = 3; reps = 12 }
+    else if (primaryGoal === 'toning') { sets = 3; reps = isCompound ? 10 : 12 }
+    else if (primaryGoal === 'fat-loss') { sets = 3; reps = isCompound ? 12 : 15 }
     else if (primaryGoal === 'endurance') { sets = 2; reps = isCompound ? 12 : 15 }
     else { sets = 3; reps = 10 }
   }
@@ -723,16 +726,28 @@ function getWristStressLevel(name: string): 'severe' | 'moderate' | 'mild' | 'no
   return 'none'
 }
 
+// Goal-aware scoring bonuses for compound and isolation exercises
+const COMPOUND_SCORE: Record<string, number> = {
+  'strength': 8, 'muscle-building': 6, 'toning': 2,
+  'fat-loss': 4, 'endurance': 3, 'general-fitness': 4,
+}
+const ISOLATION_SCORE: Record<string, number> = {
+  'strength': -2, 'muscle-building': 1, 'toning': 4,
+  'fat-loss': 2, 'endurance': 1, 'general-fitness': 0,
+}
+
 function scoreExercise(
   ex: ExerciseData, focusAreas: MuscleGroup[], familiarExercises: string[],
   comfort: string, usedIds: string[], cautiousMuscles: MuscleGroup[],
   hasPartner: string, hasBench: boolean | null, varietyPref: string, injuries: string[] = [],
   bodyComposition?: BodyComposition,
   bodyType?: string,
+  primaryGoal: string = 'general-fitness',
 ): number {
   let score = 0
   if (focusAreas.includes(ex.primaryMuscle)) score += 6
-  if (ex.type === 'compound') score += 4
+  if (ex.type === 'compound') score += (COMPOUND_SCORE[primaryGoal] ?? 4)
+  else score += (ISOLATION_SCORE[primaryGoal] ?? 0)
   const lower = ex.name.toLowerCase()
   if (familiarExercises.some(f => lower.includes(f.toLowerCase()))) score += 3
 
@@ -981,7 +996,9 @@ function checkLegBalance(days: GeneratedDay[]): { balanced: boolean; quadSets: n
 
 function estimateDuration(exercises: GeneratedExercise[], level: string, goal: string, warmup: string, composition?: BodyComposition, sessionDuration?: number): number {
   const warmupMins = warmup === 'full' ? 10 : warmup === 'quick' ? 5 : 0
-  let total = warmupMins + 3
+  let total = warmupMins
+  let firstCompoundSeen = false
+
   exercises.forEach(ex => {
     // Determine if exercise is likely compound based on rest time (compounds get longer rest)
     const isCompound = (ex.restSeconds || 0) > 50
@@ -991,9 +1008,19 @@ function estimateDuration(exercises: GeneratedExercise[], level: string, goal: s
       // Duration-based exercise: 30sec + 5sec prep per set + rest between sets
       total += (ex.sets * ((5 + 30) / 60)) + ((ex.sets - 1) * restSec / 60)
     } else {
-      // Rep-based exercise: ~1.5min per set + rest between sets
-      total += (ex.sets * 1.5) + ((ex.sets - 1) * restSec / 60)
+      // Rep-based exercise: aligned with SessionBuilder time model
+      const setTimeSec = 30 + (ex.reps * 2)
+      total += (ex.sets * setTimeSec / 60) + ((ex.sets - 1) * restSec / 60)
     }
+
+    // First compound: add 3 min warmup cost (mirrors SessionBuilder.warmupCostApplied)
+    if (isCompound && !firstCompoundSeen) {
+      total += 3
+      firstCompoundSeen = true
+    }
+
+    // Transition/setup time per exercise
+    total += 0.5
   })
   return Math.round(total)
 }
@@ -1077,7 +1104,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       targetMuscles.includes(ex.primaryMuscle) && !usedThisWeek.has(ex.id)
     )
     const scored = dayPool.map(ex => ({
-      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries, bodyComposition, answers.bodyType) + (shuffle ? Math.random() * 8 : 0)
+      ex, score: scoreExercise(ex, answers.focusAreas, answers.familiarExercises, answers.comfortWithFreeWeights, usedExerciseIds, cautiousMuscles, answers.hasTrainingPartner, answers.hasAdjustableBench, answers.varietyPreference, answers.injuries, bodyComposition, answers.bodyType, answers.primaryGoal) + (shuffle ? Math.random() * 8 : 0)
     })).sort((a, b) => b.score - a.score)
 
     const selected: ExerciseData[] = []
@@ -1123,6 +1150,27 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       }
     }
 
+    // Dynamic push/pull re-sort after Phase 1
+    // If push exercises dominate, boost pull scores and re-sort to improve balance
+    const pushInPhase1 = selected.filter(ex =>
+      ex.primaryMuscle === 'chest' || ex.primaryMuscle === 'shoulders' || ex.primaryMuscle === 'triceps'
+    ).length
+    const pullInPhase1 = selected.filter(ex =>
+      ex.primaryMuscle === 'back' || ex.primaryMuscle === 'biceps' || ex.primaryMuscle === 'traps'
+    ).length
+    const pushPullDiff = pushInPhase1 - pullInPhase1
+
+    if (pushPullDiff > 1) {
+      for (const s of scored) {
+        const lower = s.ex.name.toLowerCase()
+        const isPull = s.ex.primaryMuscle === 'back' ||
+                       s.ex.primaryMuscle === 'biceps' ||
+                       lower.includes('row') || lower.includes('pull')
+        if (isPull) s.score += pushPullDiff * 3
+      }
+      scored.sort((a, b) => b.score - a.score)
+    }
+
     // PHASE 2: One isolation per MAJOR muscle (provides stretch/variety)
     for (const muscle of majorTargets) {
       if (session.getRemainingSeconds() < 180) break
@@ -1130,6 +1178,20 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       const best = scored.find(s => s.ex.type === 'isolation' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
       if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
         addExercise(best.ex)
+      }
+    }
+
+    // PHASE 2b: Promote aesthetic focus muscles (calves, core) for toning goal
+    // Must run before generic Phase 3 to claim time while budget is healthy
+    if (answers.primaryGoal === 'toning') {
+      const aestheticMuscles = (['calves', 'core'] as MuscleGroup[])
+        .filter(m => focusMinors.includes(m) && !muscleCount[m])
+      for (const muscle of aestheticMuscles) {
+        if (session.getRemainingSeconds() < 180) break
+        const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
+        if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+          addExercise(best.ex)
+        }
       }
     }
 
