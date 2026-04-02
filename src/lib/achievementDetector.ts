@@ -111,8 +111,9 @@ export function checkAchievements(
     unlocked.push('profile-complete')
   }
   
-  // Plan created
-  if (allPlans.length > 0 && !unlockedAchievementIds.has('plan-created')) {
+  // Plan created (must be custom plan, not pre-made)
+  const hasCreatedCustomPlan = allPlans.some(p => !p.isPreMade)
+  if (hasCreatedCustomPlan && !unlockedAchievementIds.has('plan-created')) {
     unlocked.push('plan-created')
   }
   

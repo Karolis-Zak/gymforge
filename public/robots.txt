@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /plans/[id]
+Disallow: /workout
+Sitemap: https://gymforge-nine.vercel.app/sitemap.xml

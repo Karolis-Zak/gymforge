@@ -164,6 +164,18 @@ export const ActiveWorkout: React.FC = () => {
   }, [completeSet, getRestForExercise])
 
   const handleFinish = useCallback(() => {
+    if (!currentWorkout) return
+
+    // CRITICAL: Validate that all sets are completed before finishing
+    const totalSets = currentWorkout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0)
+    const completedSets = currentWorkout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.completed).length, 0)
+
+    if (completedSets < totalSets) {
+      const remaining = totalSets - completedSets
+      notify.error(`${remaining} set${remaining > 1 ? 's' : ''} remaining. Complete all sets or mark as incomplete.`)
+      return
+    }
+
     if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
 
     // Capture current workout BEFORE completing (fixes race condition)

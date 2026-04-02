@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useRecoveryStore } from '../store/recoveryStore'
 import { Card, Badge, Button } from './ui'
 import { FiMinus, FiPlus, FiCheckCircle } from 'react-icons/fi'
@@ -12,6 +12,7 @@ export function RecoveryTracker() {
   const { logRecovery, getRecoveryLog, updateRecoveryLog, getWeeklyRecoveryScore } = useRecoveryStore()
   const today = new Date().toISOString().split('T')[0]
   const todayLog = getRecoveryLog(today)
+  const notesDetailsRef = useRef<HTMLDetailsElement>(null)
 
   const [quality, setQuality] = useState<'poor' | 'fair' | 'good' | 'excellent'>(todayLog?.quality || 'good')
   const [sleep, setSleep] = useState(todayLog?.sleep?.toString() || '7')
@@ -34,6 +35,14 @@ export function RecoveryTracker() {
       updateRecoveryLog(today, logData)
     } else {
       logRecovery(logData)
+    }
+  }
+
+  const handleNotesToggle = () => {
+    if (notesDetailsRef.current && notesDetailsRef.current.open) {
+      setTimeout(() => {
+        notesDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
     }
   }
 
@@ -180,7 +189,7 @@ export function RecoveryTracker() {
         </div>
 
         {/* Notes - Optional, hidden by default */}
-        <details className="text-xs">
+        <details ref={notesDetailsRef} onToggle={handleNotesToggle} className="text-xs">
           <summary className="cursor-pointer font-medium text-text-muted hover:text-text-primary transition-colors">
             + Add notes (optional)
           </summary>

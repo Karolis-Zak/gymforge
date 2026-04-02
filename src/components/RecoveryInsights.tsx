@@ -31,6 +31,13 @@ export function RecoveryInsights() {
     excellent: weeklyLogs.filter(l => l.quality === 'excellent').length,
   }
 
+  const qualityLabels: Record<string, string> = {
+    poor: 'Poor',
+    fair: 'Fair',
+    good: 'Good',
+    excellent: 'Excellent',
+  }
+
   // Generate recommendations
   const recommendations: string[] = []
   if (parseFloat(avgSleep) < 7) recommendations.push('Try to get more sleep — aim for 7-9 hours')
@@ -95,7 +102,7 @@ export function RecoveryInsights() {
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <p className="text-xs text-text-muted capitalize">{q}</p>
+                  <p className="text-xs text-text-muted">{qualityLabels[q]}</p>
                   <p className="text-xs font-semibold text-text-primary">{count}</p>
                 </div>
               )
