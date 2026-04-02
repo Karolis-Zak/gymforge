@@ -61,6 +61,7 @@ export const ActiveWorkout: React.FC = () => {
   const [motivationIdx, setMotivationIdx] = useState(0)
   const [restTimers, setRestTimers] = useState<Record<string, number>>({})
   const [restActive, setRestActive] = useState<Record<string, boolean>>({})
+  const [cancelWarning, setCancelWarning] = useState(false)
   const restRefs = useRef<Record<string, NodeJS.Timeout>>({})
   const [showGuide, setShowGuide] = useState<Record<string, boolean>>({})
   const [sessionNotes, setSessionNotes] = useState('')
@@ -172,7 +173,7 @@ export const ActiveWorkout: React.FC = () => {
 
     if (completedSets < totalSets) {
       const remaining = totalSets - completedSets
-      notify.error(`${remaining} set${remaining > 1 ? 's' : ''} remaining. Complete all sets or mark as incomplete.`)
+      notify.error(`${remaining} set${remaining > 1 ? 's' : ''} remaining. Click Save & Exit or complete all sets.`)
       return
     }
 
@@ -227,13 +228,24 @@ export const ActiveWorkout: React.FC = () => {
     setTimeout(() => router.push('/progress'), 2000)
   }, [currentWorkout, sessionNotes, updateSessionNotes, completeWorkout, timer, router, notify])
 
+  const handleSaveAndExit = useCallback(() => {
+    if (!currentWorkout) return
+    if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
+    notify.info('Workout saved.')
+    setTimeout(() => router.push('/progress'), 500)
+  }, [currentWorkout, sessionNotes, updateSessionNotes, router, notify])
+
   const handleCancel = useCallback(() => {
-    if (confirm('Cancel this workout? Your progress will be lost.')) {
+    if (cancelWarning) {
       cancelWorkout()
       notify.info('Workout cancelled.')
       setTimeout(() => router.push('/plans'), 500)
+    } else {
+      setCancelWarning(true)
+      notify.info('Click Cancel again to confirm — progress will be lost.')
+      setTimeout(() => setCancelWarning(false), 3000)
     }
-  }, [cancelWorkout, router, notify])
+  }, [cancelWarning, cancelWorkout, router, notify])
 
   if (!currentWorkout) {
     return (
@@ -319,7 +331,7 @@ export const ActiveWorkout: React.FC = () => {
             <span className="font-mono text-lg font-bold text-primary">{formatTime(timer)}</span>
           </div>
           <Button variant="secondary" size="sm" onClick={() => setShowNotesPanel(!showNotesPanel)} aria-label="Workout notes"><FiEdit3 /></Button>
-          <Button variant="danger" size="sm" onClick={handleCancel}><FiX /> Cancel</Button>
+          <Button variant={cancelWarning ? "danger" : "secondary"} size="sm" onClick={handleCancel}><FiX /> {cancelWarning ? 'Confirm?' : 'Cancel'}</Button>
         </div>
       </div>
 
@@ -492,9 +504,16 @@ export const ActiveWorkout: React.FC = () => {
         onUpdateRPE={updateExerciseRPE}
       />
 
-      {/* ===== Floating Finish Early Button ===== */}
+      {/* ===== Floating Action Buttons ===== */}
       {!allDone && completedSets > 0 && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
+          <button
+            onClick={handleSaveAndExit}
+            className="bg-background-elevated border border-white/10 text-text-secondary px-4 py-3 rounded-2xl shadow-card hover:text-text-primary hover:border-accent/30 transition-all backdrop-blur-xl text-sm font-medium flex items-center gap-2"
+            title="Save partial workout and exit"
+          >
+            <FiArrowRight size={16} /> Save &amp; Exit
+          </button>
           <button
             onClick={handleFinish}
             className="bg-background-elevated border border-white/10 text-text-secondary px-6 py-3 rounded-2xl shadow-card hover:text-text-primary hover:border-primary/30 transition-all backdrop-blur-xl text-sm font-medium flex items-center gap-2"
