@@ -152,19 +152,28 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
 
       {/* Guide Tab */}
       {activeTab === 'guide' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {plan.description.split('\n\n').map((section, idx) => {
             const isHeading = section.startsWith('##')
-            const cleanSection = section.replace(/^##\s*/, '')
+            const cleanSection = section.replace(/^##\s*/, '').trim()
+
+            if (!cleanSection) return null
 
             return isHeading ? (
-              <div key={idx}>
-                <h3 className="text-lg font-display font-bold text-primary mb-3">{cleanSection}</h3>
+              <div key={idx} className="pt-2">
+                <h3 className="text-base font-display font-bold text-primary">{cleanSection}</h3>
               </div>
             ) : (
-              <Card key={idx} className="bg-white/[0.02]">
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{cleanSection}</p>
-              </Card>
+              <div key={idx} className="text-sm text-text-secondary leading-relaxed space-y-2">
+                {cleanSection.split('\n').map((line, lineIdx) => {
+                  if (!line.trim()) return null
+                  return (
+                    <div key={lineIdx} className={line.startsWith('•') || line.match(/^\d+\./) ? 'ml-4' : ''}>
+                      {line}
+                    </div>
+                  )
+                })}
+              </div>
             )
           })}
         </div>
