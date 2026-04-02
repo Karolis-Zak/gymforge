@@ -8,7 +8,7 @@ import { useOnboardingStore, DEFAULT_ANSWERS, type OnboardingAnswers } from '../
 import { useToast } from '../../store/toastStore'
 import { generatePlan, type GeneratedPlan } from '../../lib/planGenerator'
 import { getMuscleGroupLabel, getEquipmentLabel } from '../../data/exerciseUtils'
-import { Button } from './ui'
+import { Button } from '../../ui'
 import { PlanPreview } from './PlanPreview'
 import { FiArrowLeft, FiArrowRight, FiZap } from 'react-icons/fi'
 import { Step1AboutYou } from './steps/Step1AboutYou'
