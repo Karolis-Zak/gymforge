@@ -5,8 +5,8 @@ import { useRecoveryStore } from '../store/recoveryStore'
 import { Card, Badge, Button } from './ui'
 import { FiMinus, FiPlus, FiCheckCircle } from 'react-icons/fi'
 
-const sorenessLabels = ['Really Good', 'Good', 'Medium', 'Poor', 'Really Poor']
-const fatigueLabels = ['Really Fresh', 'Fresh', 'Medium', 'Tired', 'Exhausted']
+const sorenessLabels = ['Really Poor', 'Poor', 'Medium', 'Good', 'Really Good']
+const fatigueLabels = ['Exhausted', 'Tired', 'Medium', 'Fresh', 'Really Fresh']
 
 export function RecoveryTracker() {
   const { logRecovery, getRecoveryLog, updateRecoveryLog, getWeeklyRecoveryScore } = useRecoveryStore()
@@ -152,7 +152,7 @@ export function RecoveryTracker() {
                 }`}
                 title={sorenessLabels[val - 1]}
               >
-                {['😊', '🙂', '😐', '😕', '😣'][val - 1]}
+                {['😣', '😕', '😐', '🙂', '😊'][val - 1]}
               </button>
             ))}
           </div>
@@ -173,7 +173,7 @@ export function RecoveryTracker() {
                 }`}
                 title={fatigueLabels[val - 1]}
               >
-                {['⚡', '😀', '🙂', '😔', '😫'][val - 1]}
+                {['😫', '😔', '🙂', '😀', '⚡'][val - 1]}
               </button>
             ))}
           </div>
