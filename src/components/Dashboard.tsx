@@ -14,6 +14,7 @@ import { Card, Button, Badge } from './ui'
 import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
 import { RecoveryTracker } from './RecoveryTracker'
+import { QuickRepeatWorkout } from './QuickRepeatWorkout'
 
 const CHART_OPTIONS = {
   ...BASE_CHART_OPTIONS,
@@ -154,6 +155,9 @@ export function Dashboard() {
           </div>
         </Card>
       )}
+
+      {/* Quick Repeat Last Workout */}
+      {!currentWorkout && <QuickRepeatWorkout />}
 
       {/* Workout Status */}
       {(() => {
