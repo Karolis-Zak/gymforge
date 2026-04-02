@@ -163,10 +163,15 @@ export function Questionnaire() {
       {/* Plan Preview */}
       {showPreview && generatedPlan && (
         <div>
-          <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)} className="mb-4">
-            <FiArrowLeft /> Back to questions
-          </Button>
-          <h2 className="text-2xl font-display font-bold text-text-primary mb-6">Your Personalized Plan</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-display font-bold text-text-primary">Your Personalized Plan</h2>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="text-xs text-text-muted hover:text-text-secondary transition-colors flex items-center gap-1"
+            >
+              <FiArrowLeft className="w-3 h-3" /> Edit
+            </button>
+          </div>
           <PlanPreview plan={generatedPlan} planName={planName} onPlanNameChange={setPlanName} onConfirm={handleConfirm} onShuffle={handleShuffle} />
         </div>
       )}

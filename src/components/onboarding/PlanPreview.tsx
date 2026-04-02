@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { GeneratedPlan } from '../../lib/planGenerator'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -18,6 +18,11 @@ interface PlanPreviewProps {
 
 export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShuffle }: PlanPreviewProps) {
   const [activeTab, setActiveTab] = useState<'plan' | 'guide'>('plan')
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
   const totalExercises = plan.days.reduce((sum, d) => sum + d.exercises.length, 0)
   const totalMinutes = plan.days.reduce((sum, d) => sum + d.estimatedMinutes, 0)
   const allMuscles = [...new Set(plan.days.flatMap(d => d.targetMuscles))]
@@ -116,32 +121,44 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
 
           {/* Day cards */}
           {plan.days.map((day) => (
-            <Card key={day.dayName}>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-display font-bold text-text-primary">{day.dayName}</h3>
-                  <p className="text-sm text-text-muted">{day.splitName}</p>
+            <Card key={day.dayName} className="border-l-4 border-primary overflow-hidden">
+              {/* Day Header */}
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                <div className="flex-1">
+                  <h3 className="font-display font-bold text-lg text-text-primary">{day.dayName}</h3>
+                  <p className="text-sm text-text-secondary">{day.splitName}</p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-text-muted">
-                  <FiClock /> ~{day.estimatedMinutes}min
+                <div className="flex items-center gap-3 text-sm text-text-muted">
+                  <div className="flex items-center gap-1">
+                    <FiClock className="w-4 h-4" />
+                    <span>~{day.estimatedMinutes}m</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 mb-3">
+
+              {/* Target Muscles */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {day.targetMuscles.map(m => (
                   <Badge key={m} variant="primary" size="sm">{getMuscleGroupLabel(m)}</Badge>
                 ))}
               </div>
-              <div className="space-y-1.5">
-                {day.exercises.map((ex) => (
-                  <div key={ex.id} className="py-1.5 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-secondary">{ex.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-text-muted">{ex.sets} × {ex.reps}{ex.notes?.includes('seconds') ? 's' : ''}</span>
-                        {ex.restSeconds && <span className="text-[10px] text-text-muted">{ex.restSeconds}s rest</span>}
+
+              {/* Exercises */}
+              <div className="space-y-2">
+                {day.exercises.map((ex, exIdx) => (
+                  <div key={ex.id} className="bg-white/[0.02] rounded-lg p-3">
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-medium text-text-primary">{exIdx + 1}. {ex.name}</span>
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-text-muted flex flex-col items-end gap-0.5">
+                        <span className="font-medium">{ex.sets} × {ex.reps}{ex.notes?.includes('seconds') ? 's' : ''}</span>
+                        {ex.restSeconds && <span>{ex.restSeconds}s rest</span>}
                       </div>
                     </div>
-                    {ex.notes && <p className="text-xs text-text-muted mt-0.5">{ex.notes}</p>}
+                    {ex.notes && <p className="text-xs text-text-muted ml-0 leading-relaxed">{ex.notes}</p>}
                   </div>
                 ))}
               </div>
@@ -159,11 +176,47 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
 
             if (!cleanSection) return null
 
-            return isHeading ? (
-              <div key={idx} className="pt-2">
-                <h3 className="text-base font-display font-bold text-primary">{cleanSection}</h3>
-              </div>
-            ) : (
+            if (isHeading) {
+              return (
+                <div key={idx} className="pt-2">
+                  <h3 className="text-base font-display font-bold text-primary">{cleanSection}</h3>
+                </div>
+              )
+            }
+
+            // Render RPE table if this is the RPE section
+            if (cleanSection.includes('RPE 6') || cleanSection.includes('RPE 7')) {
+              return (
+                <div key={idx} className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left py-2 px-3 font-semibold text-text-secondary">RPE</th>
+                        <th className="text-left py-2 px-3 font-semibold text-text-secondary">Reps In Tank</th>
+                        <th className="text-left py-2 px-3 font-semibold text-text-secondary">Weeks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-text-secondary">
+                      {[
+                        { rpe: '5', reps: '4+ (super easy)', weeks: 'Week ' + plan.days.length },
+                        { rpe: '6', reps: '4 left (comfortable)', weeks: '1' },
+                        { rpe: '7', reps: '3 left (moderate)', weeks: '1-2' },
+                        { rpe: '8', reps: '2 left (challenging)', weeks: '2-3' },
+                        { rpe: '9', reps: '1 left (very hard)', weeks: '2-3 (main only)' },
+                      ].map((row, i) => (
+                        <tr key={i} className="border-b border-white/5">
+                          <td className="py-2 px-3 font-semibold text-primary">{row.rpe}</td>
+                          <td className="py-2 px-3">{row.reps}</td>
+                          <td className="py-2 px-3">{row.weeks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
+
+            return (
               <div key={idx} className="text-sm text-text-secondary leading-relaxed space-y-2">
                 {cleanSection.split('\n').map((line, lineIdx) => {
                   if (!line.trim()) return null
