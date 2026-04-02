@@ -23,6 +23,7 @@ import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import type { WorkoutLog } from '../store/workoutLogStore'
 import { Card, Input, StatCard } from './ui'
 import { FiZap, FiTrendingUp, FiAward, FiCalendar, FiActivity } from 'react-icons/fi'
+import { AchievementShowcase } from './AchievementShowcase'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement, Filler, ArcElement)
 
@@ -367,6 +368,12 @@ export const WorkoutProgress: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Achievements */}
+      <div>
+        <h2 className="text-2xl font-display font-bold text-text-primary mb-6">Achievements</h2>
+        <AchievementShowcase />
+      </div>
     </div>
   )
 }

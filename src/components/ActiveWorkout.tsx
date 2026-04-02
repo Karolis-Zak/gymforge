@@ -7,6 +7,8 @@ import { useWorkoutStore } from '../store/workoutStore'
 import { useUserStore } from '../store/userStore'
 import { useOnboardingStore } from '../store/onboardingStore'
 import { useToast } from '../store/toastStore'
+import { useAchievementStore } from '../store/achievementStore'
+import { checkAchievements } from '../lib/achievementDetector'
 import { exercises as exerciseDb } from '../data/exercises'
 import {
   ExerciseFocusCard,
@@ -164,11 +166,47 @@ export const ActiveWorkout: React.FC = () => {
   const handleFinish = useCallback(() => {
     if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
     completeWorkout(timer)
+
+    // Check and unlock achievements
+    const achievementStore = useAchievementStore.getState()
+    const { logs, currentWorkout: _unusedCurrent } = useWorkoutLogStore.getState()
+    const { plans } = useWorkoutStore.getState()
+    const { profile, weightHistory } = useUserStore.getState()
+
+    // Get the newly completed workout (it's the last one in logs after completeWorkout)
+    const completedWorkout = logs[logs.length - 1]
+    if (completedWorkout) {
+      const profileComplete = !!(profile?.name && profile?.age && profile?.height && profile?.weight)
+      const hasLoggedWeight = weightHistory.length > 0
+
+      const { newlyUnlocked } = checkAchievements(
+        completedWorkout,
+        logs,
+        plans,
+        achievementStore.unlockedAchievementIds,
+        profileComplete,
+        hasLoggedWeight
+      )
+
+      // Unlock new achievements
+      newlyUnlocked.forEach(id => achievementStore.unlockAchievement(id))
+
+      // Notify on first 3 achievements, summarize after
+      if (newlyUnlocked.length === 1) {
+        const achievement = achievementStore.achievements[newlyUnlocked[0]]
+        if (achievement) {
+          notify.success(`Achievement unlocked! ${achievement.icon} ${achievement.title}`)
+        }
+      } else if (newlyUnlocked.length > 1) {
+        notify.success(`🎉 ${newlyUnlocked.length} achievements unlocked!`)
+      }
+    }
+
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 4000)
     notify.success('Workout complete!')
     setTimeout(() => router.push('/progress'), 2000)
-  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router])
+  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router, notify])
 
   const handleCancel = useCallback(() => {
     if (confirm('Cancel this workout? Your progress will be lost.')) {
