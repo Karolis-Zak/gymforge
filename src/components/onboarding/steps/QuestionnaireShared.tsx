@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Button } from '../../ui/Button'
-import { FiArrowLeft, FiArrowRight, FiTarget, FiAward, FiTrendingDown, FiHeart, FiActivity, FiMaximize2, FiHome, FiMapPin, FiSun, FiCompass } from 'react-icons/fi'
+import { FiArrowLeft, FiArrowRight, FiTarget, FiAward, FiTrendingDown, FiHeart, FiActivity, FiMaximize2 } from 'react-icons/fi'
 import type { OnboardingAnswers } from '../../../store/onboardingStore'
 
 export const INJURY_AREAS = [
@@ -23,13 +23,6 @@ export const GOALS: Array<{ id: OnboardingAnswers['primaryGoal']; label: string;
   { id: 'general-fitness', label: 'General Fitness', desc: 'Stay healthy, feel good', icon: <FiHeart /> },
   { id: 'endurance', label: 'Build Endurance', desc: 'Improve stamina', icon: <FiActivity /> },
   { id: 'flexibility', label: 'Improve Flexibility', desc: 'Move better', icon: <FiMaximize2 /> },
-]
-
-export const LOCATIONS: Array<{ id: OnboardingAnswers['trainingLocation']; label: string; desc: string; icon: React.ReactNode }> = [
-  { id: 'gym', label: 'At a Gym', desc: 'Full gym access', icon: <FiMapPin /> },
-  { id: 'home', label: 'At Home', desc: 'Home equipment', icon: <FiHome /> },
-  { id: 'outdoor', label: 'Outdoors', desc: 'Parks, outdoors', icon: <FiSun /> },
-  { id: 'mixed', label: 'Mixed', desc: 'Combination', icon: <FiCompass /> },
 ]
 
 export const CARDIO_OPTIONS: Array<{ v: OnboardingAnswers['cardioPreference']; l: string }> = [

@@ -55,14 +55,6 @@ export function Step5Schedule({ answers, update, onNext, onBack }: Step5Schedule
           <PillToggle label="Skip warm-up" selected={answers.warmupPreference === 'none'} onClick={() => update({ warmupPreference: 'none' })} />
         </div>
       </div>
-      <div>
-        <label className="text-sm font-medium text-text-secondary block mb-2">Preferred time of day</label>
-        <div className="flex flex-wrap gap-2">
-          {['Morning', 'Afternoon', 'Evening', 'No preference'].map(t => (
-            <PillToggle key={t} label={t} selected={answers.preferredTime === t.toLowerCase().replace(' ', '-')} onClick={() => update({ preferredTime: t.toLowerCase().replace(' ', '-') })} />
-          ))}
-        </div>
-      </div>
       <NavButtons onBack={onBack} onNext={onNext} nextDisabled={answers.specificDays.length !== answers.daysPerWeek} />
     </div>
   )

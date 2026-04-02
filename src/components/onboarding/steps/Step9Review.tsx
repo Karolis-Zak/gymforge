@@ -5,7 +5,7 @@ import { getAllMuscleGroups, getMuscleGroupLabel } from '../../../data/exerciseU
 import type { OnboardingAnswers } from '../../../store/onboardingStore'
 import type { MuscleGroup } from '../../../data/exercises'
 import { Button } from '../../ui/Button'
-import { StepHeader, SummaryRow, capitalize, GOALS, LOCATIONS, CARDIO_OPTIONS, SPLIT_LABELS, WEEKDAYS, INJURY_AREAS } from './QuestionnaireShared'
+import { StepHeader, SummaryRow, capitalize, GOALS, CARDIO_OPTIONS, SPLIT_LABELS, WEEKDAYS, INJURY_AREAS } from './QuestionnaireShared'
 import { FiArrowLeft, FiZap } from 'react-icons/fi'
 
 interface Step9ReviewProps {
@@ -18,7 +18,6 @@ interface Step9ReviewProps {
 
 export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditStep }: Step9ReviewProps) {
   const getGoalLabel = (id: string) => GOALS.find(g => g.id === id)?.label || id
-  const getLocationLabel = (id: string) => LOCATIONS.find(l => l.id === id)?.label || id
   const getCardioLabel = (id: string) => CARDIO_OPTIONS.find(c => c.v === id)?.l || id
   const getInjuryLabel = (id: string) => INJURY_AREAS.find(a => a.id === id)?.label || id
   const muscleGroupLabels = (groups: MuscleGroup[]) => groups.length > 0 ? groups.map(mg => getMuscleGroupLabel(mg)).join(', ') : 'None (balanced)'
@@ -60,9 +59,8 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Equipment & Location</h3>
+          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Equipment</h3>
           <div className="space-y-1">
-            <SummaryRow label="Training Location" value={getLocationLabel(answers.trainingLocation)} onEdit={() => onEditStep(4)} />
             <SummaryRow label="Equipment" value={answers.availableEquipment.length > 0 ? answers.availableEquipment.join(', ') : 'Bodyweight only'} onEdit={() => onEditStep(4)} />
             <SummaryRow label="Adjustable Bench" value={answers.hasAdjustableBench ? 'Yes' : 'No'} onEdit={() => onEditStep(4)} />
             <SummaryRow label="Training Partner" value={capitalize(answers.hasTrainingPartner)} onEdit={() => onEditStep(4)} />
@@ -76,7 +74,6 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
             <SummaryRow label="Which Days" value={daysLabel} onEdit={() => onEditStep(5)} />
             <SummaryRow label="Session Duration" value={`${answers.sessionDuration} min`} onEdit={() => onEditStep(5)} />
             <SummaryRow label="Warm-up" value={answers.warmupPreference === 'quick' ? '5 min' : answers.warmupPreference === 'full' ? '10 min' : 'Skip'} onEdit={() => onEditStep(5)} />
-            <SummaryRow label="Time of Day" value={capitalize(answers.preferredTime)} onEdit={() => onEditStep(5)} />
           </div>
         </div>
 

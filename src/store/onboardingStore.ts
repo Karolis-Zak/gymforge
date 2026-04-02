@@ -23,7 +23,6 @@ export interface OnboardingAnswers {
   cardioPreference: 'none' | 'light' | 'moderate' | 'heavy'
 
   // Equipment & Location
-  trainingLocation: 'home' | 'gym' | 'outdoor' | 'mixed'
   availableEquipment: Equipment[]
   hasAdjustableBench: boolean | null
   hasTrainingPartner: 'yes' | 'sometimes' | 'no'
@@ -32,14 +31,12 @@ export interface OnboardingAnswers {
   daysPerWeek: number
   specificDays: string[]
   sessionDuration: number
-  preferredTime: string
   warmupPreference: 'quick' | 'full' | 'none'
 
   // Preferences
   varietyPreference: 'variety' | 'routine' | 'balanced'
   focusAreas: MuscleGroup[]
   exerciseComplexity: 'simple' | 'moderate' | 'any'
-  muscleFrequency: 'once' | 'twice' | 'auto'
 
   // Experience
   comfortWithFreeWeights: 'yes' | 'somewhat' | 'not-yet'
@@ -73,19 +70,16 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
   secondaryGoal: '',
   timelineWeeks: 8,
   cardioPreference: 'none',
-  trainingLocation: 'gym',
   availableEquipment: [],
   hasAdjustableBench: null,
   hasTrainingPartner: 'no',
   daysPerWeek: 3,
   specificDays: ['monday', 'wednesday', 'friday'],
   sessionDuration: 45,
-  preferredTime: 'no-preference',
   warmupPreference: 'quick',
   varietyPreference: 'balanced',
   focusAreas: [],
   exerciseComplexity: 'simple',
-  muscleFrequency: 'auto',
   comfortWithFreeWeights: 'somewhat',
   typicalDumbbellWeight: null,
   familiarExercises: [],

@@ -3,8 +3,8 @@
 import React from 'react'
 import { getEquipmentLabel, getAllEquipment } from '../../../data/exerciseUtils'
 import type { OnboardingAnswers } from '../../../store/onboardingStore'
-import { SelectionCard, PillToggle } from '../SelectionCard'
-import { StepHeader, NavButtons, LOCATIONS } from './QuestionnaireShared'
+import { PillToggle } from '../SelectionCard'
+import { StepHeader, NavButtons } from './QuestionnaireShared'
 
 interface Step4EquipmentProps {
   answers: OnboardingAnswers
@@ -20,23 +20,15 @@ const toggleInArray = <T extends string>(arr: T[], item: T): T[] =>
 export function Step4Equipment({ answers, update, onNext, onBack }: Step4EquipmentProps) {
   return (
     <div className="animate-fade-in space-y-5">
-      <StepHeader title="Equipment & Location" subtitle="Where and with what will you train?" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {LOCATIONS.map(loc => (
-          <SelectionCard key={loc.id} icon={loc.icon} label={loc.label} description={loc.desc} selected={answers.trainingLocation === loc.id} onClick={() => update({ trainingLocation: loc.id })} size="lg" />
-        ))}
-      </div>
-      {answers.trainingLocation !== 'outdoor' && (
-        <div>
-          <label className="text-sm font-medium text-text-secondary block mb-2">What equipment do you have access to?</label>
-          <p className="text-xs text-text-muted mb-3">Bodyweight exercises are always included. Select any equipment you can use.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {EQUIPMENT_OPTIONS.map(eq => (
-              <PillToggle key={eq} label={getEquipmentLabel(eq)} selected={answers.availableEquipment.includes(eq)} onClick={() => update({ availableEquipment: toggleInArray(answers.availableEquipment, eq) })} />
-            ))}
-          </div>
+      <StepHeader title="Equipment" subtitle="What equipment do you have access to?" />
+      <div>
+        <p className="text-xs text-text-muted mb-3">Bodyweight exercises are always included. Select any equipment you can use.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {EQUIPMENT_OPTIONS.map(eq => (
+            <PillToggle key={eq} label={getEquipmentLabel(eq)} selected={answers.availableEquipment.includes(eq)} onClick={() => update({ availableEquipment: toggleInArray(answers.availableEquipment, eq) })} />
+          ))}
         </div>
-      )}
+      </div>
       <div>
         <label className="text-sm font-medium text-text-secondary block mb-2">Do you have an adjustable bench?</label>
         <p className="text-xs text-text-muted mb-2">Some exercises need a bench that can incline/decline.</p>
@@ -54,7 +46,7 @@ export function Step4Equipment({ answers, update, onNext, onBack }: Step4Equipme
           <PillToggle label="No, I train alone" selected={answers.hasTrainingPartner === 'no'} onClick={() => update({ hasTrainingPartner: 'no' })} />
         </div>
       </div>
-      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!answers.trainingLocation || answers.hasAdjustableBench === null || !answers.hasTrainingPartner} />
+      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={answers.hasAdjustableBench === null || !answers.hasTrainingPartner} />
     </div>
   )
 }
