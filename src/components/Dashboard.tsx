@@ -13,6 +13,7 @@ import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card, Button, Badge } from './ui'
 import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
+import { RecoveryTracker } from './RecoveryTracker'
 
 const CHART_OPTIONS = {
   ...BASE_CHART_OPTIONS,
@@ -406,6 +407,9 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Recovery Tracker */}
+      <RecoveryTracker />
 
       {/* Empty State */}
       {plans.length === 0 && recentLogs.length === 0 && (
