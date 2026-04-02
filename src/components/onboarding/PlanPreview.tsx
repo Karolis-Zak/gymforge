@@ -152,12 +152,21 @@ export function PlanPreview({ plan, planName, onPlanNameChange, onConfirm, onShu
 
       {/* Guide Tab */}
       {activeTab === 'guide' && (
-        <div className="space-y-6">
-          <Card>
-            <div className="prose prose-invert max-w-none text-sm">
-              <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">{plan.description}</p>
-            </div>
-          </Card>
+        <div className="space-y-4">
+          {plan.description.split('\n\n').map((section, idx) => {
+            const isHeading = section.startsWith('##')
+            const cleanSection = section.replace(/^##\s*/, '')
+
+            return isHeading ? (
+              <div key={idx}>
+                <h3 className="text-lg font-display font-bold text-primary mb-3">{cleanSection}</h3>
+              </div>
+            ) : (
+              <Card key={idx} className="bg-white/[0.02]">
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{cleanSection}</p>
+              </Card>
+            )
+          })}
         </div>
       )}
 
