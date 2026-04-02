@@ -6,6 +6,7 @@ import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
 import { useUserStore } from '../store/userStore'
 import { useOnboardingStore } from '../store/onboardingStore'
+import { useToast } from '../store/toastStore'
 import { exercises as exerciseDb } from '../data/exercises'
 import { WorkoutPreviewScreen } from './workout/WorkoutPreviewScreen'
 import { SwapExerciseModal } from './workout/SwapExerciseModal'
@@ -45,6 +46,7 @@ export const ActiveWorkout: React.FC = () => {
   const { plans } = useWorkoutStore()
   const { defaultRestSeconds } = useUserStore()
   const { answers } = useOnboardingStore()
+  const notify = useToast()
   const DEFAULT_REST_SECONDS = defaultRestSeconds || FALLBACK_REST_SECONDS
   const userInjuries = answers?.injuries || []
   const userInjurySeverity = answers?.injurySeverity || {}
@@ -54,7 +56,6 @@ export const ActiveWorkout: React.FC = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
   const [collapsedExercises, setCollapsedExercises] = useState<Record<string, boolean>>({})
   const [motivationIdx, setMotivationIdx] = useState(0)
   const [restTimers, setRestTimers] = useState<Record<string, number>>({})
@@ -166,8 +167,8 @@ export const ActiveWorkout: React.FC = () => {
     completeWorkout(timer)
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 4000)
-    setToast('Workout complete!')
-    setTimeout(() => { setToast(null); router.push('/progress') }, 2000)
+    notify.success('Workout complete!')
+    setTimeout(() => router.push('/progress'), 2000)
   }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router])
 
   const handleCancel = useCallback(() => {
@@ -237,11 +238,9 @@ export const ActiveWorkout: React.FC = () => {
   const handleShare = () => {
     const summary = `GymForge Workout: ${currentWorkout.planName}\n${completedSets}/${totalSets} sets completed.`
     navigator.clipboard.writeText(summary).then(() => {
-      setToast('Copied to clipboard!')
-      setTimeout(() => setToast(null), 2000)
+      notify.success('Copied to clipboard!')
     }).catch(() => {
-      setToast('Could not copy — check browser permissions')
-      setTimeout(() => setToast(null), 3000)
+      notify.error('Could not copy — check browser permissions')
     })
   }
 
@@ -330,8 +329,7 @@ export const ActiveWorkout: React.FC = () => {
           setSwappingExerciseId(null)
           setSwapQuery('')
           setSwapSuggestions([])
-          setToast(`Swapped to ${newExName}`)
-          setTimeout(() => setToast(null), 2000)
+          notify.success(`Swapped to ${newExName}`)
         }}
         userInjuries={userInjuries}
         userInjurySeverity={userInjurySeverity}
@@ -449,12 +447,6 @@ export const ActiveWorkout: React.FC = () => {
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-background-elevated border border-white/10 text-text-primary px-6 py-3 rounded-2xl shadow-card animate-slide-up backdrop-blur-xl">
-          {toast}
-        </div>
-      )}
     </div>
   )
 }
