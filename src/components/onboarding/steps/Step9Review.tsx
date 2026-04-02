@@ -3,6 +3,7 @@
 import React from 'react'
 import { getAllMuscleGroups, getMuscleGroupLabel } from '../../../data/exerciseUtils'
 import type { OnboardingAnswers } from '../../../store/onboardingStore'
+import type { MuscleGroup } from '../../../data/exercises'
 import { Button } from '../../ui/Button'
 import { StepHeader, SummaryRow, capitalize, GOALS, LOCATIONS, CARDIO_OPTIONS, SPLIT_LABELS, WEEKDAYS, INJURY_AREAS } from './QuestionnaireShared'
 import { FiArrowLeft, FiZap } from 'react-icons/fi'
@@ -20,7 +21,7 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
   const getLocationLabel = (id: string) => LOCATIONS.find(l => l.id === id)?.label || id
   const getCardioLabel = (id: string) => CARDIO_OPTIONS.find(c => c.v === id)?.l || id
   const getInjuryLabel = (id: string) => INJURY_AREAS.find(a => a.id === id)?.label || id
-  const muscleGroupLabels = (groups: string[]) => groups.length > 0 ? groups.map(mg => getMuscleGroupLabel(mg as any)).join(', ') : 'None (balanced)'
+  const muscleGroupLabels = (groups: MuscleGroup[]) => groups.length > 0 ? groups.map(mg => getMuscleGroupLabel(mg)).join(', ') : 'None (balanced)'
   const daysLabel = answers.specificDays.map(d => WEEKDAYS.find(w => w.id === d)?.label).filter(Boolean).join(', ')
 
   return (
