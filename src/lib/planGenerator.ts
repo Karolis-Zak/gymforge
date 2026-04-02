@@ -3,6 +3,104 @@ import { getExerciseCategory } from '../data/exerciseCategories'
 import { GOAL_NAMES, SECONDARY_GOAL_NAMES } from './planConstants'
 import type { OnboardingAnswers } from '../store/onboardingStore'
 
+/**
+ * SessionBuilder: Constraint-based session time management
+ * Prevents adding exercises if they exceed session time limit
+ * This is the enforcement layer that turns the generator into a proper system
+ */
+class SessionBuilder {
+  private exercises: ExerciseData[] = []
+  private totalSeconds: number = 0
+  private limitSeconds: number
+  private warmupCostApplied: boolean = false
+
+  constructor(sessionDurationMinutes: number, warmupMinutes: number) {
+    // Total budget = session duration - warmup - 2 min buffer for transitions
+    this.limitSeconds = (sessionDurationMinutes - warmupMinutes - 2) * 60
+  }
+
+  /**
+   * Estimate time cost of adding an exercise based on its volume and rest
+   */
+  private estimateExerciseTime(
+    exercise: ExerciseData,
+    fitnessLevel: string,
+    primaryGoal: string,
+    secondaryGoal: string,
+    bodyComposition?: BodyComposition,
+    sessionDuration?: number
+  ): number {
+    // Get volume (sets/reps) for this exercise type
+    const vol = getVolume(fitnessLevel, primaryGoal, secondaryGoal, exercise.type === 'compound')
+    const { sets, reps } = vol
+
+    // Estimate per-set time: 30sec base + 2sec per rep
+    const setTime = 30 + (reps * 2)
+    const totalSetTime = setTime * sets
+
+    // Get rest time for this exercise
+    const isCompound = exercise.type === 'compound'
+    const rest = getRestSeconds(primaryGoal, fitnessLevel, isCompound, bodyComposition, sessionDuration)
+    const totalRest = rest * Math.max(0, sets - 1)
+
+    let total = totalSetTime + totalRest
+
+    // Add warm-up cost once per session (for first compound only)
+    if (isCompound && !this.warmupCostApplied) {
+      total += 180 // ~3 minutes for warm-up sets (50%×8, 70%×5, 85%×2)
+      this.warmupCostApplied = true
+    }
+
+    // Add transition time buffer
+    total += 30
+
+    return total
+  }
+
+  /**
+   * Try to add an exercise; only succeeds if it fits in remaining time
+   */
+  tryAdd(
+    exercise: ExerciseData,
+    fitnessLevel: string,
+    primaryGoal: string,
+    secondaryGoal: string,
+    bodyComposition?: BodyComposition,
+    sessionDuration?: number
+  ): boolean {
+    const timeNeeded = this.estimateExerciseTime(
+      exercise,
+      fitnessLevel,
+      primaryGoal,
+      secondaryGoal,
+      bodyComposition,
+      sessionDuration
+    )
+
+    if (this.totalSeconds + timeNeeded > this.limitSeconds) {
+      return false
+    }
+
+    this.exercises.push(exercise)
+    this.totalSeconds += timeNeeded
+    return true
+  }
+
+  /**
+   * Get remaining time in seconds
+   */
+  getRemainingSeconds(): number {
+    return this.limitSeconds - this.totalSeconds
+  }
+
+  /**
+   * Get the exercises that were successfully added
+   */
+  getExercises(): ExerciseData[] {
+    return this.exercises
+  }
+}
+
 // Body composition assessment — used to adapt programming
 export interface BodyComposition {
   bmi: number
@@ -951,21 +1049,14 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const daysToGenerate = split.days.slice(0, sortedDays.length)
 
   // CARDIO STRATEGY:
-  // If user selects cardio AND has tight time (<=30 min), reduce exercises per day to fit cardio
-  // If user has loose time (>50 min), add cardio finishers
+  // With time-based session building, exercises naturally reduce to fit time budget
+  // We still determine if cardio finishers should be added based on preferences
   const needsCardio = answers.cardioPreference !== 'none'
-  let adjustedExerciseCount = exerciseCount
   let cardioCount = 0
 
-  if (needsCardio) {
-    if (answers.sessionDuration > 50) {
-      // Plenty of time: add cardio finishers
-      cardioCount = answers.cardioPreference === 'heavy' ? 2 : 1
-    } else if (answers.sessionDuration <= 30) {
-      // Tight time: reduce exercises by 1, add cardio finisher instead
-      adjustedExerciseCount = Math.max(3, exerciseCount - 1)
-      cardioCount = 1
-    }
+  if (needsCardio && answers.sessionDuration > 40) {
+    // Only add cardio finishers if there's meaningful time remaining
+    cardioCount = answers.cardioPreference === 'heavy' ? 2 : answers.cardioPreference === 'moderate' ? 1 : 0
   }
 
   daysToGenerate.forEach((splitDay, i) => {
@@ -1010,54 +1101,67 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (pattern !== 'other') usedPatterns.add(pattern)
     }
 
-    // Reserve slots for focus minors so they don't get squeezed out
-    const reservedForMinors = Math.min(focusMinors.length, 1)
-    const mainSlots = adjustedExerciseCount - reservedForMinors
+    // Create session builder — time is now the constraint, not slot count
+    const warmupMinutes = answers.warmupPreference === 'full' ? 10 : answers.warmupPreference === 'quick' ? 5 : 0
+    const session = new SessionBuilder(answers.sessionDuration, warmupMinutes)
 
     // PHASE 1: One compound per MAJOR muscle (different movement patterns)
-    // Back is special — it benefits from TWO compounds (a row + a pull) if slots allow
+    // Back is special — it benefits from TWO compounds (a row + a pull) if time allows
     for (const muscle of majorTargets) {
-      if (selected.length >= Math.ceil(mainSlots * 0.6)) break
+      // Need at least 5 minutes remaining for anything
+      if (session.getRemainingSeconds() < 300) break
       const best = scored.find(s => s.ex.type === 'compound' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
-      if (best) addExercise(best.ex)
+      if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+        addExercise(best.ex)
+      }
     }
-    // Back gets a second compound if it only has one and there's a different pattern available
-    if (muscleCount['back'] === 1 && selected.length < Math.ceil(mainSlots * 0.6)) {
+    // Back gets a second compound if it only has one and there's time available
+    if (muscleCount['back'] === 1 && session.getRemainingSeconds() >= 300) {
       const secondBack = scored.find(s => s.ex.type === 'compound' && s.ex.primaryMuscle === 'back' && canAdd(s.ex))
-      if (secondBack) addExercise(secondBack.ex)
+      if (secondBack && session.tryAdd(secondBack.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+        addExercise(secondBack.ex)
+      }
     }
 
     // PHASE 2: One isolation per MAJOR muscle (provides stretch/variety)
     for (const muscle of majorTargets) {
-      if (selected.length >= mainSlots) break
+      if (session.getRemainingSeconds() < 180) break
       if ((muscleCount[muscle] || 0) >= getMaxForMuscle(muscle)) continue
       const best = scored.find(s => s.ex.type === 'isolation' && s.ex.primaryMuscle === muscle && canAdd(s.ex))
-      if (best) addExercise(best.ex)
-    }
-
-    // PHASE 3: Focus minor muscles — GUARANTEED slot (reserved above)
-    for (const muscle of focusMinors) {
-      if (selected.length >= adjustedExerciseCount) break
-      const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
-      if (best) addExercise(best.ex)
-    }
-
-    // PHASE 4: Fill remaining — any muscle, different patterns, prefer unfilled muscles
-    if (selected.length < adjustedExerciseCount) {
-      const unfilled = [...majorTargets, ...focusMinors].filter(m => !muscleCount[m])
-      const filled = majorTargets.filter(m => muscleCount[m])
-      for (const muscle of [...unfilled, ...filled]) {
-        if (selected.length >= adjustedExerciseCount) break
-        const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
-        if (best) addExercise(best.ex)
+      if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+        addExercise(best.ex)
       }
     }
 
-    // PHASE 5: Absolute fill — still respects pattern constraints but allows any muscle
-    if (selected.length < adjustedExerciseCount) {
+    // PHASE 3: Focus minor muscles — try to fit if time available
+    for (const muscle of focusMinors) {
+      if (session.getRemainingSeconds() < 180) break
+      const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
+      if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+        addExercise(best.ex)
+      }
+    }
+
+    // PHASE 4: Fill remaining time — any muscle, different patterns, prefer unfilled muscles
+    if (session.getRemainingSeconds() >= 180) {
+      const unfilled = [...majorTargets, ...focusMinors].filter(m => !muscleCount[m])
+      const filled = majorTargets.filter(m => muscleCount[m])
+      for (const muscle of [...unfilled, ...filled]) {
+        if (session.getRemainingSeconds() < 180) break
+        const best = scored.find(s => s.ex.primaryMuscle === muscle && canAdd(s.ex))
+        if (best && session.tryAdd(best.ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+          addExercise(best.ex)
+        }
+      }
+    }
+
+    // PHASE 5: Absolute fill — if still time, grab the best remaining options
+    if (session.getRemainingSeconds() >= 150) {
       for (const { ex } of scored) {
-        if (selected.length >= adjustedExerciseCount) break
-        if (canAdd(ex)) addExercise(ex)
+        if (session.getRemainingSeconds() < 150) break
+        if (canAdd(ex) && session.tryAdd(ex, answers.fitnessLevel, answers.primaryGoal, answers.secondaryGoal, bodyComposition, answers.sessionDuration)) {
+          addExercise(ex)
+        }
       }
     }
 
