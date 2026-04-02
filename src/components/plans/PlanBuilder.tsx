@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutStore } from '../../store/workoutStore'
+import { useToast } from '../../store/toastStore'
 import type { Exercise } from '../../store/workoutStore'
 import { exercises as exerciseDb } from '../../data/exercises'
 import { ExercisePicker } from './ExercisePicker'
@@ -56,6 +57,7 @@ const TEMPLATES = [
 export function PlanBuilder() {
   const router = useRouter()
   const { addPlan } = useWorkoutStore()
+  const toast = useToast()
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -91,13 +93,19 @@ export function PlanBuilder() {
   const handleCreate = () => {
     if (!name || exercises.length === 0 || creating) return
     setCreating(true)
-    addPlan({
-      name,
-      description: `${description}${goal ? ` | Goal: ${goal}` : ''}`,
-      exercises,
-      isPreMade: false,
-    })
-    router.push('/plans')
+    try {
+      addPlan({
+        name,
+        description: `${description}${goal ? ` | Goal: ${goal}` : ''}`,
+        exercises,
+        isPreMade: false,
+      })
+      toast.success(`Plan "${name}" created successfully!`)
+      router.push('/plans')
+    } catch (error) {
+      toast.error('Failed to create plan. Please try again.')
+      setCreating(false)
+    }
   }
 
   return (
