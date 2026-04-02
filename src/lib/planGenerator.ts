@@ -715,6 +715,19 @@ function scoreExercise(
 
   if (isDurationBasedExercise(ex.name)) score -= 6
 
+  // Prevent excessive front delt work — front raises cause shoulder imbalance
+  // Front delts already get work from pressing movements
+  if (lower.includes('front raise') || lower.includes('front delt')) score -= 10
+
+  // Boost rear delt work — critical for shoulder health and balance
+  if (lower.includes('rear delt') || lower.includes('reverse fly') || lower.includes('face pull') || lower.includes('band pull-apart')) score += 6
+
+  // Boost pulling exercises for upper body days — prevent push/pull imbalance
+  if (ex.primaryMuscle === 'back' || lower.includes('pull-up') || lower.includes('pull up') || lower.includes('chin-up') || lower.includes('chin up')) score += 3
+
+  // Boost hamstring selection — prevent quad/hamstring imbalance
+  if (ex.primaryMuscle === 'hamstrings') score += 2
+
   return score
 }
 
@@ -763,26 +776,31 @@ function auditVolumeBalance(days: GeneratedDay[]): { muscle: string; sets: numbe
  * RPE 5-6 = deload (moving without fatigue)
  */
 function getWeekRPE(weekNumber: number, totalWeeks: number, primaryGoal: string): { min: number; max: number; description: string } {
-  // Deload weeks (4, 8, 12)
-  if (weekNumber === Math.ceil(totalWeeks / 3) || weekNumber === Math.ceil(2 * totalWeeks / 3) || weekNumber === totalWeeks) {
-    return { min: 5, max: 6, description: 'Deload week: Light, focus on movement quality' }
-  }
-
-  // Early phase (weeks 1-2 or 1-3)
-  if (weekNumber <= Math.ceil(totalWeeks * 0.25)) {
+  // Week 1: Always build
+  if (weekNumber === 1) {
     return { min: 6, max: 7, description: 'Build phase: Learn form, move with control' }
   }
 
-  // Mid phase (weeks 3-8)
-  if (weekNumber <= Math.ceil(totalWeeks * 0.65)) {
-    if (weekNumber <= Math.ceil(totalWeeks * 0.45)) {
-      return { min: 7, max: 8, description: 'Accumulation phase: Add weight or reps' }
-    }
+  // Last week: Always deload
+  if (weekNumber === totalWeeks) {
+    return { min: 5, max: 6, description: 'Deload week: Light, focus on movement quality' }
+  }
+
+  // Middle weeks: Progressive intensity buildup
+  const progressRatio = (weekNumber - 1) / (totalWeeks - 1)
+
+  // First third: Accumulation (add weight/reps)
+  if (progressRatio <= 0.33) {
+    return { min: 7, max: 8, description: 'Accumulation phase: Add weight or reps' }
+  }
+
+  // Second third: Intensity (push hard)
+  if (progressRatio <= 0.67) {
     return { min: 8, max: 9, description: 'Intensity phase: Push hard, challenge yourself' }
   }
 
-  // Final weeks
-  return { min: 6, max: 7, description: 'Taper phase: Reduce intensity, maintain movement' }
+  // Final third before deload: Peak intensity
+  return { min: 8, max: 9, description: 'Intensity phase: Push hard, challenge yourself' }
 }
 
 /**
