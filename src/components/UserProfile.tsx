@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useUserStore } from '../store/userStore'
+import { useToast } from '../store/toastStore'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
@@ -11,6 +12,7 @@ import { FiEdit2, FiCheck, FiUser, FiTarget, FiClock } from 'react-icons/fi'
 
 export const UserProfileForm: React.FC = () => {
   const { profile, updateProfile, calculateBMI, getIdealWeight, defaultRestSeconds, setDefaultRestSeconds } = useUserStore()
+  const toast = useToast()
   const [editing, setEditing] = useState(!profile?.name)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -30,6 +32,7 @@ export const UserProfileForm: React.FC = () => {
 
   const handleSave = () => {
     setEditing(false)
+    toast.success('Profile updated successfully!')
   }
 
   const bmi = calculateBMI()
