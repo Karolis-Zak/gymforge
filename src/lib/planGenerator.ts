@@ -1043,9 +1043,12 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   const hasAcuteWristInjury = answers.injuries.includes('wrists') &&
                                (!answers.injurySeverity['wrists'] || answers.injurySeverity['wrists'] === 'acute')
 
+  // Gym users have access to all equipment
+  const skipEquipmentFilter = answers.trainingLocation === 'gym'
+
   let pool = exerciseDb.filter(ex => {
     // Equipment check
-    if (!(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
+    if (!skipEquipmentFilter && !(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
     // Injury checks
     if (avoidedMuscles.includes(ex.primaryMuscle)) return false
     if (ex.secondaryMuscles.some(m => avoidedMuscles.includes(m))) return false
@@ -1061,7 +1064,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   })
   if (pool.length < 10) {
     pool = exerciseDb.filter(ex => {
-      if (!(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
+      if (!skipEquipmentFilter && !(ex.equipment === 'bodyweight' || ex.equipment === 'none' || answers.availableEquipment.includes(ex.equipment))) return false
       if (avoidedMuscles.includes(ex.primaryMuscle)) return false
       if (!allowedDifficulties.includes(ex.difficulty)) return false
       if (answers.injuries.includes('wrists') && shouldExcludeForWristInjury(ex, hasAcuteWristInjury)) return false

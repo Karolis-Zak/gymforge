@@ -61,7 +61,8 @@ export function Step9Review({ answers, onBack, onGenerate, isGenerating, onEditS
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Equipment</h3>
           <div className="space-y-1">
-            <SummaryRow label="Equipment" value={answers.availableEquipment.length > 0 ? answers.availableEquipment.join(', ') : 'Bodyweight only'} onEdit={() => onEditStep(4)} />
+            <SummaryRow label="Training Location" value={answers.trainingLocation === 'gym' ? 'Full Gym' : answers.trainingLocation === 'home' ? 'Home / Limited' : '—'} onEdit={() => onEditStep(4)} />
+            <SummaryRow label="Equipment" value={answers.trainingLocation === 'gym' ? 'All available' : answers.availableEquipment.length > 0 ? answers.availableEquipment.join(', ') : 'Bodyweight only'} onEdit={() => onEditStep(4)} />
             <SummaryRow label="Adjustable Bench" value={answers.hasAdjustableBench ? 'Yes' : 'No'} onEdit={() => onEditStep(4)} />
             <SummaryRow label="Training Partner" value={capitalize(answers.hasTrainingPartner)} onEdit={() => onEditStep(4)} />
           </div>

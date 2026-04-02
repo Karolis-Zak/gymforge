@@ -24,6 +24,7 @@ export interface OnboardingAnswers {
 
   // Equipment & Location
   availableEquipment: Equipment[]
+  trainingLocation: 'gym' | 'home' | undefined
   hasAdjustableBench: boolean | null
   hasTrainingPartner: 'yes' | 'sometimes' | 'no'
 
@@ -71,6 +72,7 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
   timelineWeeks: 8,
   cardioPreference: 'none',
   availableEquipment: [],
+  trainingLocation: undefined,
   hasAdjustableBench: null,
   hasTrainingPartner: 'no',
   daysPerWeek: 3,

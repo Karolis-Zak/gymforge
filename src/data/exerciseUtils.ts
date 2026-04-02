@@ -55,7 +55,7 @@ export function getAllMuscleGroups(): MuscleGroup[] {
 }
 
 export function getAllEquipment(): Equipment[] {
-  return ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'band', 'kettlebell', 'none', 'ez-bar', 'smith-machine', 'pull-up-bar']
+  return ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'band', 'kettlebell', 'none', 'ez-bar', 'smith-machine', 'pull-up-bar', 'trap-bar']
 }
 
 export function getMuscleGroupLabel(muscle: MuscleGroup): string {
