@@ -1079,20 +1079,21 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
         notes = (notes ? notes + ' ' : '') + 'Perform for 30 seconds per set.'
       }
 
+      // Reduce sets on secondary compounds (exIndex >= 2) to fit 45min target
+      // Keep first 2 exercises at full volume, reduce secondary to 3 sets
+      if (!isDurationBased && exIndex >= 2 && ex.type === 'compound' && sets > 3) {
+        sets = 3
+      }
+
       if (answers.fitnessLevel === 'complete-beginner' && ex.type === 'compound') notes = 'Focus on form over weight. ' + notes
       if (answers.primaryGoal === 'fat-loss' && !isDurationBased) {
         notes = (notes ? notes + ' ' : '') + 'Keep rest 30-60s.'
       }
 
-      // Add RPE guidance for week 1 (can be adjusted week-to-week)
-      const week1RPE = getWeekRPE(1, answers.timelineWeeks, answers.primaryGoal)
-      if (!isDurationBased && (answers.fitnessLevel === 'regular-exerciser' || answers.fitnessLevel === 'some-experience')) {
-        notes = (notes ? notes + ' ' : '') + `RPE ${week1RPE.min}-${week1RPE.max}: ${week1RPE.description}`
-      }
-
       const restSec = getRestSeconds(answers.primaryGoal, answers.fitnessLevel, ex.type === 'compound', bodyComposition, answers.sessionDuration)
 
-      // TIER 2: Smart warm-up for first compound exercise on the day
+      // TIER 2: Smart warm-up for first compound exercise on the day only
+      // (showing it on every exercise wastes space and confuses users)
       const isFirstCompound = exIndex === 0 && ex.type === 'compound' && !isDurationBased
       if (isFirstCompound && answers.fitnessLevel !== 'complete-beginner') {
         warmupSets = generateWarmupSets(ex.name)
@@ -1103,6 +1104,13 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
       if (ex.type === 'compound' && answers.timelineWeeks >= 8 && !isDurationBased) {
         const pattern = getMovementPattern(ex)
         rotationSchedule = createRotationSchedule(ex.id, pattern, answers.timelineWeeks, pool)
+      }
+
+      // Add RPE guidance only to first exercise of the day
+      // Reduces visual clutter while keeping info accessible
+      const week1RPE = getWeekRPE(1, answers.timelineWeeks, answers.primaryGoal)
+      if (!isDurationBased && exIndex === 0 && (answers.fitnessLevel === 'regular-exerciser' || answers.fitnessLevel === 'some-experience')) {
+        notes = (notes ? notes + ' ' : '') + `RPE ${week1RPE.min}-${week1RPE.max}: ${week1RPE.description}`
       }
 
       return {
@@ -1165,11 +1173,11 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   if (answers.timelineWeeks >= 8) {
     // Strategic progression for longer timelines
     if (answers.primaryGoal === 'strength') {
-      progressionNote = ' Progress: Weeks 1-4 learn form, 5-8 add weight each session, 9-11 deload, 12 retest.'
+      progressionNote = ' Progress: Weeks 1-4 build foundation (learn form, 6-7 RPE), weeks 5-11 push intensity (add weight each session, 7-9 RPE), week 12 deload and retest.'
     } else if (answers.primaryGoal === 'muscle-building' || answers.primaryGoal === 'toning') {
-      progressionNote = ' Progress: Weekly increase 1-2 reps or 5-10% weight. Week 12: reduce volume, focus on form.'
+      progressionNote = ' Progress: Weeks 1-4 build form, weeks 5-11 increase volume and weight, week 12 reduce volume and recover.'
     } else {
-      progressionNote = ' Progress: Add weight when you hit top of rep range (e.g., 12 reps easy → add 5%).'
+      progressionNote = ' Progress: Add weight when you hit top of rep range (e.g., 12 reps easy → add 5%). Final week: reduce load 40-50% to recover.'
     }
   }
 
@@ -1198,8 +1206,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
   // Build deload week guidance
   let deloadNote = ''
   if (answers.timelineWeeks >= 8) {
-    const deloadWeeks = [Math.ceil(answers.timelineWeeks / 3), Math.ceil(2 * answers.timelineWeeks / 3), answers.timelineWeeks]
-    deloadNote = ` Deload weeks: ${deloadWeeks.join(', ')} (reduce volume 40-50%, maintain movement patterns).`
+    deloadNote = ` Final week (${answers.timelineWeeks}): Deload — reduce volume 40-50%, maintain movement quality.`
   }
 
   // Check for rotation schedules (Tier 2)
@@ -1220,6 +1227,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     warmupProtocolNote = ' Each day: Do warm-up sets (50%×8, 70%×5, 85%×2) before first compound lift.'
   }
 
+  // Add RPE guide for clarity
+  let rpeGuideNote = ' RPE Guide: 6 = 4 reps left in tank, 7 = 3 reps left, 8 = 2 reps left, 9 = 1 rep left (near failure).'
+
   // Generate weekly progression guidance (Tier 3)
   const weeklyProgression = Array.from({ length: answers.timelineWeeks }, (_, i) => {
     const weekNumber = i + 1
@@ -1235,7 +1245,7 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
 
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${rotationNote}${warmupProtocolNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${rpeGuideNote}${rotationNote}${warmupProtocolNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
     days,
     splitType: split.type,
     weeklyProgression,
