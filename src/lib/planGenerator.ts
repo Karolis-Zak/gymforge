@@ -1372,32 +1372,15 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     balanceWarnings += ' ⚠️ ' + legBalance.issues[0]
   }
 
-  // Build deload week guidance
-  let deloadNote = ''
-  if (answers.timelineWeeks >= 8) {
-    deloadNote = ` Final week (${answers.timelineWeeks}): Deload — reduce volume 40-50%, maintain movement quality.`
-  }
-
   // Check for rotation schedules (Tier 2)
   const hasRotation = days.some(day =>
     day.exercises.some(ex => ex.rotationSchedule && ex.rotationSchedule.length > 1)
   )
-  let rotationNote = ''
-  if (hasRotation && answers.timelineWeeks >= 8) {
-    rotationNote = ' Exercises rotate every 3 weeks to prevent plateaus and boredom — see each exercise for rotation schedule.'
-  }
 
   // Check for warm-ups (Tier 2)
   const hasWarmup = days.some(day =>
     day.exercises.some(ex => ex.warmupSets && ex.warmupSets.length > 0)
   )
-  let warmupProtocolNote = ''
-  if (hasWarmup) {
-    warmupProtocolNote = ' Each day: Do warm-up sets (50%×8, 70%×5, 85%×2) before first compound lift.'
-  }
-
-  // Add RPE guide for clarity
-  let rpeGuideNote = ' RPE Guide: 6 = 4 reps left in tank, 7 = 3 reps left, 8 = 2 reps left, 9 = 1 rep left (near failure).'
 
   // Generate weekly progression guidance (Tier 3)
   const weeklyProgression = Array.from({ length: answers.timelineWeeks }, (_, i) => {
@@ -1412,9 +1395,101 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     }
   })
 
+  // Build cleaner, beginner-friendly description with structured sections
+  let description = ''
+
+  // SECTION 1: HOW TO USE THIS PLAN
+  description += '## How to Use This Plan\n\n'
+  description += 'Your plan is ' + answers.timelineWeeks + ' weeks of structured workouts.\n\n'
+  description += 'EACH WEEK shows:\n'
+  description += '• Which exercises to do (listed by day)\n'
+  description += '• How many sets × reps (e.g., "3 × 10")\n'
+  description += '• Rest time between sets (e.g., "45s rest")\n\n'
+  description += 'WHAT YOU DO:\n'
+  description += '1. Each day, do exactly what\'s listed\n'
+  description += '2. Track your actual performance (go to Workout tab after each session)\n'
+  description += '3. Write down: how many reps you completed, and how hard it felt (see RPE scale below)\n'
+  description += '4. After week 1, you\'ll know if you need heavier/lighter weights\n\n'
+  description += 'PROGRESSION:\n'
+  description += '• Weeks 1-4: Focus on form and consistency. Don\'t rush weight increases.\n'
+  description += '• Weeks 5-' + (answers.timelineWeeks - 1) + ': Once form feels solid, add weight when you hit the top of your rep range easily. Example: If it says "3 × 12" and you hit 12 reps feeling strong, add ~5% weight next week.\n'
+  if (answers.timelineWeeks >= 8) {
+    description += '• Week ' + answers.timelineWeeks + ': Deload (easy week to recover — reduce volume 40-50%).\n\n'
+  }
+  description += 'HOW TO TRACK WEIGHT CHANGES:\n'
+  description += '• In the Workout tab, log your actual weights used\n'
+  description += '• Next time you do that exercise, the app will suggest your previous weight\n'
+  description += '• Increase it if you\'re ready, keep it the same if you want more reps at current weight\n\n'
+  if (hasRotation) {
+    description += 'EXERCISES ROTATE every 3 weeks:\n'
+    description += '• To keep things fresh and prevent plateaus\n'
+    description += '• See the "Shuffle Exercises" section for what\'s available\n\n'
+  }
+
+  // SECTION 2: UNDERSTANDING RPE & PROGRESSION
+  description += '## Understanding RPE (Rate of Perceived Exertion)\n\n'
+  description += 'RPE is how HARD the set felt, on a scale of 0–10:\n\n'
+  description += 'RPE 6 = Moderate effort\n'
+  description += '  "I could do 4 more reps if I had to" → Use this in Week 1 (learning phase)\n\n'
+  description += 'RPE 7 = Harder\n'
+  description += '  "I could do 3 more reps if I pushed" → Weeks 2-4\n\n'
+  description += 'RPE 8 = Very hard\n'
+  description += '  "I could do 2 more reps, but it\'s tough" → Weeks 5-' + (answers.timelineWeeks - 1) + '\n\n'
+  description += 'RPE 9 = Almost to failure\n'
+  description += '  "I could do 1 more rep, barely" → Weeks 5-' + (answers.timelineWeeks - 1) + ' (only on main lifts)\n\n'
+  if (answers.timelineWeeks >= 8) {
+    description += 'RPE 5 = Super easy (recovery week only)\n'
+    description += '  "I barely broke a sweat" → Week ' + answers.timelineWeeks + '\n\n'
+  }
+  description += 'WHAT THIS MEANS:\n'
+  description += 'You don\'t have to lift to absolute failure. RPE lets you train hard but safely. Example: If it says "3 × 10 — RPE 7", do 10 reps feeling like you have 3 more in the tank.\n\n'
+
+  // SECTION 3: PLAN OVERVIEW
+  description += '## Your Plan at a Glance\n\n'
+  description += 'Program: ' + split.type + ' ' + goalLabel + (secondaryLabel ? secondaryLabel : '') + '\n'
+  description += 'Frequency: ' + answers.daysPerWeek + ' days/week, ~' + answers.sessionDuration + ' min per session\n'
+  description += 'Duration: ' + answers.timelineWeeks + ' weeks\n'
+  description += 'Goal: ' + (answers.primaryGoal === 'fat-loss' ? 'Fat loss & muscle building' :
+                            answers.primaryGoal === 'muscle-building' ? 'Muscle building' :
+                            answers.primaryGoal === 'strength' ? 'Strength & muscle' :
+                            answers.primaryGoal === 'toning' ? 'Toning & definition' : 'Fitness improvement') + '\n\n'
+  description += 'EACH SESSION INCLUDES:\n'
+  description += '1. Warm-up: 3 easy sets before your first heavy lift\n'
+  description += '2. Main lifts: Compound exercises (bench press, rows, squats, deadlifts)\n'
+  description += '3. Accessories: Isolation exercises for shaping and detail\n'
+  if (cardioNote) {
+    description += '4. Finisher: 2–3 min cardio to boost fat loss\n\n'
+  } else {
+    description += '4. Finisher: Optional cardio or stability work\n\n'
+  }
+  description += 'WEEKLY TIME COMMITMENT:\n'
+  const totalMinutes = Math.round(answers.daysPerWeek * (answers.sessionDuration + 10))
+  description += '• Total: ~' + totalMinutes + ' min/week (' + (totalMinutes / 60).toFixed(1) + ' hours) including warm-ups\n'
+  description += '• Best spread: ' + answers.sessionDuration + ' min per day, ' + answers.daysPerWeek + ' days per week\n\n'
+
+  // Add any body composition notes
+  if (bodyCompNote) {
+    description += 'PERSONALIZATION:\n'
+    description += bodyCompNote.trim().replace(/^ /, '') + '\n\n'
+  }
+
+  // Add balance warnings if present
+  if (balanceWarnings) {
+    description += 'MINOR IMBALANCES (Watch for these):\n'
+    description += balanceWarnings.trim().replace(/^ ⚠️ /g, '• ') + '\n'
+    description += 'If you feel fatigue or discomfort in these areas, let your coach know.\n\n'
+  }
+
+  // Add flexibility note if relevant
+  if (answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility') {
+    description += 'EXTRA: Add 5-10 min stretching after each session.\n\n'
+  }
+
+  description += 'You\'re ready to start. Track your sessions, respect RPE, and adjust weights based on how reps feel.'
+
   return {
     name: '',
-    description: `${split.type} ${goalLabel}${secondaryLabel} program. ${answers.daysPerWeek} days/week, ~${answers.sessionDuration} min sessions.${warmupNote}${cardioNote}${bodyCompNote}${progressionNote}${deloadNote}${rpeGuideNote}${rotationNote}${warmupProtocolNote}${balanceWarnings}${volumeNote}${answers.primaryGoal === 'flexibility' || answers.secondaryGoal === 'flexibility' ? ' Add 5-10 min stretching after each session.' : ''}`,
+    description: description,
     days,
     splitType: split.type,
     weeklyProgression,
