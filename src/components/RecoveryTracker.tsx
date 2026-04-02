@@ -7,6 +7,12 @@ import { FiMinus, FiPlus, FiCheckCircle } from 'react-icons/fi'
 
 const sorenessLabels = ['Really Poor', 'Poor', 'Medium', 'Good', 'Really Good']
 const fatigueLabels = ['Exhausted', 'Tired', 'Medium', 'Fresh', 'Really Fresh']
+const qualityLabels: Record<'poor' | 'fair' | 'good' | 'excellent', string> = {
+  poor: 'Poor',
+  fair: 'Fair',
+  good: 'Good',
+  excellent: 'Excellent',
+}
 
 export function RecoveryTracker() {
   const { logRecovery, getRecoveryLog, updateRecoveryLog, getWeeklyRecoveryScore } = useRecoveryStore()
@@ -104,7 +110,7 @@ export function RecoveryTracker() {
                     : 'bg-white/5 text-text-secondary border-white/10 hover:bg-white/10'
                 }`}
               >
-                {q === 'excellent' ? '✓' : q.slice(0, 3)}
+                {qualityLabels[q]}
               </button>
             ))}
           </div>
