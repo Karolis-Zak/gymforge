@@ -80,7 +80,10 @@ export function RecoveryTracker() {
           <label className="block text-sm font-medium text-text-muted mb-2">Sleep hours</label>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setSleep(Math.max(0, parseFloat(sleep) - 0.5).toFixed(1))}
+              onClick={() => {
+                const val = parseFloat(sleep)
+                setSleep(!isNaN(val) ? Math.max(0, val - 0.5).toFixed(1) : '6.5')
+              }}
               className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all"
               aria-label="Decrease sleep"
             >
@@ -96,7 +99,10 @@ export function RecoveryTracker() {
               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center text-text-primary focus:outline-none focus:border-primary/50"
             />
             <button
-              onClick={() => setSleep(Math.min(16, parseFloat(sleep) + 0.5).toFixed(1))}
+              onClick={() => {
+                const val = parseFloat(sleep)
+                setSleep(!isNaN(val) ? Math.min(16, val + 0.5).toFixed(1) : '7.5')
+              }}
               className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all"
               aria-label="Increase sleep"
             >

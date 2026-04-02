@@ -30,7 +30,7 @@ export function AchievementShowcase() {
           <p className="text-xs text-text-muted uppercase tracking-wider">Achievements</p>
         </Card>
         <Card className="text-center py-6">
-          <div className="text-3xl font-bold text-success mb-2">{Math.round((unlocked.length / (unlocked.length + locked.length)) * 100 || 0)}%</div>
+          <div className="text-3xl font-bold text-success mb-2">{unlocked.length + locked.length > 0 ? Math.round((unlocked.length / (unlocked.length + locked.length)) * 100) : 0}%</div>
           <p className="text-xs text-text-muted uppercase tracking-wider">Complete</p>
         </Card>
         <Card className="text-center py-6">

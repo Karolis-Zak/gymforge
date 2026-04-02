@@ -165,23 +165,30 @@ export const ActiveWorkout: React.FC = () => {
 
   const handleFinish = useCallback(() => {
     if (sessionNotes.trim()) updateSessionNotes(sessionNotes.trim())
-    completeWorkout(timer)
+
+    // Capture current workout BEFORE completing (fixes race condition)
+    const capturedWorkout = currentWorkout
 
     // Check and unlock achievements
     const achievementStore = useAchievementStore.getState()
-    const { logs, currentWorkout: _unusedCurrent } = useWorkoutLogStore.getState()
     const { plans } = useWorkoutStore.getState()
     const { profile, weightHistory } = useUserStore.getState()
 
-    // Get the newly completed workout (it's the last one in logs after completeWorkout)
-    const completedWorkout = logs[logs.length - 1]
+    // Complete the workout
+    completeWorkout(timer)
+
+    // Get fresh logs after completing (for achievement detection)
+    const { logs: updatedLogs } = useWorkoutLogStore.getState()
+
+    // Use the captured workout (not the old log entry)
+    const completedWorkout = capturedWorkout
     if (completedWorkout) {
       const profileComplete = !!(profile?.name && profile?.age && profile?.height && profile?.weight)
       const hasLoggedWeight = weightHistory.length > 0
 
       const { newlyUnlocked } = checkAchievements(
         completedWorkout,
-        logs,
+        updatedLogs,
         plans,
         achievementStore.unlockedAchievementIds,
         profileComplete,
@@ -206,7 +213,7 @@ export const ActiveWorkout: React.FC = () => {
     setTimeout(() => setShowConfetti(false), 4000)
     notify.success('Workout complete!')
     setTimeout(() => router.push('/progress'), 2000)
-  }, [sessionNotes, updateSessionNotes, completeWorkout, timer, router, notify])
+  }, [currentWorkout, sessionNotes, updateSessionNotes, completeWorkout, timer, router, notify])
 
   const handleCancel = useCallback(() => {
     if (confirm('Cancel this workout? Your progress will be lost.')) {
