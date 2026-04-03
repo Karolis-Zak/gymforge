@@ -2,7 +2,7 @@
 
 Your personal training command center. Build smart workout plans, track every rep, and watch your progress over time.
 
-**[Live Demo](https://gymforge-nine.vercel.app)**
+**[Live App](https://gymforge-nine.vercel.app)** — https://gymforge-nine.vercel.app
 
 ---
 
@@ -92,13 +92,15 @@ src/
 
 ## Deployment
 
-Hosted on [Vercel](https://vercel.com). Pushes to `production` branch auto-deploy to the live site.
+Hosted on [Vercel](https://vercel.com). Pushes to `production` branch auto-deploy to **https://gymforge-nine.vercel.app**.
 
 ```bash
 git checkout production
 git merge main
 git push origin production
 ```
+
+Vercel automatically deploys when `production` branch is updated.
 
 ---
 
