@@ -130,7 +130,7 @@ export function NumberCard({ value, subtitle, selected, onClick }: NumberCardPro
       `}
     >
       <span className={`text-2xl font-display font-bold ${selected ? 'text-primary' : 'text-text-primary'}`}>{value}</span>
-      {subtitle && <span className="text-[9px] text-text-muted mt-0.5">{subtitle}</span>}
+      {subtitle && <span className="text-xs text-text-muted mt-0.5">{subtitle}</span>}
     </button>
   )
 }

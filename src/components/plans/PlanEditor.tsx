@@ -116,19 +116,19 @@ export function PlanEditor({ planId }: { planId: string }) {
                 <span className="text-sm font-medium text-text-primary">{ex.name}</span>
                 <div className="flex items-center gap-3 mt-1">
                   <div className="flex items-center gap-1">
-                    <label className="text-[10px] text-text-muted">Sets</label>
+                    <label className="text-xs text-text-muted">Sets</label>
                     <input type="number" value={ex.sets} min={1} max={20}
                       onChange={e => updateExercise(planId, ex.id, { sets: Number(e.target.value) })}
                       className="w-12 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                   <div className="flex items-center gap-1">
-                    <label className="text-[10px] text-text-muted">Reps</label>
+                    <label className="text-xs text-text-muted">Reps</label>
                     <input type="number" value={ex.reps} min={1} max={100}
                       onChange={e => updateExercise(planId, ex.id, { reps: Number(e.target.value) })}
                       className="w-12 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                   <div className="flex items-center gap-1">
-                    <label className="text-[10px] text-text-muted">Rest (s)</label>
+                    <label className="text-xs text-text-muted">Rest (s)</label>
                     <input type="number" value={ex.restSeconds || 60} min={0} max={600} step={15}
                       onChange={e => updateExercise(planId, ex.id, { restSeconds: Number(e.target.value) })}
                       className="w-14 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />

@@ -162,7 +162,7 @@ export const WorkoutProgress: React.FC = () => {
           </h3>
           <div className="grid grid-cols-12 gap-1">
             {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-              <div key={day + i} className="text-[9px] text-text-muted text-center col-span-1 hidden sm:block">
+              <div key={day + i} className="text-[11px] text-text-muted text-center col-span-1 hidden sm:block">
                 {i === 0 || i === 2 || i === 4 ? day : ''}
               </div>
             ))}

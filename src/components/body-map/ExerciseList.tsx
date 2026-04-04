@@ -269,9 +269,9 @@ function ExerciseCard({ ex, expandedId, setExpandedId, idPrefix = '', selectedMu
             ) : (
               <>
                 <Badge variant={ex.type === 'compound' ? 'primary' : 'accent'} size="sm">{ex.type}</Badge>
-                {showPrimaryLabel && <span className="text-[10px] text-text-muted">Primary: {getMuscleGroupLabel(ex.primaryMuscle)}</span>}
+                {showPrimaryLabel && <span className="text-xs text-text-muted">Primary: {getMuscleGroupLabel(ex.primaryMuscle)}</span>}
                 {!showPrimaryLabel && ex.secondaryMuscles.length > 0 && (
-                  <span className="text-[10px] text-text-muted">+{ex.secondaryMuscles.map(getMuscleGroupLabel).join(', ')}</span>
+                  <span className="text-xs text-text-muted">+{ex.secondaryMuscles.map(getMuscleGroupLabel).join(', ')}</span>
                 )}
               </>
             )}

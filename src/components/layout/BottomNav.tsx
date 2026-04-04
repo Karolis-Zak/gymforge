@@ -34,17 +34,17 @@ export function BottomNav() {
               <Link
                 href={item.href}
                 className={`
-                  flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-200
+                  flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-colors duration-200
                   ${isActive ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}
                 `}
               >
                 <span className="relative">
-                  <item.icon className="text-xl" />
+                  <item.icon className="text-lg" />
                   {isWorkout && currentWorkout && (
                     <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-success animate-pulse" />
                   )}
                 </span>
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-xs font-medium">{item.label}</span>
               </Link>
             </li>
           )
