@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { calculateVolume } from '../lib/exerciseUtils'
-import { Card } from './ui'
+import { Card, Button } from './ui'
 import { Badge } from './ui'
-import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook } from 'react-icons/fi'
+import { FiClock, FiAward, FiChevronDown, FiChevronUp, FiCalendar, FiBook, FiArrowRight } from 'react-icons/fi'
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '—'
@@ -28,12 +29,24 @@ export function WorkoutHistory() {
       <h1 className="text-3xl font-display font-bold text-text-primary">Workout History</h1>
 
       {completedLogs.length === 0 ? (
-        <Card className="text-center py-16">
+        <Card className="text-center py-12">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <FiBook className="text-primary text-2xl" />
           </div>
           <h2 className="text-xl font-display font-bold text-text-primary mb-2">No workouts yet</h2>
-          <p className="text-text-secondary">Complete a workout to see it here.</p>
+          <p className="text-text-secondary mb-6">Start your first workout to build your history and track progress.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/plans">
+              <Button variant="primary" size="md" className="flex items-center gap-2">
+                Browse Plans <FiArrowRight />
+              </Button>
+            </Link>
+            <Link href="/exercises">
+              <Button variant="secondary" size="md" className="flex items-center gap-2">
+                Explore Exercises <FiArrowRight />
+              </Button>
+            </Link>
+          </div>
         </Card>
       ) : (
         <div className="space-y-3">

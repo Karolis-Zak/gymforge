@@ -99,6 +99,8 @@ export const WorkoutProgress: React.FC = () => {
 
   const darkChartOptions = BASE_CHART_OPTIONS
 
+  const isNewUser = completedLogs.length === 0
+
   return (
     <div className="animate-fade-in space-y-8">
       <h1 className="text-3xl font-display font-bold text-text-primary">Progress</h1>
@@ -111,9 +113,45 @@ export const WorkoutProgress: React.FC = () => {
         <StatCard title="Longest Streak" value={`${stats.longestStreak}d`} icon={<FiTrendingUp />} color="warning" />
       </div>
 
-      {/* Charts Grid */}
+      {/* For new users: show weight logging first */}
+      {isNewUser && (
+        <>
+          <Card>
+            <h3 className="text-lg font-display font-bold text-text-primary mb-4">Start Tracking</h3>
+            <p className="text-sm text-text-secondary mb-4">Track your body weight over time. Complete your first workout to see progress charts.</p>
+            <div className="flex items-end gap-3 mb-4">
+              <div className="flex-1 max-w-[140px]">
+                <Input
+                  label="Log today's weight (kg)"
+                  type="number"
+                  value={newWeight}
+                  onChange={e => setNewWeight(e.target.value)}
+                  placeholder={profile?.weight ? String(profile.weight) : '75'}
+                  min={30}
+                  max={300}
+                  step={0.1}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  const w = parseFloat(newWeight)
+                  if (w > 0) { logWeight(w); setNewWeight('') }
+                }}
+                disabled={!newWeight || parseFloat(newWeight) <= 0}
+                className="px-4 py-2.5 bg-gradient-primary text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-all"
+              >
+                Log
+              </button>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Charts Grid - Skip for new users */}
+      {!isNewUser && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Volume */}
+        {volumePerWeek.length > 0 ? (
         <Card>
           <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">Weekly Volume</h3>
           <div className="h-48">
@@ -133,8 +171,14 @@ export const WorkoutProgress: React.FC = () => {
             />
           </div>
         </Card>
+        ) : (
+        <Card>
+          <p className="text-sm text-text-muted text-center py-8">Complete your first workout to see volume trends.</p>
+        </Card>
+        )}
 
         {/* Workouts Per Week */}
+        {workoutsPerWeek.length > 0 ? (
         <Card>
           <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">Workouts Per Week</h3>
           <div className="h-48">
@@ -154,6 +198,11 @@ export const WorkoutProgress: React.FC = () => {
             />
           </div>
         </Card>
+        ) : (
+        <Card>
+          <p className="text-sm text-text-muted text-center py-8">Complete your first workout to see frequency trends.</p>
+        </Card>
+        )}
 
         {/* Activity Heatmap */}
         <Card>
@@ -223,8 +272,10 @@ export const WorkoutProgress: React.FC = () => {
           </Card>
         )}
       </div>
+      )}
 
-      {/* Exercise Progress */}
+      {/* Exercise Progress - Only show if user has workout history */}
+      {!isNewUser && (
       <Card>
         <h3 className="text-lg font-display font-bold text-text-primary mb-4">Exercise Progress</h3>
         <div className="mb-4">
@@ -289,6 +340,7 @@ export const WorkoutProgress: React.FC = () => {
           </div>
         )}
       </Card>
+      )}
 
       {/* Body Weight Tracking */}
       <Card>
@@ -370,17 +422,21 @@ export const WorkoutProgress: React.FC = () => {
         )}
       </Card>
 
-      {/* Achievements */}
+      {/* Achievements - Only for users with workout history */}
+      {!isNewUser && (
       <div>
         <h2 className="text-2xl font-display font-bold text-text-primary mb-6">Achievements</h2>
         <AchievementShowcase />
       </div>
+      )}
 
-      {/* Recovery Insights */}
+      {/* Recovery Insights - Only for users with workout history */}
+      {!isNewUser && (
       <div>
         <h2 className="text-2xl font-display font-bold text-text-primary mb-6">Recovery</h2>
         <RecoveryInsights />
       </div>
+      )}
     </div>
   )
 }

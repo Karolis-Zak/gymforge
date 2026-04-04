@@ -28,7 +28,7 @@ export function BodyMap() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-text-primary">Exercise Explorer</h1>
-          <p className="text-text-secondary text-sm mt-1">Tap a muscle group to see exercises</p>
+          <p className="text-text-secondary text-sm mt-1">🎯 Select a muscle group below to find exercises</p>
         </div>
         {selectedMuscles.length > 0 && (
           <Button variant="ghost" size="sm" onClick={clearSelection}>

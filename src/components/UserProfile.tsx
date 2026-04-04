@@ -218,25 +218,27 @@ export const UserProfileForm: React.FC = () => {
 
       {/* Training Settings */}
       <Card>
-        <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">
+        <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-6">
           <FiClock className="inline mr-1" /> Training Settings
         </h3>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex-1">
             <p className="text-text-primary font-medium text-sm">Default Rest Time</p>
-            <p className="text-xs text-text-muted">Time between sets (can be overridden per exercise in plan editor)</p>
+            <p className="text-xs text-text-muted mt-1">Time between sets (can be overridden per exercise in plan editor)</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setDefaultRestSeconds(Math.max(10, defaultRestSeconds - 15))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center"
+              className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center text-lg font-bold"
+              aria-label="Decrease rest time"
             >
-              -
+              −
             </button>
-            <span className="text-lg font-display font-bold text-primary w-14 text-center">{defaultRestSeconds}s</span>
+            <span className="text-2xl font-display font-bold text-primary w-20 text-center">{defaultRestSeconds}s</span>
             <button
               onClick={() => setDefaultRestSeconds(Math.min(300, defaultRestSeconds + 15))}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center"
+              className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary hover:bg-white/10 transition-all flex items-center justify-center text-lg font-bold"
+              aria-label="Increase rest time"
             >
               +
             </button>

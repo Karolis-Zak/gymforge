@@ -167,7 +167,9 @@ export function Dashboard() {
       {/* Workout Status */}
       {(() => {
         const plannedWorkoutsThisWeek = plans.length > 0 ? answers?.daysPerWeek || 3 : 0
-        const onTrack = plannedWorkoutsThisWeek > 0 && thisWeekLogs.length >= Math.ceil(plannedWorkoutsThisWeek * (new Date().getDay() / 7))
+        const dayOfWeek = new Date().getDay()
+        const expectedWorkoutsByNow = Math.floor(plannedWorkoutsThisWeek * (dayOfWeek / 7))
+        const onTrack = plannedWorkoutsThisWeek > 0 && thisWeekLogs.length >= expectedWorkoutsByNow
         const workoutsRemaining = Math.max(0, plannedWorkoutsThisWeek - thisWeekLogs.length)
 
         if (plannedWorkoutsThisWeek > 0) {

@@ -88,7 +88,7 @@ export function PlanEditor({ planId }: { planId: string }) {
               onDragStart={() => setDragIdx(i)}
               onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
               onDragEnd={() => { if (dragIdx !== null && dragOverIdx !== null) handleDrop(dragIdx, dragOverIdx); setDragIdx(null); setDragOverIdx(null) }}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+              className={`flex flex-col md:flex-row md:items-center gap-3 p-4 rounded-xl border transition-all ${
                 dragOverIdx === i && dragIdx !== null && dragIdx !== i
                   ? 'bg-primary/10 border-primary/30'
                   : dragIdx === i
@@ -114,24 +114,24 @@ export function PlanEditor({ planId }: { planId: string }) {
               {/* Exercise info */}
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium text-text-primary">{ex.name}</span>
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs text-text-muted">Sets</label>
+                <div className="grid grid-cols-3 gap-3 mt-3 md:flex md:items-center md:gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-text-muted font-semibold">Sets</label>
                     <input type="number" value={ex.sets} min={1} max={20}
                       onChange={e => updateExercise(planId, ex.id, { sets: Number(e.target.value) })}
-                      className="w-12 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs text-text-muted">Reps</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-text-muted font-semibold">Reps</label>
                     <input type="number" value={ex.reps} min={1} max={100}
                       onChange={e => updateExercise(planId, ex.id, { reps: Number(e.target.value) })}
-                      className="w-12 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs text-text-muted">Rest (s)</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-text-muted font-semibold">Rest (s)</label>
                     <input type="number" value={ex.restSeconds || 60} min={0} max={600} step={15}
                       onChange={e => updateExercise(planId, ex.id, { restSeconds: Number(e.target.value) })}
-                      className="w-14 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                 </div>
               </div>
