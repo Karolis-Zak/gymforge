@@ -156,7 +156,7 @@ export function ExerciseFocusCard({
           onCompleteSet={() => onCompleteSet(currentExercise.id, currentSetIdx, true, currentExercise.sets.length)}
         />
       ) : (
-        <div className="flex items-center gap-6 mb-8">
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 mb-8 w-full max-w-md md:max-w-none justify-center">
           {/* Only show weight for weighted exercises */}
           {!isBW && (
             <>
@@ -194,7 +194,7 @@ export function ExerciseFocusCard({
                   </button>
                 </div>
               </div>
-              <span className="text-3xl text-text-muted font-light mt-6">&times;</span>
+              <span className="hidden md:inline-block text-3xl text-text-muted font-light">&times;</span>
             </>
           )}
           <div className="flex flex-col items-center">

@@ -34,7 +34,7 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-background" suppressHydrationWarning>
         <div className="hidden md:block" /> {/* Sidebar placeholder */}
         <div className="md:hidden" /> {/* BottomNav placeholder */}
-        <main className="md:ml-64 pb-20 md:pb-0 min-h-screen">
+        <main className="md:ml-64 pb-32 md:pb-0 min-h-screen">
           <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
             {children}
           </div>

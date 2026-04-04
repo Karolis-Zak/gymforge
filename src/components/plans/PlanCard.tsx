@@ -63,7 +63,7 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
           <Link href={`/plans/${plan.id}`}>
             <Button variant="ghost" size="sm" aria-label="Edit plan"><FiEdit2 /></Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-danger hover:text-danger">
+          <Button variant="ghost" size="sm" onClick={onDelete} aria-label="Delete plan" className="text-danger hover:text-danger">
             <FiTrash2 />
           </Button>
         </div>

@@ -28,7 +28,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <Sidebar />
       <BottomNav />
-      <main className="md:ml-64 pb-20 md:pb-0 min-h-screen">
+      <main className="md:ml-64 pb-32 md:pb-0 min-h-screen">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
           <ErrorBoundary>{children}</ErrorBoundary>
         </div>
