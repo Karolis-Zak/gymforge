@@ -40,6 +40,11 @@ export function Dashboard() {
   const { answers } = useOnboardingStore()
   const stats = getWorkoutStats()
   const [expandedStat, setExpandedStat] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
+
+  React.useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   const completedLogs = useMemo(() => logs.filter(l => l.completed), [logs])
   const recentLogs = useMemo(() => [...completedLogs]
@@ -157,7 +162,7 @@ export function Dashboard() {
       )}
 
       {/* Quick Repeat Last Workout */}
-      {!currentWorkout && <QuickRepeatWorkout />}
+      {hydrated && !currentWorkout && <QuickRepeatWorkout />}
 
       {/* Workout Status */}
       {(() => {
