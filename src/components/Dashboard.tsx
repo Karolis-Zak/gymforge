@@ -11,7 +11,7 @@ import { useOnboardingStore } from '../store/onboardingStore'
 import { calculateVolume, getProgressionSuggestion, findExerciseInfo } from '../lib/exerciseUtils'
 import { BASE_CHART_OPTIONS } from '../lib/chartOptions'
 import { Card, Button, Badge } from './ui'
-import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
+import { FiAward, FiPlay, FiArrowRight, FiCompass, FiTrendingUp, FiAlertCircle, FiCheckCircle, FiTarget } from 'react-icons/fi'
 import { DashboardStats } from './DashboardStats'
 import { RecoveryTracker } from './RecoveryTracker'
 import { QuickRepeatWorkout } from './QuickRepeatWorkout'
@@ -244,6 +244,24 @@ export function Dashboard() {
           onToggleStat={toggleStat}
           chartOptions={CHART_OPTIONS}
         />
+      )}
+
+      {/* Abs Builder promo (always visible — quick win) */}
+      {hydrated && !currentWorkout && (
+        <Link href="/abs" className="block group">
+          <Card className="border-accent/20 bg-gradient-to-br from-accent/5 to-transparent hover:border-accent/40 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center flex-shrink-0">
+                <FiTarget className="text-accent text-xl" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-bold text-text-primary">Abs Builder</h3>
+                <p className="text-sm text-text-secondary">Build a focused 5–20 min core workout in three taps.</p>
+              </div>
+              <FiArrowRight className="text-text-muted group-hover:text-accent transition-colors flex-shrink-0" />
+            </div>
+          </Card>
+        </Link>
       )}
 
       {/* Quick Start */}
