@@ -82,20 +82,23 @@ export function BodyMap() {
           </div>
 
           {/* Quick muscle buttons (mobile helper) */}
-          <div className="flex flex-wrap gap-1.5 mt-3 lg:hidden">
-            {(['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'calves', 'core', 'traps', 'forearms'] as MuscleGroup[]).map(m => (
-              <button
-                key={m}
-                onClick={() => toggleMuscle(m)}
-                className={`px-2.5 py-1 text-[11px] rounded-full border transition-all ${
-                  selectedMuscles.includes(m)
-                    ? 'bg-primary/15 text-primary border-primary/30'
-                    : 'bg-white/5 text-text-muted border-white/10'
-                }`}
-              >
-                {getMuscleGroupLabel(m)}
-              </button>
-            ))}
+          <div className="mt-4 lg:hidden">
+            <p className="text-xs text-text-muted mb-2">Or tap a muscle below:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {(['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'calves', 'core', 'traps', 'forearms'] as MuscleGroup[]).map(m => (
+                <button
+                  key={m}
+                  onClick={() => toggleMuscle(m)}
+                  className={`px-2.5 py-1 text-[11px] rounded-full border transition-all ${
+                    selectedMuscles.includes(m)
+                      ? 'bg-primary/15 text-primary border-primary/30'
+                      : 'bg-white/5 text-text-muted border-white/10'
+                  }`}
+                >
+                  {getMuscleGroupLabel(m)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

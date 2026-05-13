@@ -80,7 +80,7 @@ export function PlanEditor({ planId }: { planId: string }) {
         <h3 className="font-display font-bold text-text-primary mb-4">
           Exercises ({plan.exercises.length})
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-4 md:space-y-3">
           {plan.exercises.map((ex, i) => (
             <div
               key={ex.id}
@@ -88,7 +88,7 @@ export function PlanEditor({ planId }: { planId: string }) {
               onDragStart={() => setDragIdx(i)}
               onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
               onDragEnd={() => { if (dragIdx !== null && dragOverIdx !== null) handleDrop(dragIdx, dragOverIdx); setDragIdx(null); setDragOverIdx(null) }}
-              className={`flex flex-col md:flex-row md:items-center gap-3 p-4 rounded-xl border transition-all ${
+              className={`flex flex-col md:flex-row md:items-center gap-3 p-5 md:p-4 rounded-2xl md:rounded-xl border transition-all ${
                 dragOverIdx === i && dragIdx !== null && dragIdx !== i
                   ? 'bg-primary/10 border-primary/30'
                   : dragIdx === i
@@ -96,16 +96,46 @@ export function PlanEditor({ planId }: { planId: string }) {
                     : 'bg-white/[0.02] border-white/5'
               }`}
             >
-              {/* Reorder: drag handle on desktop, arrows on mobile */}
-              <div className="flex items-center gap-1">
-                <div className="hidden md:block cursor-grab active:cursor-grabbing text-text-muted hover:text-text-primary touch-none" aria-label="Drag to reorder">
+              {/* Exercise name + actions row (mobile gets full-width name with controls below) */}
+              <div className="flex items-start justify-between gap-3 md:hidden">
+                <span className="text-sm font-medium text-text-primary flex-1 pt-2">{ex.name}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }}
+                    disabled={i === 0}
+                    className="w-11 h-11 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors"
+                    aria-label="Move up"
+                  >
+                    <FiChevronUp size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }}
+                    disabled={i === plan.exercises.length - 1}
+                    className="w-11 h-11 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors"
+                    aria-label="Move down"
+                  >
+                    <FiChevronDown size={18} />
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`Remove ${ex.name}?`)) deleteExercise(planId, ex.id) }}
+                    className="w-11 h-11 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-danger transition-colors"
+                    aria-label={`Remove ${ex.name}`}
+                  >
+                    <FiTrash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Reorder: drag handle + small arrow column on desktop only */}
+              <div className="hidden md:flex items-center gap-1">
+                <div className="cursor-grab active:cursor-grabbing text-text-muted hover:text-text-primary touch-none" aria-label="Drag to reorder">
                   <FiMenu size={16} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }} disabled={i === 0} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move up">
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }} disabled={i === 0} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors p-1" aria-label="Move up">
                     <FiChevronUp size={14} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }} disabled={i === plan.exercises.length - 1} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors" aria-label="Move down">
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }} disabled={i === plan.exercises.length - 1} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors p-1" aria-label="Move down">
                     <FiChevronDown size={14} />
                   </button>
                 </div>
@@ -113,32 +143,32 @@ export function PlanEditor({ planId }: { planId: string }) {
 
               {/* Exercise info */}
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-text-primary">{ex.name}</span>
-                <div className="grid grid-cols-3 gap-3 mt-3 md:flex md:items-center md:gap-3">
+                <span className="hidden md:inline text-sm font-medium text-text-primary">{ex.name}</span>
+                <div className="grid grid-cols-3 gap-3 mt-3 md:mt-3 md:flex md:items-center md:gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-text-muted font-semibold">Sets</label>
                     <input type="number" value={ex.sets} min={1} max={20}
                       onChange={e => updateExercise(planId, ex.id, { sets: Number(e.target.value) })}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-base md:text-sm md:py-1.5 text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-text-muted font-semibold">Reps</label>
                     <input type="number" value={ex.reps} min={1} max={100}
                       onChange={e => updateExercise(planId, ex.id, { reps: Number(e.target.value) })}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-base md:text-sm md:py-1.5 text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-text-muted font-semibold">Rest (s)</label>
                     <input type="number" value={ex.restSeconds || 60} min={0} max={600} step={15}
                       onChange={e => updateExercise(planId, ex.id, { restSeconds: Number(e.target.value) })}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:border-primary/50" />
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-base md:text-sm md:py-1.5 text-text-primary focus:outline-none focus:border-primary/50" />
                   </div>
                 </div>
               </div>
 
-              {/* Delete */}
+              {/* Delete: desktop only (mobile has it in the top-right action row) */}
               <button onClick={() => { if (confirm(`Remove ${ex.name}?`)) deleteExercise(planId, ex.id) }}
-                className="text-text-muted hover:text-danger transition-colors p-1" aria-label={`Remove ${ex.name}`}>
+                className="hidden md:block text-text-muted hover:text-danger transition-colors p-1" aria-label={`Remove ${ex.name}`}>
                 <FiTrash2 size={14} />
               </button>
             </div>

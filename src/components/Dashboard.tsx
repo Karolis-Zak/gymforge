@@ -130,17 +130,17 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-text-primary">
-            Welcome back, <span className="gradient-text">{userName}</span>
+            Welcome back, <span className="gradient-text">{hydrated ? userName : 'Athlete'}</span>
           </h1>
-          <p className="text-text-secondary mt-1">{getGreeting()}</p>
+          <p className="text-text-secondary mt-1">{hydrated ? getGreeting() : "Let's get started!"}</p>
         </div>
         <div className="w-12 h-12 rounded-full bg-gradient-mixed flex items-center justify-center">
-          <span className="text-white font-bold text-sm">{initials}</span>
+          <span className="text-white font-bold text-sm">{hydrated ? initials : 'AT'}</span>
         </div>
       </div>
 
       {/* Active Workout Banner */}
-      {currentWorkout && (
+      {hydrated && currentWorkout && (
         <Card className="border-primary/30 bg-primary/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -164,61 +164,90 @@ export function Dashboard() {
       {/* Quick Repeat Last Workout */}
       {hydrated && !currentWorkout && <QuickRepeatWorkout />}
 
-      {/* Workout Status */}
-      {(() => {
+      {/* Workout Status — gated on hydration so SSR/CSR markup matches */}
+      {hydrated && (() => {
         const plannedWorkoutsThisWeek = plans.length > 0 ? answers?.daysPerWeek || 3 : 0
+        if (plannedWorkoutsThisWeek === 0) return null
+
         const dayOfWeek = new Date().getDay()
+        // Expected pace: roughly proportional to days elapsed (Sun=0 → 1/7 by Mon end)
         const expectedWorkoutsByNow = Math.floor(plannedWorkoutsThisWeek * (dayOfWeek / 7))
-        const onTrack = plannedWorkoutsThisWeek > 0 && thisWeekLogs.length >= expectedWorkoutsByNow
         const workoutsRemaining = Math.max(0, plannedWorkoutsThisWeek - thisWeekLogs.length)
 
-        if (plannedWorkoutsThisWeek > 0) {
-          return (
-            <Card className={onTrack ? 'border-success/20 bg-success/5' : 'border-warning/20 bg-warning/5'}>
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${onTrack ? 'bg-success/20' : 'bg-warning/20'}`}>
-                  {onTrack ? <FiCheckCircle className="text-success text-lg" /> : <FiAlertCircle className="text-warning text-lg" />}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-text-primary">
-                    {onTrack ? '✓ On Track' : '⚠️ Behind Schedule'}
-                  </h3>
-                  <p className="text-sm text-text-secondary mt-1">
-                    {thisWeekLogs.length}/{plannedWorkoutsThisWeek} workouts this week
-                    {workoutsRemaining > 0 && ` • ${workoutsRemaining} remaining`}
-                  </p>
-                  <div className="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${onTrack ? 'bg-success' : 'bg-warning'}`}
-                      style={{ width: `${(thisWeekLogs.length / plannedWorkoutsThisWeek) * 100}%` }}
-                    />
-                  </div>
+        // Three states:
+        //  - none done yet → neutral "Get started" prompt (no false "on track")
+        //  - done >= expected and at least one logged → success "On Track"
+        //  - otherwise → warning "Behind Schedule"
+        const noneLogged = thisWeekLogs.length === 0
+        const onTrack = !noneLogged && thisWeekLogs.length >= expectedWorkoutsByNow
+        const tone: 'neutral' | 'success' | 'warning' =
+          noneLogged ? 'neutral' : onTrack ? 'success' : 'warning'
+
+        const border =
+          tone === 'success' ? 'border-success/20 bg-success/5'
+          : tone === 'warning' ? 'border-warning/20 bg-warning/5'
+          : 'border-white/10 bg-white/[0.02]'
+        const iconBg =
+          tone === 'success' ? 'bg-success/20'
+          : tone === 'warning' ? 'bg-warning/20'
+          : 'bg-primary/15'
+        const icon =
+          tone === 'success' ? <FiCheckCircle className="text-success text-lg" />
+          : tone === 'warning' ? <FiAlertCircle className="text-warning text-lg" />
+          : <FiPlay className="text-primary text-lg" />
+        const heading =
+          tone === 'success' ? 'On Track'
+          : tone === 'warning' ? 'Behind Schedule'
+          : 'Get your first workout in'
+        const barColor =
+          tone === 'success' ? 'bg-success'
+          : tone === 'warning' ? 'bg-warning'
+          : 'bg-primary/40'
+
+        return (
+          <Card className={border}>
+            <div className="flex items-start gap-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBg}`}>
+                {icon}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-text-primary">{heading}</h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  {thisWeekLogs.length}/{plannedWorkoutsThisWeek} workouts this week
+                  {workoutsRemaining > 0 && ` • ${workoutsRemaining} remaining`}
+                </p>
+                <div className="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${barColor}`}
+                    style={{ width: `${Math.min(100, (thisWeekLogs.length / plannedWorkoutsThisWeek) * 100)}%` }}
+                  />
                 </div>
               </div>
-            </Card>
-          )
-        }
-        return null
+            </div>
+          </Card>
+        )
       })()}
 
-      {/* Interactive Stats Grid */}
-      <DashboardStats
-        stats={stats}
-        thisWeekLogs={thisWeekLogs}
-        weeklyVolume={weeklyVolume}
-        completedLogs={completedLogs}
-        weekKeys={weekKeys}
-        volumePerWeek={volumePerWeek}
-        workoutsPerWeek={workoutsPerWeek}
-        last30Days={last30Days}
-        streakDays={streakDays}
-        expandedStat={expandedStat}
-        onToggleStat={toggleStat}
-        chartOptions={CHART_OPTIONS}
-      />
+      {/* Interactive Stats Grid — gated on hydration so SSR/CSR markup matches */}
+      {hydrated && (
+        <DashboardStats
+          stats={stats}
+          thisWeekLogs={thisWeekLogs}
+          weeklyVolume={weeklyVolume}
+          completedLogs={completedLogs}
+          weekKeys={weekKeys}
+          volumePerWeek={volumePerWeek}
+          workoutsPerWeek={workoutsPerWeek}
+          last30Days={last30Days}
+          streakDays={streakDays}
+          expandedStat={expandedStat}
+          onToggleStat={toggleStat}
+          chartOptions={CHART_OPTIONS}
+        />
+      )}
 
       {/* Quick Start */}
-      {plans.length > 0 && !currentWorkout && (
+      {hydrated && plans.length > 0 && !currentWorkout && (
         <div>
           <h2 className="text-xl font-display font-bold text-text-primary mb-4">Quick Start</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -248,8 +277,8 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Weekly Volume Targets */}
-      {(() => {
+      {/* Weekly Volume Targets — gated on hydration */}
+      {hydrated && (() => {
         // Calculate sets per muscle this week
         const muscleSetCounts: Record<string, number> = {}
         const targetSetsPerMuscle = 10 // Optimal 8-12, aiming for 10
@@ -313,8 +342,8 @@ export function Dashboard() {
         return null
       })()}
 
-      {/* Progression Suggestions (from RPE feedback) */}
-      {(() => {
+      {/* Progression Suggestions (from RPE feedback) — gated on hydration */}
+      {hydrated && (() => {
         const suggestions: Array<{ exerciseName: string; currentWeight: number; rpes: number[]; suggestion: { suggestion: string; nextWeight: number; reason: string } }> = []
 
         // Group exercises by name across last 5 workouts
@@ -375,8 +404,8 @@ export function Dashboard() {
         return null
       })()}
 
-      {/* Recent Activity */}
-      {recentLogs.length > 0 && (
+      {/* Recent Activity — gated on hydration */}
+      {hydrated && recentLogs.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-display font-bold text-text-primary">Recent Activity</h2>
@@ -419,11 +448,11 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Recovery Tracker */}
-      <RecoveryTracker />
+      {/* Recovery Tracker — gated on hydration (reads recoveryStore) */}
+      {hydrated && <RecoveryTracker />}
 
-      {/* Empty State */}
-      {plans.length === 0 && recentLogs.length === 0 && (
+      {/* Empty State — gated on hydration (depends on stored plans/logs) */}
+      {hydrated && plans.length === 0 && recentLogs.length === 0 && (
         <Card className="text-center py-16">
           <div className="w-20 h-20 rounded-2xl bg-gradient-mixed flex items-center justify-center mx-auto mb-6">
             <FiCompass className="text-white text-3xl" />
