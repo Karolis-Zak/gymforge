@@ -284,40 +284,65 @@ function scoreExercise(ex: ExerciseData, goal: AbsGoal, equipment: AbsEquipment)
   return score
 }
 
-function getVolume(ex: ExerciseData, goal: AbsGoal, level: AbsLevel, baseSets: number): { sets: number; reps: number; restSeconds: number } {
+/**
+ * Timed-exercise hold durations (seconds), calibrated to industry standards:
+ *   - Stuart McGill (spine biomechanics) — 60s minimum, 90-120s for trained
+ *   - NSCA / AthleanX / Nippard programs — 30 / 45 / 60s for beg/int/adv tone
+ *   - Endurance gets longer holds (45 / 60 / 90s) per McGill protocols
+ *
+ * For 5-min endurance specifically we cap at 45s (circuit-style) so the session
+ * still fits a sensible time budget.
+ */
+function getTimedReps(level: AbsLevel, goal: AbsGoal, duration: AbsAnswers['duration']): number {
+  if (goal === 'endurance') {
+    if (duration === 5) return 45 // 5-min endurance = circuit-style 45s holds for any level
+    return level === 'beginner' ? 45 : level === 'intermediate' ? 60 : 90
+  }
+  // Tone & strength: same hold for any duration
+  return level === 'beginner' ? 30 : level === 'intermediate' ? 45 : 60
+}
+
+/**
+ * Non-timed rep counts, calibrated to:
+ *   - Schoenfeld 2017 hypertrophy meta-analysis (8-15 reps for tone)
+ *   - NSCA strength guidelines (5-8 reps loaded, 8-12 bodyweight)
+ *   - Israetel/RP endurance ranges (15-30+ reps)
+ */
+function getRepCount(level: AbsLevel, goal: AbsGoal, isCompoundLike: boolean): number {
+  if (level === 'beginner') {
+    if (goal === 'strength')  return isCompoundLike ? 8  : 12
+    if (goal === 'endurance') return 20
+    return 12 // tone
+  }
+  if (level === 'intermediate') {
+    if (goal === 'strength')  return isCompoundLike ? 8  : 12
+    if (goal === 'endurance') return 25
+    return 15 // tone
+  }
+  // advanced
+  if (goal === 'strength')    return isCompoundLike ? 6  : 10
+  if (goal === 'endurance')   return 30
+  return 15 // tone
+}
+
+function getVolume(
+  ex: ExerciseData,
+  goal: AbsGoal,
+  level: AbsLevel,
+  baseSets: number,
+  duration: AbsAnswers['duration'],
+): { sets: number; reps: number; restSeconds: number } {
   const isCompoundLike = ex.equipment === 'cable' || ex.equipment === 'barbell' || ex.name.toLowerCase().includes('weighted') || ex.name.toLowerCase().includes('rollout')
   const timed = isDurationBased(ex.name)
-
-  // baseSets is already chosen by getDurationTarget() to fit total time budget
   const sets = baseSets
 
-  let reps: number
-  let restSeconds: number
+  // Rest: abs recover fast (smaller muscles, high pain tolerance) — even loaded
+  // strength work doesn't need 90-120s like squats/deadlifts. 60s is the upper bound.
+  const restSeconds = goal === 'strength' ? 60 : goal === 'endurance' ? 25 : 30
 
-  // Rest is goal-driven, not level-driven — abs recover fast, so HIIT pacing
-  // (20-30s rest) is the industry norm for tone/endurance work
-  if (goal === 'strength') {
-    restSeconds = level === 'beginner' ? 60 : level === 'intermediate' ? 60 : 75
-  } else if (goal === 'endurance') {
-    restSeconds = 20 // HIIT-style for endurance
-  } else {
-    restSeconds = 30 // tone — short rest for metabolic stress
-  }
-
-  // Reps depend on goal × exercise type (timed vs rep) × level
-  if (level === 'beginner') {
-    if (timed)             reps = goal === 'endurance' ? 25 : 20
-    else if (goal === 'strength') reps = isCompoundLike ? 8 : 10
-    else                   reps = goal === 'endurance' ? 15 : 10
-  } else if (level === 'intermediate') {
-    if (timed)             reps = goal === 'endurance' ? 30 : 25
-    else if (goal === 'strength') reps = isCompoundLike ? 8 : 12
-    else                   reps = goal === 'endurance' ? 18 : 12
-  } else {
-    if (timed)             reps = goal === 'endurance' ? 40 : 30
-    else if (goal === 'strength') reps = isCompoundLike ? 6 : 10
-    else                   reps = goal === 'endurance' ? 20 : 12
-  }
+  const reps = timed
+    ? getTimedReps(level, goal, duration)
+    : getRepCount(level, goal, isCompoundLike)
 
   return { sets, reps, restSeconds }
 }
@@ -441,7 +466,7 @@ export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): 
 
   // Build exercise entries
   const exercises: AbsExercise[] = picked.map(ex => {
-    const vol = getVolume(ex, answers.goal, answers.level, target.sets)
+    const vol = getVolume(ex, answers.goal, answers.level, target.sets, answers.duration)
     const timed = isDurationBased(ex.name)
     let notes = ex.tips[0] || ''
     if (timed) notes = `Hold/perform for ${vol.reps} seconds per set. ${notes}`.trim()
