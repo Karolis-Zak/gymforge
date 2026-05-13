@@ -51,9 +51,66 @@ export interface AbsPlan {
   safetyNetTriggered: boolean
   /** How many exercises were targeted for the chosen duration (vs how many fit) */
   targetExerciseCount: number
+  /** Human-readable list of ab regions hit (e.g. ["top abs", "lower abs", "deep core"]) */
+  coverage: string[]
 }
 
-type Pattern = 'anti-flexion' | 'flexion' | 'rotation' | 'anti-rotation' | 'dynamic' | 'other'
+/**
+ * Movement-pattern taxonomy mapped to ab anatomy.
+ * Splitting flexion into upper/lower lets us hit BOTH "six pack top" (rectus abdominis
+ * via trunk flexion) AND "lower abs" (rectus via hip flexion) in the same workout
+ * instead of treating them as redundant.
+ */
+type Pattern =
+  | 'upper-flexion'   // Trunk flexion → upper rectus emphasis (crunch, cable crunch)
+  | 'lower-flexion'   // Hip flexion → lower rectus emphasis (leg raise, reverse crunch)
+  | 'rotation'        // Oblique rotation (twist, woodchop, bicycle)
+  | 'lateral'         // Oblique lateral flexion (side bend)
+  | 'anti-extension'  // Deep core stability — transverse abdominis (plank, dead bug, ab wheel)
+  | 'anti-rotation'   // Resists rotation (Pallof press, side plank)
+  | 'dynamic'         // Cardio/metabolic core (mountain climber, bear crawl)
+  | 'other'
+
+/** Human-readable labels for the UI coverage badges */
+const PATTERN_LABELS: Record<Pattern, string> = {
+  'upper-flexion':  'top abs',
+  'lower-flexion':  'lower abs',
+  'rotation':       'obliques (rotation)',
+  'lateral':        'sides',
+  'anti-extension': 'deep core',
+  'anti-rotation':  'anti-rotation',
+  'dynamic':        'dynamic',
+  'other':          'other',
+}
+
+/**
+ * Pattern priority by goal. The picker walks this list in order, picking the
+ * highest-scored exercise of each pattern until the target count is reached.
+ * This guarantees the most important patterns for the goal get represented.
+ */
+const PATTERN_PRIORITY: Record<AbsGoal, Pattern[]> = {
+  // Tone wants visible-ab coverage first: upper + lower rectus, then obliques
+  tone:      ['upper-flexion', 'lower-flexion', 'rotation', 'anti-extension', 'lateral', 'anti-rotation', 'dynamic'],
+  // Strength: anti-extension is the king of trunk strength (rollout, plank); then anti-rotation
+  strength:  ['anti-extension', 'anti-rotation', 'upper-flexion', 'rotation', 'lower-flexion', 'lateral', 'dynamic'],
+  // Endurance: timed stability + dynamic finishers + high-rep flexion
+  endurance: ['anti-extension', 'dynamic', 'lower-flexion', 'upper-flexion', 'rotation', 'anti-rotation', 'lateral'],
+}
+
+/**
+ * Logical workout flow order — used to sort the final picked exercises so the
+ * session reads top-to-bottom: warm-up → strength → variety → finisher.
+ */
+const FLOW_ORDER: Pattern[] = [
+  'anti-extension',  // stability warm-up
+  'anti-rotation',   // deep core priming
+  'upper-flexion',   // direct rectus
+  'lower-flexion',   // direct rectus (lower)
+  'rotation',        // obliques
+  'lateral',         // obliques (lateral)
+  'dynamic',         // cardio finisher
+  'other',
+]
 
 // Keep in sync with planGenerator.ts isDurationBasedExercise()
 const DURATION_BASED_KEYWORDS = ['plank', 'wall sit', 'dead hang', 'mountain climber', 'bear crawl', 'flutter', 'farmer', 'carry', 'suitcase', 'plate pinch']
@@ -126,11 +183,39 @@ function isExcludedByLimitations(ex: ExerciseData, lim: AbsLimitations): boolean
 
 function getPattern(ex: ExerciseData): Pattern {
   const lower = ex.name.toLowerCase()
-  if (lower.includes('plank') || lower.includes('dead bug') || lower.includes('bird dog') || lower.includes('rollout')) return 'anti-flexion'
-  if (lower.includes('crunch') || lower.includes('sit-up') || lower.includes('toe touch') || lower.includes('v-up') || lower.includes('leg raise') || lower.includes('knee raise') || lower.includes('flutter')) return 'flexion'
-  if (lower.includes('twist') || lower.includes('rotation') || lower.includes('wood') || lower.includes('side bend')) return 'rotation'
-  if (lower.includes('pallof') || lower.includes('side plank')) return 'anti-rotation'
-  if (lower.includes('mountain climber') || lower.includes('bear crawl') || lower.includes('bicycle')) return 'dynamic'
+
+  // ANTI-ROTATION first — side plank is technically anti-lateral-flexion stability
+  // but functionally trains anti-rotation, so group it here. Pallof too.
+  if (lower.includes('side plank')) return 'anti-rotation'
+  if (lower.includes('pallof')) return 'anti-rotation'
+
+  // ANTI-EXTENSION — stability against trunk flexion/extension
+  if (lower.includes('plank')) return 'anti-extension'
+  if (lower.includes('dead bug') || lower.includes('bird dog')) return 'anti-extension'
+  if (lower.includes('ab wheel') || lower.includes('rollout')) return 'anti-extension'
+
+  // LATERAL flexion (oblique side bend)
+  if (lower.includes('side bend')) return 'lateral'
+
+  // ROTATION — twists, woodchops, landmine rotation, bicycle (rotational flexion)
+  if (lower.includes('twist') || lower.includes('rotation') || lower.includes('wood') || lower.includes('landmine')) return 'rotation'
+  if (lower.includes('bicycle')) return 'rotation'
+
+  // LOWER-FLEXION — hip flexion dominant (lower rectus emphasis)
+  if (lower.includes('leg raise')) return 'lower-flexion'
+  if (lower.includes('reverse crunch')) return 'lower-flexion'
+  if (lower.includes('flutter')) return 'lower-flexion'
+  if (lower.includes('knee raise')) return 'lower-flexion'
+  if (lower.includes('toe touch')) return 'lower-flexion' // legs lifted toward hands
+  if (lower.includes('v-up')) return 'lower-flexion'      // hip-flexion dominant
+
+  // UPPER-FLEXION — trunk flexion (upper rectus emphasis)
+  if (lower.includes('crunch')) return 'upper-flexion'    // includes cable/machine/weighted/decline crunch
+  if (lower.includes('sit-up') || lower.includes('situp')) return 'upper-flexion'
+
+  // DYNAMIC — metabolic / cardio core
+  if (lower.includes('mountain climber') || lower.includes('bear crawl')) return 'dynamic'
+
   return 'other'
 }
 
@@ -140,26 +225,29 @@ const ALLOWED_DIFFICULTIES: Record<AbsLevel, Difficulty[]> = {
   advanced: ['beginner', 'intermediate', 'advanced'],
 }
 
-// Per-duration exercise count and base set count.
-// Tuned so the time math (estimateMinutes) lands within the budget.
-// Strength goal needs longer rest, so it gets fewer exercises at the same duration.
+/**
+ * Per-duration exercise count and base set count.
+ * Calibrated against industry "X-min focused abs" templates (Athlean-X, Caliber,
+ * Nippard hypertrophy templates) so density matches user expectations.
+ *
+ * Strength uses longer rest (60-75s) so it fits one fewer exercise per duration.
+ */
 function getDurationTarget(duration: AbsAnswers['duration'], goal: AbsGoal): { exercises: number; sets: number } {
   if (goal === 'strength') {
-    // Strength uses longer rest — cap exercises so total time still fits
     const map: Record<AbsAnswers['duration'], { exercises: number; sets: number }> = {
       5:  { exercises: 2, sets: 2 },
       10: { exercises: 3, sets: 3 },
-      15: { exercises: 3, sets: 3 },
-      20: { exercises: 4, sets: 3 },
+      15: { exercises: 4, sets: 3 },
+      20: { exercises: 5, sets: 3 },
     }
     return map[duration]
   }
-  // Tone / endurance — shorter rest, more variety
+  // Tone / endurance — HIIT-style density with short rest
   const map: Record<AbsAnswers['duration'], { exercises: number; sets: number }> = {
-    5:  { exercises: 2, sets: 2 },
-    10: { exercises: 3, sets: 3 },
-    15: { exercises: 4, sets: 3 },
-    20: { exercises: 5, sets: 3 },
+    5:  { exercises: 3, sets: 2 },
+    10: { exercises: 4, sets: 3 },
+    15: { exercises: 5, sets: 3 },
+    20: { exercises: 6, sets: 3 },
   }
   return map[duration]
 }
@@ -206,20 +294,29 @@ function getVolume(ex: ExerciseData, goal: AbsGoal, level: AbsLevel, baseSets: n
   let reps: number
   let restSeconds: number
 
-  if (level === 'beginner') {
-    if (timed) reps = goal === 'endurance' ? 25 : 20
-    else reps = goal === 'endurance' ? 15 : 10
-    restSeconds = goal === 'endurance' ? 30 : 45
-  } else if (level === 'intermediate') {
-    if (timed) reps = goal === 'endurance' ? 35 : 30
-    else if (goal === 'strength') reps = isCompoundLike ? 8 : 12
-    else reps = goal === 'endurance' ? 20 : 15
-    restSeconds = goal === 'strength' ? 60 : goal === 'endurance' ? 25 : 40
+  // Rest is goal-driven, not level-driven — abs recover fast, so HIIT pacing
+  // (20-30s rest) is the industry norm for tone/endurance work
+  if (goal === 'strength') {
+    restSeconds = level === 'beginner' ? 60 : level === 'intermediate' ? 60 : 75
+  } else if (goal === 'endurance') {
+    restSeconds = 20 // HIIT-style for endurance
   } else {
-    if (timed) reps = goal === 'endurance' ? 45 : 40
+    restSeconds = 30 // tone — short rest for metabolic stress
+  }
+
+  // Reps depend on goal × exercise type (timed vs rep) × level
+  if (level === 'beginner') {
+    if (timed)             reps = goal === 'endurance' ? 25 : 20
+    else if (goal === 'strength') reps = isCompoundLike ? 8 : 10
+    else                   reps = goal === 'endurance' ? 15 : 10
+  } else if (level === 'intermediate') {
+    if (timed)             reps = goal === 'endurance' ? 30 : 25
+    else if (goal === 'strength') reps = isCompoundLike ? 8 : 12
+    else                   reps = goal === 'endurance' ? 18 : 12
+  } else {
+    if (timed)             reps = goal === 'endurance' ? 40 : 30
     else if (goal === 'strength') reps = isCompoundLike ? 6 : 10
-    else reps = goal === 'endurance' ? 25 : 15
-    restSeconds = goal === 'strength' ? 75 : goal === 'endurance' ? 20 : 30
+    else                   reps = goal === 'endurance' ? 20 : 12
   }
 
   return { sets, reps, restSeconds }
@@ -300,27 +397,47 @@ export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): 
     }))
     .sort((a, b) => b.score - a.score)
 
-  // Pick exercises with pattern variety — at most 1 per pattern (relaxed if pool small)
+  // STEP 3: Pick exercises in goal-aware pattern priority order
   const target = getDurationTarget(answers.duration, answers.goal)
   const targetCount = target.exercises
+  const priority = PATTERN_PRIORITY[answers.goal]
+  const pickedIds = new Set<string>()
   const usedPatterns = new Set<Pattern>()
   const picked: ExerciseData[] = []
 
-  // Pass 1: prefer different patterns
+  // Pass 1: walk priority list, pick highest-scored exercise of each pattern
+  // This guarantees the patterns most important for the goal get represented first
+  for (const pattern of priority) {
+    if (picked.length >= targetCount) break
+    const best = scored.find(s => getPattern(s.ex) === pattern && !pickedIds.has(s.ex.id))
+    if (best) {
+      picked.push(best.ex)
+      pickedIds.add(best.ex.id)
+      usedPatterns.add(pattern)
+    }
+  }
+
+  // Pass 2: fill remaining slots, preferring still-unused patterns first
   for (const { ex } of scored) {
     if (picked.length >= targetCount) break
+    if (pickedIds.has(ex.id)) continue
     const pattern = getPattern(ex)
-    if (usedPatterns.has(pattern) && pattern !== 'other') continue
+    if (usedPatterns.has(pattern)) continue
     picked.push(ex)
+    pickedIds.add(ex.id)
     usedPatterns.add(pattern)
   }
 
-  // Pass 2: fill remaining slots, allowing pattern repeats
+  // Pass 3: fill any remaining slots, allowing pattern repeats (highest score wins)
   for (const { ex } of scored) {
     if (picked.length >= targetCount) break
-    if (picked.some(p => p.id === ex.id)) continue
+    if (pickedIds.has(ex.id)) continue
     picked.push(ex)
+    pickedIds.add(ex.id)
   }
+
+  // Sort picked exercises by logical workout flow (warm-up → strength → variety → finisher)
+  picked.sort((a, b) => FLOW_ORDER.indexOf(getPattern(a)) - FLOW_ORDER.indexOf(getPattern(b)))
 
   // Build exercise entries
   const exercises: AbsExercise[] = picked.map(ex => {
@@ -339,6 +456,15 @@ export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): 
     }
   })
 
+  // Build coverage list — what ab regions this workout actually hits
+  const coverage: string[] = []
+  for (const pattern of FLOW_ORDER) {
+    if (pattern === 'other') continue
+    if (picked.some(ex => getPattern(ex) === pattern)) {
+      coverage.push(PATTERN_LABELS[pattern])
+    }
+  }
+
   return {
     name: buildName(answers),
     description: buildDescription(answers),
@@ -347,5 +473,6 @@ export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): 
     excludedByLimitations,
     safetyNetTriggered,
     targetExerciseCount: targetCount,
+    coverage,
   }
 }

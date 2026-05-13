@@ -288,6 +288,21 @@ export function AbsBuilder() {
             </div>
           </div>
 
+          {/* Coverage — what ab regions this workout hits */}
+          {plan.coverage.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs uppercase tracking-wider text-text-muted font-semibold">Hits:</span>
+              {plan.coverage.map(region => (
+                <span
+                  key={region}
+                  className="text-xs px-2 py-1 rounded-full bg-success/10 border border-success/20 text-success"
+                >
+                  {region}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Limitation feedback */}
           {(plan.excludedByLimitations > 0 || plan.safetyNetTriggered || plan.exercises.length < plan.targetExerciseCount) && (
             <div className="text-xs bg-warning/5 border border-warning/20 rounded-xl px-3 py-2 flex items-start gap-2">
