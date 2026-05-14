@@ -80,7 +80,8 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
                   : `${typeof ex.sets === 'number' && typeof ex.reps === 'number' ? ex.sets * ex.reps : '?'} total`
 
                 return (
-                  <div key={ex.id || i} className="flex items-start justify-between gap-3">
+                  // Composite key — circuit-format plans share ex.id across rounds
+                  <div key={`${ex.id || 'ex'}-${i}`} className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-text-primary font-medium text-sm">{i + 1}. {ex.name}</p>
                       {ex.notes && (

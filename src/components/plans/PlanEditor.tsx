@@ -83,7 +83,12 @@ export function PlanEditor({ planId }: { planId: string }) {
         <div className="space-y-4 md:space-y-3">
           {plan.exercises.map((ex, i) => (
             <div
-              key={ex.id}
+              // Composite key: circuit-format plans (from Abs Builder) save the
+              // same exercise multiple times (one per round) sharing ex.id.
+              // Index-suffixing keeps React keys unique without changing the
+              // data model or breaking progress tracking (which relies on
+              // exerciseId staying stable across rounds).
+              key={`${ex.id}-${i}`}
               draggable
               onDragStart={() => setDragIdx(i)}
               onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
