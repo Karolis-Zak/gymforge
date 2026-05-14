@@ -15,6 +15,13 @@ export const INJURY_AREAS = [
   { id: 'neck', label: 'Neck' },
 ]
 
+/**
+ * Primary goals — the lifting plan generator can deliver these. Flexibility is
+ * NOT in this list because the exercise database has no stretching/mobility
+ * exercises; selecting it as primary would silently fall back to a normal
+ * lifting plan with a "stretch after each session" note. Available as secondary
+ * via SECONDARY_GOALS so users can still flag it.
+ */
 export const GOALS: Array<{ id: OnboardingAnswers['primaryGoal']; label: string; desc: string; icon: React.ReactNode }> = [
   { id: 'strength', label: 'Build Strength', desc: 'Get stronger, lift heavier', icon: <FiTarget /> },
   { id: 'muscle-building', label: 'Build Muscle', desc: 'Grow bigger muscles', icon: <FiAward /> },
@@ -22,7 +29,12 @@ export const GOALS: Array<{ id: OnboardingAnswers['primaryGoal']; label: string;
   { id: 'fat-loss', label: 'Lose Fat', desc: 'Burn calories, get leaner', icon: <FiTrendingDown /> },
   { id: 'general-fitness', label: 'General Fitness', desc: 'Stay healthy, feel good', icon: <FiHeart /> },
   { id: 'endurance', label: 'Build Endurance', desc: 'Improve stamina', icon: <FiActivity /> },
-  { id: 'flexibility', label: 'Improve Flexibility', desc: 'Move better', icon: <FiMaximize2 /> },
+]
+
+/** Secondary goals — same list plus flexibility (which only adds a stretching note) */
+export const SECONDARY_GOALS: Array<{ id: OnboardingAnswers['primaryGoal'] | 'flexibility'; label: string; desc: string; icon: React.ReactNode }> = [
+  ...GOALS,
+  { id: 'flexibility', label: 'Improve Flexibility', desc: 'Adds a stretching note to your plan', icon: <FiMaximize2 /> },
 ]
 
 export const CARDIO_OPTIONS: Array<{ v: OnboardingAnswers['cardioPreference']; l: string }> = [

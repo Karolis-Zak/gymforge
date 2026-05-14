@@ -3,7 +3,7 @@
 import React from 'react'
 import type { OnboardingAnswers } from '../../../store/onboardingStore'
 import { SelectionCard, PillToggle } from '../SelectionCard'
-import { StepHeader, NavButtons, GOALS, CARDIO_OPTIONS } from './QuestionnaireShared'
+import { StepHeader, NavButtons, GOALS, SECONDARY_GOALS, CARDIO_OPTIONS } from './QuestionnaireShared'
 
 interface Step3GoalsProps {
   answers: OnboardingAnswers
@@ -28,7 +28,7 @@ export function Step3Goals({ answers, update, onNext, onBack }: Step3GoalsProps)
         <label className="text-sm font-medium text-text-secondary block mb-2">Secondary goal (optional)</label>
         <div className="flex flex-wrap gap-2">
           <PillToggle label="None" selected={!answers.secondaryGoal} onClick={() => update({ secondaryGoal: '' })} />
-          {GOALS.filter(g => g.id !== answers.primaryGoal).map(g => (
+          {SECONDARY_GOALS.filter(g => g.id !== answers.primaryGoal).map(g => (
             <PillToggle key={g.id} label={g.label} selected={answers.secondaryGoal === g.id} onClick={() => update({ secondaryGoal: g.id })} />
           ))}
         </div>

@@ -134,7 +134,8 @@ export function checkAchievements(
         log.exercises
           .filter(ex =>
             // Check if exercise name contains common compound movement names
-            ['squat', 'deadlift', 'bench', 'press', 'row', 'pullup', 'chin', 'dip', 'clean'].some(
+            // Include both hyphenated and non-hyphenated variants since DB uses "Pull-Up", "Chin-Up"
+            ['squat', 'deadlift', 'bench', 'press', 'row', 'pullup', 'pull-up', 'chinup', 'chin-up', 'dip', 'clean'].some(
               c => ex.exerciseName.toLowerCase().includes(c)
             )
           )

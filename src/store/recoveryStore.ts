@@ -52,14 +52,19 @@ export const useRecoveryStore = create<RecoveryStore>()(
 
         const avgQuality = logs.reduce((sum, l) => sum + qualityScores[l.quality], 0) / logs.length
         const avgSleep = logs.reduce((sum, l) => sum + (l.sleep || 7), 0) / logs.length
-        const avgSoreness = 1 - (logs.reduce((sum, l) => sum + l.soreness, 0) / logs.length) / 5
-        const avgFatigue = 1 - (logs.reduce((sum, l) => sum + (l.fatigue || 3), 0) / logs.length) / 5
+        // Soreness/fatigue rated 1-5 (1 = best). Map [1,5] → [1,0]:
+        //   (avg - 1) / 4 then invert → score component in [0,1]
+        // Previous formula `1 - avg/5` capped at 0.8 even with perfect 1-rating, never reaching 100%.
+        const avgSorenessRaw = logs.reduce((sum, l) => sum + l.soreness, 0) / logs.length
+        const avgFatigueRaw  = logs.reduce((sum, l) => sum + (l.fatigue || 3), 0) / logs.length
+        const sorenessScore = 1 - (avgSorenessRaw - 1) / 4
+        const fatigueScore  = 1 - (avgFatigueRaw  - 1) / 4
 
         // Weighted score: quality 40%, sleep 20%, soreness 20%, fatigue 20%
         const score = (avgQuality / 4) * 0.4 +
                      Math.min(avgSleep, 9) / 9 * 0.2 +
-                     avgSoreness * 0.2 +
-                     avgFatigue * 0.2
+                     sorenessScore * 0.2 +
+                     fatigueScore * 0.2
 
         return Math.round(score * 100)
       },
