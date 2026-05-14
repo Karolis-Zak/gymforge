@@ -313,9 +313,10 @@ function scoreExercise(ex: ExerciseData, goal: AbsGoal, equipment: AbsEquipment)
 
 /**
  * Timed-exercise hold durations (seconds), calibrated to industry standards:
- *   - Stuart McGill (spine biomechanics) — 60s minimum, 90-120s for trained
- *   - NSCA / AthleanX / Nippard programs — 30 / 45 / 60s for beg/int/adv tone
- *   - Endurance gets longer holds (45 / 60 / 90s) per McGill protocols
+ *   - NSCA muscular endurance protocols — short holds (15-30s) for novices,
+ *     scaling to 60-90s for trained adults
+ *   - AthleanX / Nippard / Caliber programs — 30 / 45 / 60s for beg/int/adv tone
+ *   - Side bridge / plank endurance benchmarks: ~60s for general fitness
  *
  * For 5-min endurance specifically we cap at 45s (circuit-style) so the session
  * still fits a sensible time budget.
@@ -326,7 +327,7 @@ function getTimedReps(level: AbsLevel, goal: AbsGoal, duration: AbsAnswers['dura
     if (duration === 5) return 45
     // 10-min: cap advanced at 60s (90s × 2 sets × 4 ex = 16 min just on planks, blows budget)
     if (duration === 10) return level === 'beginner' ? 45 : 60
-    // 15-20 min: full McGill-style holds (90s for trained adults)
+    // 15-20 min: full holds — 90s aligned with general fitness endurance benchmarks
     return level === 'beginner' ? 45 : level === 'intermediate' ? 60 : 90
   }
   // Tone & strength: same hold for any duration
