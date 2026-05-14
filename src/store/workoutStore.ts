@@ -8,6 +8,12 @@ export interface Exercise {
   reps: number
   notes?: string
   restSeconds?: number // custom rest time between sets
+  /**
+   * Seconds to rest AFTER the final set of this exercise (before the next exercise).
+   * Used by circuit-format plans to fire a round-rest timer between exercises.
+   * Standard sequential plans leave this undefined (no inter-exercise rest).
+   */
+  triggerRestAfter?: number
 }
 
 export interface WorkoutPlan {

@@ -99,6 +99,7 @@ export function AbsBuilder() {
       reps: ex.reps,
       notes: ex.notes,
       restSeconds: ex.restSeconds,
+      triggerRestAfter: ex.triggerRestAfter, // circuit round-rest carries to active workout
     }))
     addPlan({
       name: plan.name,

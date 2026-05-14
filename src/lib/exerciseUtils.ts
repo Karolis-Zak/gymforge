@@ -35,7 +35,7 @@ const BODYWEIGHT_KEYWORDS = [
 // Keep in sync with planGenerator.ts DURATION_BASED_KEYWORDS and absBuilder.ts
 // so ActiveWorkout's TimedExerciseCard renders for ALL duration-based exercises
 const TIMED_EXERCISE_KEYWORDS = [
-  'plank', 'hold', 'dead hang', 'wall sit', 'farmer', 'carry', 'suitcase',
+  'plank', 'dead hang', 'wall sit', 'farmer', 'carry', 'suitcase',
   'mountain climber', 'bear crawl', 'flutter', 'plate pinch',
 ] as const
 

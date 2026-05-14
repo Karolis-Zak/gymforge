@@ -16,6 +16,8 @@ export interface ExerciseLog {
   notes?: string
   rpe?: number // Rate of Perceived Exertion (1-10 scale)
   date: string // ISO string
+  /** Mirrored from plan Exercise.triggerRestAfter — fires a rest timer after the final set */
+  triggerRestAfter?: number
 }
 
 export interface WorkoutLog {
@@ -97,7 +99,8 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
                 completed: false,
               })),
               notes: ex.notes || '',
-              date: new Date().toISOString()
+              date: new Date().toISOString(),
+              triggerRestAfter: ex.triggerRestAfter, // carry through for circuit round-rest
             }
           }),
           completed: false

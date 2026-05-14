@@ -157,12 +157,31 @@ export const ActiveWorkout: React.FC = () => {
   // Complete a set and start rest timer
   const handleCompleteSet = useCallback((exerciseId: string, setIndex: number, markAsCompleted: boolean, setsLength: number) => {
     completeSet(exerciseId, setIndex, markAsCompleted)
-    if (markAsCompleted && setIndex < setsLength - 1) {
+    if (!markAsCompleted) return
+
+    // Inter-set rest (between sets of the SAME exercise)
+    if (setIndex < setsLength - 1) {
       const restTime = getRestForExercise(exerciseId)
       setRestTimers(prev => ({ ...prev, [exerciseId]: restTime }))
       setRestActive(prev => ({ ...prev, [exerciseId]: true }))
+      return
     }
-  }, [completeSet, getRestForExercise])
+
+    // INTER-EXERCISE rest (e.g. circuit round-end). When an exercise opts in
+    // via triggerRestAfter, attach the timer to the NEXT exercise — that's
+    // what becomes "current" after this one's last set auto-collapses, and
+    // the focus card renders the timer on the current exercise.
+    const ex = currentWorkout?.exercises.find(e => e.id === exerciseId)
+    const roundRest = ex?.triggerRestAfter
+    if (roundRest && roundRest > 0 && currentWorkout) {
+      const completedIdx = currentWorkout.exercises.findIndex(e => e.id === exerciseId)
+      const nextEx = currentWorkout.exercises[completedIdx + 1]
+      if (nextEx) {
+        setRestTimers(prev => ({ ...prev, [nextEx.id]: roundRest }))
+        setRestActive(prev => ({ ...prev, [nextEx.id]: true }))
+      }
+    }
+  }, [completeSet, getRestForExercise, currentWorkout])
 
   const handleFinish = useCallback(() => {
     if (!currentWorkout) return

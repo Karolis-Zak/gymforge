@@ -49,6 +49,8 @@ export interface AbsExercise {
   notes: string
   restSeconds: number
   isDurationBased: boolean
+  /** Circuit-only: seconds to rest AFTER this exercise (for round-end) */
+  triggerRestAfter?: number
 }
 
 export interface AbsPlan {
@@ -436,17 +438,16 @@ function flattenIntoCircuit(uniqueExercises: AbsExercise[], rounds: number): Abs
       const isLastOfRound = idx === uniqueExercises.length - 1
       const isFinalRound = r === rounds
       const needsRoundRest = isLastOfRound && !isFinalRound
-      const baseNotes = ex.notes || ''
-      const restPrompt = needsRoundRest
-        ? ` ⏱ Rest ${CIRCUIT_ROUND_REST_SECONDS}s, then start round ${r + 1}.`
-        : ''
       result.push({
         ...ex,
         // Suffix the name so user sees which round they're on (ActiveWorkout displays this)
         name: `${ex.name} (Round ${r}/${rounds})`,
         sets: 1, // each round = 1 set per exercise
-        notes: (baseNotes + restPrompt).trim(),
-        restSeconds: 0, // sets=1 means no inter-set rest fires; round-rest is in notes instead
+        restSeconds: 0, // sets=1 means no inter-set rest fires
+        // Round-end exercises get triggerRestAfter — ActiveWorkout fires an
+        // auto rest timer that attaches to the NEXT exercise (round-1 plank's
+        // RestTimerCard appears as the focus when round-2 plank becomes current)
+        triggerRestAfter: needsRoundRest ? CIRCUIT_ROUND_REST_SECONDS : undefined,
       })
     })
   }
