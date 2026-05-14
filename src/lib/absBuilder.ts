@@ -5,6 +5,16 @@ export type AbsLevel = 'beginner' | 'intermediate' | 'advanced'
 export type AbsEquipment = 'bodyweight' | 'gym'
 
 /**
+ * Workout structure:
+ *   sequential — finish all sets of one exercise before moving to next (standard)
+ *   circuit    — rotate through all exercises × N rounds (HIIT-style, more flow)
+ */
+export type AbsFormat = 'sequential' | 'circuit'
+
+/** Rest between full circuit rounds (seconds). Industry standard for HIIT abs. */
+const CIRCUIT_ROUND_REST_SECONDS = 60
+
+/**
  * Capability/safety filters — each true value EXCLUDES exercises that depend on
  * that capability or stress that area. Defaults are all false (no restrictions).
  */
@@ -28,6 +38,7 @@ export interface AbsAnswers {
   duration: 5 | 10 | 15 | 20
   equipment: AbsEquipment
   limitations: AbsLimitations
+  format: AbsFormat
 }
 
 export interface AbsExercise {
@@ -53,6 +64,12 @@ export interface AbsPlan {
   targetExerciseCount: number
   /** Human-readable list of ab regions hit (e.g. ["top abs", "lower abs", "deep core"]) */
   coverage: string[]
+  /** Workout format the plan was built as */
+  format: AbsFormat
+  /** For circuit format: how many rounds the user does (= original target.sets) */
+  rounds: number
+  /** For circuit format: the unique exercises per round (without round-N suffix) */
+  uniqueExercises: AbsExercise[]
 }
 
 /**
@@ -391,10 +408,56 @@ function estimateMinutes(exercises: AbsExercise[]): number {
   return Math.max(1, Math.round(totalSec / 60))
 }
 
+/**
+ * Estimate time for circuit format: each round runs through every exercise once
+ * (work + brief transition), then a longer round-rest before the next round.
+ * Total = (per-round-time × rounds) + (rounds-1) × CIRCUIT_ROUND_REST_SECONDS
+ */
+function estimateCircuitMinutes(uniqueExercises: AbsExercise[], rounds: number): number {
+  if (uniqueExercises.length === 0 || rounds <= 0) return 0
+  const perRoundSec = uniqueExercises.reduce((sum, ex) => {
+    const workPerSet = ex.isDurationBased ? ex.reps : 10 + ex.reps * 1.5
+    return sum + workPerSet + 15 // shorter inter-exercise transition for circuit pace
+  }, 0)
+  const totalSec = perRoundSec * rounds + Math.max(0, rounds - 1) * CIRCUIT_ROUND_REST_SECONDS
+  return Math.max(1, Math.round(totalSec / 60))
+}
+
+/**
+ * For circuit format: flatten {N exercises × M rounds} into a single sequential
+ * list of N×M entries, each with sets=1 and the round number in the name.
+ * The last exercise of each non-final round gets a notes prompt to rest before
+ * the next round (since ActiveWorkout's rest timer doesn't fire between exercises).
+ */
+function flattenIntoCircuit(uniqueExercises: AbsExercise[], rounds: number): AbsExercise[] {
+  const result: AbsExercise[] = []
+  for (let r = 1; r <= rounds; r++) {
+    uniqueExercises.forEach((ex, idx) => {
+      const isLastOfRound = idx === uniqueExercises.length - 1
+      const isFinalRound = r === rounds
+      const needsRoundRest = isLastOfRound && !isFinalRound
+      const baseNotes = ex.notes || ''
+      const restPrompt = needsRoundRest
+        ? ` ⏱ Rest ${CIRCUIT_ROUND_REST_SECONDS}s, then start round ${r + 1}.`
+        : ''
+      result.push({
+        ...ex,
+        // Suffix the name so user sees which round they're on (ActiveWorkout displays this)
+        name: `${ex.name} (Round ${r}/${rounds})`,
+        sets: 1, // each round = 1 set per exercise
+        notes: (baseNotes + restPrompt).trim(),
+        restSeconds: 0, // sets=1 means no inter-set rest fires; round-rest is in notes instead
+      })
+    })
+  }
+  return result
+}
+
 function buildName(answers: AbsAnswers): string {
   const goalLabel = answers.goal === 'tone' ? 'Define' : answers.goal === 'strength' ? 'Strength' : 'Endurance'
   const levelLabel = answers.level.charAt(0).toUpperCase() + answers.level.slice(1)
-  return `Abs — ${answers.duration}min ${goalLabel} (${levelLabel})`
+  const formatLabel = answers.format === 'circuit' ? ' Circuit' : ''
+  return `Abs — ${answers.duration}min ${goalLabel}${formatLabel} (${levelLabel})`
 }
 
 function buildDescription(answers: AbsAnswers): string {
@@ -403,7 +466,10 @@ function buildDescription(answers: AbsAnswers): string {
     : answers.goal === 'strength'
       ? 'Loaded core work for raw trunk strength.'
       : 'High-rep, time-under-tension work for endurance.'
-  return `${answers.duration}-minute ${answers.level} abs session. ${goalText} ${answers.equipment === 'gym' ? 'Uses available gym equipment.' : 'Bodyweight only — anywhere, anytime.'}`
+  const formatText = answers.format === 'circuit'
+    ? ' Circuit format — rotate through all exercises, rest, repeat.'
+    : ' Standard sets — finish all sets of one exercise before moving on.'
+  return `${answers.duration}-minute ${answers.level} abs session. ${goalText}${formatText} ${answers.equipment === 'gym' ? 'Uses available gym equipment.' : 'Bodyweight only — anywhere, anytime.'}`
 }
 
 export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): AbsPlan {
@@ -522,14 +588,27 @@ export function generateAbsPlan(answers: AbsAnswers, shuffle: boolean = false): 
     }
   }
 
+  // Format-aware output. Circuit flattens to N rounds × M exercises (sets=1 each)
+  // so ActiveWorkout walks them in circuit order naturally.
+  const isCircuit = answers.format === 'circuit' && exercises.length > 0
+  const finalExercises = isCircuit
+    ? flattenIntoCircuit(exercises, target.sets)
+    : exercises
+  const finalEstimatedMinutes = isCircuit
+    ? estimateCircuitMinutes(exercises, target.sets)
+    : estimateMinutes(exercises)
+
   return {
     name: buildName(answers),
     description: buildDescription(answers),
-    exercises,
-    estimatedMinutes: estimateMinutes(exercises),
+    exercises: finalExercises,
+    estimatedMinutes: finalEstimatedMinutes,
     excludedByLimitations,
     safetyNetTriggered,
     targetExerciseCount: targetCount,
     coverage,
+    format: answers.format,
+    rounds: isCircuit ? target.sets : 1,
+    uniqueExercises: exercises, // pre-flatten list for UI grouping in preview
   }
 }
