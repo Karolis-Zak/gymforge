@@ -75,11 +75,11 @@ type Pattern =
 const PATTERN_LABELS: Record<Pattern, string> = {
   'upper-flexion':  'top abs',
   'lower-flexion':  'lower abs',
-  'rotation':       'obliques (rotation)',
-  'lateral':        'sides',
+  'rotation':       'obliques (twist)',
+  'lateral':        'obliques (side bend)',
   'anti-extension': 'deep core',
-  'anti-rotation':  'anti-rotation',
-  'dynamic':        'dynamic',
+  'anti-rotation':  'anti-rotation stability',
+  'dynamic':        'dynamic / cardio',
   'other':          'other',
 }
 
@@ -227,10 +227,14 @@ const ALLOWED_DIFFICULTIES: Record<AbsLevel, Difficulty[]> = {
 
 /**
  * Per-duration exercise count and base set count.
- * Calibrated against industry "X-min focused abs" templates (Athlean-X, Caliber,
- * Nippard hypertrophy templates) so density matches user expectations.
+ * Calibrated against industry templates (Athlean-X, Caliber, Nippard) so density
+ * matches user expectations AND total time fits the chosen duration.
  *
- * Strength uses longer rest (60-75s) so it fits one fewer exercise per duration.
+ *   Strength    — longer rest (60s) → one fewer exercise per duration
+ *   Tone        — HIIT-style 30s rest, 3 sets each → moderate density
+ *   Endurance   — McGill protocol: long holds (45-90s) × 2 sets (1-set circuit at 5min).
+ *                 Three sets of 90s holds × 4-6 exercises blows any time budget;
+ *                 endurance volume comes from hold duration, not set count.
  */
 function getDurationTarget(duration: AbsAnswers['duration'], goal: AbsGoal): { exercises: number; sets: number } {
   if (goal === 'strength') {
@@ -242,7 +246,17 @@ function getDurationTarget(duration: AbsAnswers['duration'], goal: AbsGoal): { e
     }
     return map[duration]
   }
-  // Tone / endurance — HIIT-style density with short rest
+  if (goal === 'endurance') {
+    // McGill-style: long holds × fewer sets (1-2). Stimulus is TUT, not volume.
+    const map: Record<AbsAnswers['duration'], { exercises: number; sets: number }> = {
+      5:  { exercises: 4, sets: 1 },  // single-round circuit
+      10: { exercises: 4, sets: 2 },  // 2 rounds at full holds
+      15: { exercises: 5, sets: 2 },
+      20: { exercises: 6, sets: 2 },
+    }
+    return map[duration]
+  }
+  // Tone — HIIT-style 30s rest, 2-3 sets, more exercises for variety
   const map: Record<AbsAnswers['duration'], { exercises: number; sets: number }> = {
     5:  { exercises: 3, sets: 2 },
     10: { exercises: 4, sets: 3 },
@@ -258,8 +272,21 @@ function scoreExercise(ex: ExerciseData, goal: AbsGoal, equipment: AbsEquipment)
 
   // Goal-specific bonuses
   if (goal === 'strength') {
-    // Loaded/leverage moves shine for strength
-    if (lower.includes('weighted') || lower.includes('cable') || lower.includes('barbell') || lower.includes('dumbbell') || lower.includes('rollout') || lower.includes('hanging')) score += 6
+    // Loaded / leverage exercises are the strength priority. Check by EQUIPMENT
+    // (not just name) so Pallof Press, Landmine Rotation, etc. get credit even
+    // though their names don't contain "cable"/"barbell".
+    const isLoaded =
+      ex.equipment === 'cable' ||
+      ex.equipment === 'barbell' ||
+      ex.equipment === 'dumbbell' ||
+      ex.equipment === 'machine' ||
+      ex.equipment === 'trap-bar' ||
+      ex.equipment === 'ez-bar' ||
+      ex.equipment === 'smith-machine' ||
+      lower.includes('weighted') ||
+      lower.includes('rollout') ||
+      lower.includes('hanging')
+    if (isLoaded) score += 6
     if (lower.includes('ab wheel')) score += 5
     if (ex.difficulty === 'advanced') score += 2
   } else if (goal === 'tone') {
@@ -295,7 +322,11 @@ function scoreExercise(ex: ExerciseData, goal: AbsGoal, equipment: AbsEquipment)
  */
 function getTimedReps(level: AbsLevel, goal: AbsGoal, duration: AbsAnswers['duration']): number {
   if (goal === 'endurance') {
-    if (duration === 5) return 45 // 5-min endurance = circuit-style 45s holds for any level
+    // 5-min: 45s circuit-style holds, any level
+    if (duration === 5) return 45
+    // 10-min: cap advanced at 60s (90s × 2 sets × 4 ex = 16 min just on planks, blows budget)
+    if (duration === 10) return level === 'beginner' ? 45 : 60
+    // 15-20 min: full McGill-style holds (90s for trained adults)
     return level === 'beginner' ? 45 : level === 'intermediate' ? 60 : 90
   }
   // Tone & strength: same hold for any duration
