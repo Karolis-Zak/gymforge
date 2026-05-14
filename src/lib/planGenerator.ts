@@ -598,20 +598,6 @@ function getRestSeconds(goal: string, level: string, isCompound: boolean, compos
   return isCompound ? (90 + extraRest + timeConstraint) : (60 + extraRest)
 }
 
-function getExerciseCount(targetDuration: number, level: string, goal: string, composition?: BodyComposition): number {
-  const warmup = level === 'complete-beginner' ? 8 : 5
-  const available = targetDuration - warmup - 3
-  // Use compound rest for calculation (more conservative)
-  const restSec = getRestSeconds(goal, level, true, composition, targetDuration)
-  const avgSets = level === 'complete-beginner' ? 3 : (goal === 'strength' ? 4 : 3)
-  const timePerEx = (avgSets * 1.5) + ((avgSets - 1) * restSec / 60)
-  const min = targetDuration <= 30 ? 4 : 5
-  // Beginners max out at 6 exercises (manageable learning load)
-  // Others can go higher based on goal
-  const maxByLevel = level === 'complete-beginner' ? 6 : (goal === 'endurance' ? 8 : 10)
-  return Math.max(min, Math.min(Math.round(available / timePerEx), maxByLevel))
-}
-
 /**
  * Get rep range based on body type and goal
  * TRUE training logic: Body composition affects optimal stimulus
@@ -1054,7 +1040,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     ? assessBodyComposition(answers.height, answers.weight, answers.bodyType || 'athletic')
     : undefined
 
-  const exerciseCount = getExerciseCount(answers.sessionDuration, answers.fitnessLevel, answers.primaryGoal, bodyComposition)
+  // SessionBuilder is the actual exercise-count enforcer (time-budget driven).
+  // The old slot-count predictor (getExerciseCount) was made obsolete in the
+  // April 2026 SessionBuilder migration and removed.
   const sortedDays = [...answers.specificDays].sort((a, b) => WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b))
 
   // Check if user has ACUTE wrist injury (for stricter exclusions)
@@ -1131,8 +1119,17 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     const selected: ExerciseData[] = []
     const muscleCount: Record<string, number> = {}
     const usedPatterns = new Set<string>()
-    // Back needs 3 exercises (row + vertical pull + hinge), other muscles max 2
-    const getMaxForMuscle = (m: string) => m === 'back' ? 3 : 2
+    // Max exercises per muscle per session.
+    // Back always gets 3 (row + vertical pull + hinge cover different patterns).
+    // For low-frequency splits (≤3 days, each muscle hit 1x/week), allow 3 per
+    // major muscle so weekly volume reaches MEV (~10 sets/week per Schoenfeld 2017).
+    // Higher-frequency splits (4-6 days, each muscle hit 2x/week) already reach
+    // MEV with 2 ex × 3 sets × 2 sessions = 12 sets/week.
+    const getMaxForMuscle = (m: string) => {
+      if (m === 'back') return 3
+      if (answers.daysPerWeek <= 3) return 3
+      return 2
+    }
 
     // Helper: can we add this exercise?
     const canAdd = (ex: ExerciseData): boolean => {
@@ -1390,14 +1387,9 @@ export function generatePlan(answers: OnboardingAnswers, usedExerciseIds: string
     balanceWarnings += ' ⚠️ ' + legBalance.issues[0]
   }
 
-  // Check for rotation schedules (Tier 2)
+  // Check for rotation schedules (Tier 2) — referenced in description below
   const hasRotation = days.some(day =>
     day.exercises.some(ex => ex.rotationSchedule && ex.rotationSchedule.length > 1)
-  )
-
-  // Check for warm-ups (Tier 2)
-  const hasWarmup = days.some(day =>
-    day.exercises.some(ex => ex.warmupSets && ex.warmupSets.length > 0)
   )
 
   // Generate weekly progression guidance (Tier 3)
