@@ -305,27 +305,6 @@ function isDurationBasedExercise(name: string): boolean {
   return false
 }
 
-// Deprecated: Use isDurationBasedExercise instead
-function isTimedExercise(name: string): boolean {
-  const lower = name.toLowerCase()
-  return lower.includes('plank') || lower.includes('wall sit') ||
-         lower.includes('dead hang') || lower.includes('plate pinch') ||
-         lower.includes('mountain climber') || lower.includes('bear crawl') ||
-         lower.includes('flutter kick') || lower.includes('flutter') || lower.includes('band squat')
-}
-
-// Deprecated: Use isDurationBasedExercise instead
-function isCarryExercise(name: string): boolean {
-  const lower = name.toLowerCase()
-  return lower.includes('farmer') || lower.includes('carry') || lower.includes('suitcase')
-}
-
-// Deprecated: Use isDurationBasedExercise instead
-function isCardioStyleExercise(name: string): boolean {
-  const lower = name.toLowerCase()
-  return lower.includes('mountain climber') || lower.includes('bear crawl') || lower.includes('flutter')
-}
-
 /**
  * Detect movement pattern to prevent selecting multiple exercises of the same pattern
  * Patterns are sorted by priority/specificity to avoid mismatches
