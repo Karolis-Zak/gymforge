@@ -554,8 +554,19 @@ function shouldExcludeForWristInjury(ex: ExerciseData, isAcuteWristInjury: boole
 }
 
 /**
- * Get rest time for an exercise based on goal, level, and exercise type
- * Accounts for compound vs isolation and session duration constraint
+ * Get rest time for an exercise based on goal, level, and exercise type.
+ *
+ * Calibrated against:
+ *   - Schoenfeld 2016 ("Longer Inter-Set Rest Periods Enhance Muscle Strength
+ *     and Hypertrophy in Resistance-Trained Men") — 2-3 min compound rest beats
+ *     1 min for hypertrophy
+ *   - NSCA Essentials of Strength Training: 2-5 min for strength, 1-3 min for
+ *     hypertrophy, 30-90s for muscular endurance
+ *   - Henselmans practical recommendations: 90-120s sweet spot for hypertrophy
+ *     compounds (gets ~80% of long-rest benefit while allowing more variety)
+ *
+ * Beginners get slightly more rest (slower neural recovery). Time-constrained
+ * sessions (<=30 min) shave 15s off compound rest to fit more exercises.
  */
 function getRestSeconds(goal: string, level: string, isCompound: boolean, composition?: BodyComposition, sessionDuration?: number): number {
   // Heavier/less fit people need more rest for joint recovery
@@ -565,20 +576,26 @@ function getRestSeconds(goal: string, level: string, isCompound: boolean, compos
   const timeConstraint = sessionDuration && sessionDuration <= 30 ? -15 : 0
 
   if (level === 'complete-beginner') {
-    return isCompound ? (75 + extraRest + timeConstraint) : (45 + extraRest)
+    // Beginners: 90s compound (slow neural recovery), 60s isolation (per NSCA)
+    return isCompound ? (90 + extraRest + timeConstraint) : (60 + extraRest)
   }
   if (level === 'some-experience') {
-    if (goal === 'strength') return isCompound ? (90 + extraRest) : (60 + extraRest)
-    if (goal === 'fat-loss' || goal === 'endurance') return isCompound ? (45 + extraRest) : (30 + extraRest)
-    return isCompound ? (60 + extraRest) : (45 + extraRest)
+    // Strength: 120s/75s — heavy compounds need ATP-PCr recovery
+    if (goal === 'strength') return isCompound ? (120 + extraRest + timeConstraint) : (75 + extraRest)
+    // Fat-loss/endurance: short rest for metabolic stimulus, but not so short that performance tanks
+    if (goal === 'endurance') return isCompound ? (45 + extraRest) : (30 + extraRest)
+    if (goal === 'fat-loss') return isCompound ? (60 + extraRest) : (45 + extraRest)
+    // Muscle-building / toning / general: 90s compound for hypertrophy
+    return isCompound ? (90 + extraRest + timeConstraint) : (60 + extraRest)
   }
-  // Regular exerciser
-  if (goal === 'strength') return isCompound ? (120 + extraRest) : (75 + extraRest)
-  if (goal === 'muscle-building') return isCompound ? (75 + extraRest) : (60 + extraRest)
-  if (goal === 'toning') return isCompound ? (60 + extraRest) : (45 + extraRest)
-  if (goal === 'fat-loss') return isCompound ? (45 + extraRest) : (30 + extraRest)
-  if (goal === 'endurance') return isCompound ? (40 + extraRest) : (25 + extraRest)
-  return isCompound ? (60 + extraRest) : (45 + extraRest)
+  // Regular exerciser — research-backed values
+  if (goal === 'strength')        return isCompound ? (180 + extraRest + timeConstraint) : (90 + extraRest)
+  if (goal === 'muscle-building') return isCompound ? (120 + extraRest + timeConstraint) : (75 + extraRest)
+  if (goal === 'toning')          return isCompound ? (90 + extraRest + timeConstraint)  : (60 + extraRest)
+  if (goal === 'fat-loss')        return isCompound ? (60 + extraRest)                   : (45 + extraRest)
+  if (goal === 'endurance')       return isCompound ? (45 + extraRest)                   : (30 + extraRest)
+  // general-fitness / fallback
+  return isCompound ? (90 + extraRest + timeConstraint) : (60 + extraRest)
 }
 
 function getExerciseCount(targetDuration: number, level: string, goal: string, composition?: BodyComposition): number {
@@ -639,29 +656,30 @@ function getVolume(level: string, primaryGoal: string, secondaryGoal: string, is
   let sets: number
   let reps: number
 
+  // Rep ranges per Schoenfeld 2017 hypertrophy meta + NSCA strength/endurance guidelines
   if (level === 'complete-beginner') {
     sets = 3
-    if (primaryGoal === 'strength') reps = isCompound ? 8 : 10
+    if (primaryGoal === 'strength')            reps = isCompound ? 8  : 10
     else if (primaryGoal === 'muscle-building') reps = isCompound ? 10 : 12
-    else if (primaryGoal === 'toning') reps = isCompound ? 10 : 12
-    else if (primaryGoal === 'fat-loss') reps = isCompound ? 12 : 15
-    else if (primaryGoal === 'endurance') reps = isCompound ? 12 : 15
+    else if (primaryGoal === 'toning')          reps = isCompound ? 10 : 12
+    else if (primaryGoal === 'fat-loss')        reps = isCompound ? 12 : 15
+    else if (primaryGoal === 'endurance')       reps = isCompound ? 15 : 20  // NSCA: 12-25 for muscular endurance, beg starts at 15
     else reps = 10
   } else if (level === 'some-experience') {
-    sets = isCompound ? 3 : 3
-    if (primaryGoal === 'strength') { reps = isCompound ? 6 : 10; if (isCompound) sets = 4 }
-    else if (primaryGoal === 'muscle-building') reps = isCompound ? 8 : 10
-    else if (primaryGoal === 'toning') reps = isCompound ? 10 : 12
-    else if (primaryGoal === 'fat-loss') reps = isCompound ? 12 : 15
-    else if (primaryGoal === 'endurance') { reps = isCompound ? 12 : 15; sets = 2 }
+    sets = 3
+    if (primaryGoal === 'strength')             { reps = isCompound ? 6  : 10; if (isCompound) sets = 4 }
+    else if (primaryGoal === 'muscle-building')   reps = isCompound ? 8  : 10
+    else if (primaryGoal === 'toning')            reps = isCompound ? 10 : 12
+    else if (primaryGoal === 'fat-loss')          reps = isCompound ? 12 : 15
+    else if (primaryGoal === 'endurance')       { reps = isCompound ? 15 : 20; sets = 2 } // bumped 12/15 → 15/20
     else reps = 10
   } else {
-    if (primaryGoal === 'strength') { sets = isCompound ? 4 : 3; reps = isCompound ? 5 : 8 }
-    else if (primaryGoal === 'muscle-building') { sets = isCompound ? 4 : 3; reps = isCompound ? 8 : 10 }
-    else if (primaryGoal === 'toning') { sets = 3; reps = isCompound ? 10 : 12 }
-    else if (primaryGoal === 'fat-loss') { sets = 3; reps = isCompound ? 12 : 15 }
-    else if (primaryGoal === 'endurance') { sets = 2; reps = isCompound ? 12 : 15 }
-    else { sets = 3; reps = 10 }
+    if (primaryGoal === 'strength')           { sets = isCompound ? 4 : 3; reps = isCompound ? 5  : 8  }
+    else if (primaryGoal === 'muscle-building') { sets = isCompound ? 4 : 3; reps = isCompound ? 8  : 10 }
+    else if (primaryGoal === 'toning')          { sets = 3;                   reps = isCompound ? 10 : 12 }
+    else if (primaryGoal === 'fat-loss')        { sets = 3;                   reps = isCompound ? 12 : 15 }
+    else if (primaryGoal === 'endurance')       { sets = 2;                   reps = isCompound ? 20 : 25 } // bumped 12/15 → 20/25 per NSCA
+    else                                        { sets = 3;                   reps = 10 }
   }
 
   if (secondaryGoal === 'strength' && reps > 8) reps = Math.max(reps - 2, 8)
