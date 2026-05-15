@@ -29,8 +29,6 @@ const DIFFICULTY_OPTIONS: Difficulty[] = ['beginner', 'intermediate', 'advanced'
 
 export function ExercisePicker({ onAdd }: ExercisePickerProps) {
   const { answers } = useOnboardingStore()
-  const userInjuries = answers?.injuries || []
-  const userInjurySeverity = answers?.injurySeverity || {}
 
   const [query, setQuery] = useState('')
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | ''>('')
@@ -45,6 +43,8 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
   }
 
   const filtered = useMemo(() => {
+    const userInjuries = answers?.injuries || []
+    const userInjurySeverity = answers?.injurySeverity || {}
     let results = searchExercises(query, muscleFilter ? { muscle: muscleFilter as MuscleGroup } : undefined)
     if (hasDifficultyFilter) results = results.filter(ex => difficultyFilter.has(ex.difficulty))
     if (userInjuries.includes('wrists')) {
@@ -52,7 +52,7 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
       results = results.filter(ex => !isWristDangerousExercise(ex.name, isAcuteWrist))
     }
     return results.sort((a, b) => getSmartScore(b, 10, 5) - getSmartScore(a, 10, 5)).slice(0, 50)
-  }, [query, muscleFilter, difficultyFilter, hasDifficultyFilter, userInjuries, userInjurySeverity])
+  }, [query, muscleFilter, difficultyFilter, hasDifficultyFilter, answers])
 
   const muscleGroups = getAllMuscleGroups()
 
@@ -126,16 +126,16 @@ export function ExercisePicker({ onAdd }: ExercisePickerProps) {
         </div>
         <div className="flex gap-3 items-center">
           <div className="flex items-center gap-1">
-            <button onClick={() => setSets(Math.max(1, sets - 1))} className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-sm flex items-center justify-center">−</button>
-            <span className="text-sm text-text-primary font-medium w-6 text-center">{sets}</span>
-            <button onClick={() => setSets(Math.min(10, sets + 1))} className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-sm flex items-center justify-center">+</button>
+            <button aria-label="Decrease sets" onClick={() => setSets(Math.max(1, sets - 1))} className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-lg flex items-center justify-center">−</button>
+            <span className="text-sm text-text-primary font-medium w-8 text-center">{sets}</span>
+            <button aria-label="Increase sets" onClick={() => setSets(Math.min(10, sets + 1))} className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-lg flex items-center justify-center">+</button>
             <span className="text-xs text-text-muted ml-1">sets</span>
           </div>
           <span className="text-text-muted">×</span>
           <div className="flex items-center gap-1">
-            <button onClick={() => setReps(Math.max(1, reps - 1))} className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-sm flex items-center justify-center">−</button>
-            <span className="text-sm text-text-primary font-medium w-6 text-center">{reps}</span>
-            <button onClick={() => setReps(Math.min(30, reps + 1))} className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-sm flex items-center justify-center">+</button>
+            <button aria-label="Decrease reps" onClick={() => setReps(Math.max(1, reps - 1))} className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-lg flex items-center justify-center">−</button>
+            <span className="text-sm text-text-primary font-medium w-8 text-center">{reps}</span>
+            <button aria-label="Increase reps" onClick={() => setReps(Math.min(30, reps + 1))} className="w-11 h-11 rounded-lg bg-white/5 border border-white/10 text-text-muted hover:text-text-primary text-lg flex items-center justify-center">+</button>
             <span className="text-xs text-text-muted ml-1">reps</span>
           </div>
         </div>

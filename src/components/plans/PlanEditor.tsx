@@ -137,10 +137,10 @@ export function PlanEditor({ planId }: { planId: string }) {
                   <FiMenu size={16} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }} disabled={i === 0} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors p-1" aria-label="Move up">
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'up') }} disabled={i === 0} className="w-7 h-7 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="Move up">
                     <FiChevronUp size={14} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }} disabled={i === plan.exercises.length - 1} className="text-text-muted hover:text-text-primary disabled:opacity-20 transition-colors p-1" aria-label="Move down">
+                  <button onClick={(e) => { e.stopPropagation(); handleMoveExercise(i, 'down') }} disabled={i === plan.exercises.length - 1} className="w-7 h-7 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-white/10 disabled:opacity-20 transition-colors" aria-label="Move down">
                     <FiChevronDown size={14} />
                   </button>
                 </div>

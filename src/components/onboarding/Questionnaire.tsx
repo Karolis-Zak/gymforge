@@ -73,10 +73,13 @@ export function Questionnaire() {
     update({ specificDays: suggestDays(answers.daysPerWeek) })
   }, [answers.daysPerWeek])
 
-  // Auto-set complexity for beginners
+  // Auto-set complexity for beginners (reads current complexity from the
+  // functional setter so the effect only needs to depend on fitnessLevel)
   useEffect(() => {
-    if (answers.fitnessLevel === 'complete-beginner' && answers.exerciseComplexity !== 'simple') {
-      update({ exerciseComplexity: 'simple' })
+    if (answers.fitnessLevel === 'complete-beginner') {
+      setLocalAnswers(prev =>
+        prev.exerciseComplexity !== 'simple' ? { ...prev, exerciseComplexity: 'simple' } : prev
+      )
     }
   }, [answers.fitnessLevel])
 

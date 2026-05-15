@@ -36,7 +36,7 @@ export function Button({
         inline-flex items-center justify-center gap-2 transition-all duration-200
         ${variantStyles[variant]}
         ${sizeStyles[size]}
-        ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''}
+        ${disabled || loading ? 'opacity-40 grayscale cursor-not-allowed' : ''}
         ${className}
       `}
       disabled={disabled || loading}

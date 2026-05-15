@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react'
-import type { ExerciseLog } from '../store/workoutLogStore'
+import type { ExerciseLog, WorkoutLog } from '../store/workoutLogStore'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
-  BarElement, Tooltip, Filler
+  BarElement, Tooltip, Filler, type ChartOptions
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
 import { Card } from './ui'
@@ -12,11 +12,18 @@ import { FiZap, FiTrendingUp, FiAward, FiClock, FiChevronUp } from 'react-icons/
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Filler)
 
+interface WorkoutStats {
+  totalWorkouts: number
+  completedWorkouts: number
+  currentStreak: number
+  longestStreak: number
+}
+
 interface DashboardStatsProps {
-  stats: any
-  thisWeekLogs: any[]
+  stats: WorkoutStats
+  thisWeekLogs: WorkoutLog[]
   weeklyVolume: number
-  completedLogs: any[]
+  completedLogs: WorkoutLog[]
   weekKeys: string[]
   volumePerWeek: number[]
   workoutsPerWeek: number[]
@@ -24,7 +31,7 @@ interface DashboardStatsProps {
   streakDays: Set<string>
   expandedStat: string | null
   onToggleStat: (id: string) => void
-  chartOptions: any
+  chartOptions: ChartOptions<'bar'> & ChartOptions<'line'>
 }
 
 export function DashboardStats({

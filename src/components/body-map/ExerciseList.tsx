@@ -45,7 +45,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false)
 
   // Apply equipment + difficulty + search filters to full pool
-  const applyFilters = (exercises: typeof exerciseDb) => {
+  const applyFilters = useCallback((exercises: typeof exerciseDb) => {
     let results = exercises
     if (hasEquipmentFilter) results = results.filter(ex => selectedEquipment.has(ex.equipment))
     if (hasDifficultyFilter) results = results.filter(ex => selectedDifficulty.has(ex.difficulty))
@@ -54,13 +54,13 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
       results = results.filter(ex => ex.name.toLowerCase().includes(q))
     }
     return results
-  }
+  }, [selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
 
   // PRIMARY: exercises where selected muscle IS the primary target
   const primaryMatches = useMemo(() => {
     const matches = exerciseDb.filter(ex => selectedMuscles.includes(ex.primaryMuscle))
     return sortExercises(applyFilters(matches))
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
+  }, [selectedMuscles, applyFilters])
 
   // SECONDARY: exercises that also work the selected muscles (but primary is different)
   const secondaryMatches = useMemo(() => {
@@ -69,7 +69,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
       ex.secondaryMuscles.some(m => selectedMuscles.includes(m))
     )
     return sortExercises(applyFilters(matches))
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
+  }, [selectedMuscles, applyFilters])
 
   // COMPOUND: exercises hitting multiple selected muscles (only when 2+ selected)
   const compoundMatches = useMemo(() => {
@@ -81,7 +81,7 @@ export function ExerciseList({ selectedMuscles }: ExerciseListProps) {
         return selectedMuscles.filter(m => all.includes(m)).length >= 2
       })
     ))
-  }, [selectedMuscles, selectedEquipment, selectedDifficulty, searchQuery, hasEquipmentFilter, hasDifficultyFilter])
+  }, [selectedMuscles, applyFilters])
 
   // IDs to exclude from regular sections (shown in compound section)
   const compoundIds = useMemo(() => new Set(compoundMatches.map(ex => ex.id)), [compoundMatches])

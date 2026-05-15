@@ -204,11 +204,19 @@ export const useAchievementStore = create<AchievementStore>()(
         unlockedAchievementIds: Array.from(state.unlockedAchievementIds),
         achievements: state.achievements,
       }),
-      merge: (persistedState: any, currentState) => ({
-        ...currentState,
-        unlockedAchievementIds: new Set(persistedState.unlockedAchievementIds || []),
-        achievements: persistedState.achievements || currentState.achievements,
-      }),
+      merge: (persistedState: any, currentState) => {
+        // Guard against corrupted/legacy localStorage: a non-array value would
+        // make `new Set(...)` throw, and a null persistedState would throw on access.
+        const persisted = persistedState && typeof persistedState === 'object' ? persistedState : {}
+        const ids = Array.isArray(persisted.unlockedAchievementIds) ? persisted.unlockedAchievementIds : []
+        return {
+          ...currentState,
+          unlockedAchievementIds: new Set(ids),
+          achievements: persisted.achievements && typeof persisted.achievements === 'object'
+            ? persisted.achievements
+            : currentState.achievements,
+        }
+      },
     }
   )
 )

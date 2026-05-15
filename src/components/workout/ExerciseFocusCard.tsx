@@ -7,16 +7,17 @@ import { FiArrowRight, FiCheck, FiRepeat, FiVideo, FiExternalLink, FiZap, FiMinu
 import { findExerciseInfo, isBodyweightExercise, isTimedExercise, isUnilateralExercise } from '../../lib/exerciseUtils'
 import { getExerciseVideoId, getExerciseSearchUrl } from '../../data/exerciseVideos'
 import { TimedExerciseCard } from './TimedExerciseCard'
-import type { ExerciseLog } from '../../store/workoutLogStore'
+import type { ExerciseLog, WorkoutSet } from '../../store/workoutLogStore'
+import type { ExerciseData } from '../../data/exercises'
 
 interface ExerciseFocusCardProps {
   currentExercise: ExerciseLog
   currentSetIdx: number
-  exerciseInfo: any
+  exerciseInfo: ExerciseData | undefined
   suggestedWeight: number | null
   isBW: boolean
   isTimed: boolean
-  currentSet: any
+  currentSet: WorkoutSet | undefined
   pb: number | null
   isNewPB: boolean
   perSideEnabled: Record<string, boolean>

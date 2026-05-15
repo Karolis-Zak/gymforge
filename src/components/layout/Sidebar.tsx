@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { FiHome, FiUser, FiClipboard, FiPlay, FiTrendingUp, FiCompass, FiSun, FiMoon, FiBook, FiSearch, FiTarget } from 'react-icons/fi'
 import { useWorkoutLogStore } from '../../store/workoutLogStore'
@@ -29,7 +30,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-background-card border-r border-white/5 z-30">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-3 px-6 h-16 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-        <img src="/logo.svg" alt="GymForge" className="w-8 h-8" />
+        <Image src="/logo.svg" alt="GymForge" width={32} height={32} className="w-8 h-8" unoptimized />
         <span className="font-display font-bold text-lg gradient-text">GymForge</span>
       </Link>
 
