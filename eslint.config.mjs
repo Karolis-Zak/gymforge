@@ -9,8 +9,10 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+// Note: "next/typescript" is only available in eslint-config-next 15+.
+// This project pins Next 14.1.3, so we extend only "next/core-web-vitals".
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends("next/core-web-vitals"),
 ];
 
 export default eslintConfig;

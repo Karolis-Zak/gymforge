@@ -166,16 +166,19 @@ export const useWorkoutStore = create<WorkoutStore>()(
       name: 'workout-plans-storage',
       version: 2,
       migrate: (persistedState: any, version: number) => {
-        if (!persistedState || !persistedState.plans) return persistedState
+        // Guard against corrupted storage where `plans` is missing or not an array.
+        if (!persistedState || !Array.isArray(persistedState.plans)) return persistedState
 
         // v0 → v1: fix old Plank entries with reps: 1 → reps: 30
         persistedState.plans = persistedState.plans.map((plan: WorkoutPlan) => ({
           ...plan,
-          exercises: plan.exercises.map(ex =>
-            ex.name === 'Plank' && ex.reps === 1
-              ? { ...ex, reps: 30, notes: 'Hold for 30 seconds per set' }
-              : ex
-          )
+          exercises: Array.isArray(plan.exercises)
+            ? plan.exercises.map(ex =>
+                ex.name === 'Plank' && ex.reps === 1
+                  ? { ...ex, reps: 30, notes: 'Hold for 30 seconds per set' }
+                  : ex
+              )
+            : plan.exercises,
         }))
 
         // v1 → v2: replace pre-made templates with research-backed restSeconds

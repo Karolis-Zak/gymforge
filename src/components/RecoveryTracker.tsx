@@ -84,7 +84,7 @@ export function RecoveryTracker() {
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-base md:text-lg font-display font-bold text-text-primary">Recovery Log</h3>
-          <p className="text-xs text-text-muted mt-0.5">Today's check-in</p>
+          <p className="text-xs text-text-muted mt-0.5">Today&apos;s check-in</p>
         </div>
         <div className="text-right">
           <div className="text-xl md:text-2xl font-bold text-accent">{weeklyScore}%</div>

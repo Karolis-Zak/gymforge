@@ -85,12 +85,12 @@ export function PlanCard({ plan, onStart, onDelete }: PlanCardProps) {
                     <div className="flex-1 min-w-0">
                       <p className="text-text-primary font-medium text-sm">{i + 1}. {ex.name}</p>
                       {ex.notes && (
-                        <p className="text-text-muted text-xs mt-0.5 line-clamp-1">{ex.notes}</p>
+                        <p className="text-text-secondary text-xs mt-0.5 line-clamp-1">{ex.notes}</p>
                       )}
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <p className="text-primary font-bold text-sm">{ex.sets} × {repsDisplay}</p>
-                      <p className="text-text-muted text-xs">{totalDisplay}</p>
+                      <p className="text-text-secondary text-xs">{totalDisplay}</p>
                     </div>
                   </div>
                 )

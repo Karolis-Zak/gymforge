@@ -69,7 +69,7 @@ export function WorkoutHistory() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-text-primary text-sm">{log.planName}</h3>
-                      <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
+                      <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
                         <span className="flex items-center gap-1">
                           <FiCalendar size={11} />
                           {new Date(log.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}

@@ -59,7 +59,7 @@ export function Step2FitnessLevel({ answers, update, onNext, onBack }: Step2Fitn
               </div>
             )
           })}
-          <p className="text-xs text-text-muted mt-2">Recovering = we'll avoid those areas. Ongoing = we'll include lighter exercises.</p>
+          <p className="text-xs text-text-muted mt-2">Recovering = we&apos;ll avoid those areas. Ongoing = we&apos;ll include lighter exercises.</p>
         </div>
       )}
 

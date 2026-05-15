@@ -41,14 +41,14 @@ export function QuickRepeatWorkout() {
   }, [lastWorkout])
 
   // Handle repeat workout
-  const handleRepeat = () => {
+  const handleRepeat = React.useCallback(() => {
     if (!lastWorkout) return
     const plan = plans.find(p => p.id === lastWorkout.planId)
     if (plan) {
       startWorkout(lastWorkout.planId, lastWorkout.planName)
       router.push('/workout')
     }
-  }
+  }, [lastWorkout, plans, startWorkout, router])
 
   // Keyboard shortcut (R key)
   useEffect(() => {
@@ -63,7 +63,7 @@ export function QuickRepeatWorkout() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [lastWorkout])
+  }, [lastWorkout, handleRepeat])
 
   if (!lastWorkout || !lastWorkoutStats) {
     return null

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWorkoutLogStore } from '../store/workoutLogStore'
 import { useWorkoutStore } from '../store/workoutStore'
@@ -49,8 +49,10 @@ export const ActiveWorkout: React.FC = () => {
   const { answers } = useOnboardingStore()
   const notify = useToast()
   const DEFAULT_REST_SECONDS = defaultRestSeconds || FALLBACK_REST_SECONDS
-  const userInjuries = answers?.injuries || []
-  const userInjurySeverity = answers?.injurySeverity || {}
+  // Memoized so they keep a stable reference across renders — otherwise the
+  // `|| []` / `|| {}` fallbacks create fresh objects that retrigger effects.
+  const userInjuries = useMemo(() => answers?.injuries || [], [answers])
+  const userInjurySeverity = useMemo(() => answers?.injurySeverity || {}, [answers])
 
   const [workoutStarted, setWorkoutStarted] = useState(false)
   const [timer, setTimer] = useState(0)
@@ -93,27 +95,36 @@ export const ActiveWorkout: React.FC = () => {
 
   // Rest timer tick
   useEffect(() => {
+    const refs = restRefs.current
     Object.entries(restActive).forEach(([id, active]) => {
-      if (active && !restRefs.current[id]) {
-        restRefs.current[id] = setInterval(() => {
+      if (active && !refs[id]) {
+        refs[id] = setInterval(() => {
           setRestTimers(prev => {
             const next = Math.max((prev[id] || DEFAULT_REST_SECONDS) - 1, 0)
             if (next === 0) {
               beep()
               setRestActive(p => ({ ...p, [id]: false }))
-              clearInterval(restRefs.current[id])
-              delete restRefs.current[id]
+              clearInterval(refs[id])
+              delete refs[id]
             }
             return { ...prev, [id]: next }
           })
         }, 1000)
-      } else if (!active && restRefs.current[id]) {
-        clearInterval(restRefs.current[id])
-        delete restRefs.current[id]
+      } else if (!active && refs[id]) {
+        clearInterval(refs[id])
+        delete refs[id]
       }
     })
-    return () => { Object.values(restRefs.current).forEach(clearInterval) }
-  }, [restActive])
+    // Clear AND delete every handle so the next run can recreate intervals
+    // for timers that are still active — otherwise a stale (cleared) handle
+    // makes `!refs[id]` false and the timer never restarts.
+    return () => {
+      Object.keys(refs).forEach(id => {
+        clearInterval(refs[id])
+        delete refs[id]
+      })
+    }
+  }, [restActive, DEFAULT_REST_SECONDS])
 
   // Auto-collapse completed exercises — only depends on currentWorkout changes
   useEffect(() => {

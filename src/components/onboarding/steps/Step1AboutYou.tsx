@@ -58,13 +58,19 @@ export function Step1AboutYou({ answers, update, onNext, onBack }: Step1AboutYou
           ))}
         </div>
       </div>
-      {(!answers.name?.trim() || !answers.bodyType) && (
+      {(!answers.name?.trim() || !answers.bodyType) ? (
         <div className="text-xs text-accent bg-accent/10 border border-accent/20 rounded-lg px-3 py-2 flex gap-2 items-start">
           <span className="flex-shrink-0 mt-0.5">⚠️</span>
           <div className="flex-1">
-            {!answers.name?.trim() && <div>Required: Add your name</div>}
-            {!answers.bodyType && <div>Required: Select your build type</div>}
+            <div className="font-semibold mb-0.5">Complete the required fields (*) to continue:</div>
+            {!answers.name?.trim() && <div>• Add your name</div>}
+            {!answers.bodyType && <div>• Select your build type</div>}
           </div>
+        </div>
+      ) : (
+        <div className="text-xs text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2 flex gap-2 items-center">
+          <span className="flex-shrink-0">✓</span>
+          <span>All set — tap Next to continue</span>
         </div>
       )}
       <div className="flex justify-end pt-2">

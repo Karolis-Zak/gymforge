@@ -28,7 +28,7 @@ export function BodyMap() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-text-primary">Exercise Explorer</h1>
-          <p className="text-text-secondary text-sm mt-1">🎯 Select a muscle group below to find exercises</p>
+          <p className="text-text-secondary text-sm mt-1">🎯 Tap a muscle on the figure below to find exercises</p>
         </div>
         {selectedMuscles.length > 0 && (
           <Button variant="ghost" size="sm" onClick={clearSelection}>
@@ -65,7 +65,7 @@ export function BodyMap() {
             </button>
             <button
               onClick={() => setView(v => v === 'front' ? 'back' : 'front')}
-              className="ml-2 w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/10 transition-all"
+              className="ml-2 w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/10 transition-all"
               aria-label="Flip view"
             >
               <FiRotateCw size={14} />
